@@ -158,18 +158,16 @@ function ClippedNoteBadge() {
 
 function ExecuteBadge() {
     const { note, parentComponent } = useNoteContext();
-    const isScript = note?.isTriliumScript();
     const isSql = note?.isTriliumSqlite();
-    const isExecutable = isScript || isSql;
     const [ executeDescription ] = useNoteLabel(note, "executeDescription");
     const [ executeButton ] = useNoteLabelBoolean(note, "executeButton");
 
-    return (note && isExecutable && (executeDescription || executeButton) &&
+    return (note && isSql && (executeDescription || executeButton) &&
         <Badge
             className="execute-badge"
             icon="bx bx-play"
-            text={isScript ? t("breadcrumb_badges.execute_script") : t("breadcrumb_badges.execute_sql")}
-            tooltip={executeDescription || (isScript ? t("breadcrumb_badges.execute_script_description") : t("breadcrumb_badges.execute_sql_description"))}
+            text={t("breadcrumb_badges.execute_sql")}
+            tooltip={executeDescription || t("breadcrumb_badges.execute_sql_description")}
             onClick={() => parentComponent.triggerCommand("runActiveNote")}
         />
     );

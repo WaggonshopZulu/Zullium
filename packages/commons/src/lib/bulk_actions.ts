@@ -55,9 +55,6 @@ export type ActionHandlers = {
     moveNote: {
         targetParentNoteId: string;
     },
-    executeScript: {
-        script: string;
-    },
     convertNote: {
         conversion: NoteConversionId;
     }

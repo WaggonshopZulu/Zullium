@@ -18,12 +18,6 @@ vi.mock("../services/search.js", () => ({
     }
 }));
 
-vi.mock("../services/bundle.js", () => ({
-    default: {
-        getAndExecuteBundle: vi.fn(async () => "bundle-result")
-    }
-}));
-
 vi.mock("../services/protected_session_holder.js", () => ({
     default: {
         isProtectedSessionAvailable: vi.fn(() => false)
@@ -1165,38 +1159,6 @@ describe("FNote system-note predicates", () => {
         expect(makeNote({ type: "render", mime: "text/plain" }).getScriptEnv()).toBe("frontend");
         expect(makeNote({ type: "code", mime: "application/javascript;env=backend" }).getScriptEnv()).toBe("backend");
         expect(makeNote({ type: "text", mime: "text/plain" }).getScriptEnv()).toBeNull();
-    });
-});
-
-describe("FNote executeScript", () => {
-    it("executes a frontend bundle", async () => {
-        const bundleService = (await import("../services/bundle.js")).default;
-        const note = makeNote({ type: "code", mime: "application/javascript;env=frontend" });
-
-        const result = await note.executeScript();
-        expect(result).toBe("bundle-result");
-        expect(bundleService.getAndExecuteBundle).toHaveBeenCalledWith(note.noteId);
-    });
-
-    it("posts to the server for a backend script", async () => {
-        const postSpy = vi.spyOn(server, "post").mockResolvedValue(undefined);
-        const note = makeNote({ type: "code", mime: "application/javascript;env=backend" });
-
-        await note.executeScript();
-        expect(postSpy).toHaveBeenCalledWith(`script/run/${note.noteId}`);
-    });
-
-    it("throws for a non-JS note type", async () => {
-        const note = makeNote({ type: "text", mime: "text/html" });
-        await expect(note.executeScript()).rejects.toThrow();
-    });
-
-    it("throws 'Unrecognized env' for a JS note whose env is neither frontend nor backend", async () => {
-        // application/javascript without an env= suffix is JS but getScriptEnv() returns null
-        const note = makeNote({ type: "code", mime: "application/javascript" });
-        expect(note.isJavaScript()).toBe(true);
-        expect(note.getScriptEnv()).toBeNull();
-        await expect(note.executeScript()).rejects.toThrow();
     });
 });
 

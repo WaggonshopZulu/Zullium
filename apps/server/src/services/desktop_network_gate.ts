@@ -8,12 +8,6 @@ import { isElectron } from "./utils.js";
  * Paths that stay reachable on the desktop's loopback listener even when the user
  * has NOT enabled network access. These are same-machine integrations rather than
  * the web app:
- *  - `/mcp` — the MCP transport, which requires an ETAPI token on every request
- *    (see routes/mcp.ts), exactly like `/etapi`. The loopback Host check below applies on
- *    top of that token, which is why this middleware must stay mounted ahead of the MCP
- *    routes in app.ts. Note it is the loopback *bind* (see host.ts), not this gate, that
- *    keeps MCP off the LAN while network access is off — the check here only refuses a
- *    rebound Host on a connection that already reached the loopback listener.
  *  - `/api/clipper` — the web clipper endpoint the browser extension talks to.
  *  - `/etapi` — the token-authenticated External API used by local automation.
  *
@@ -21,7 +15,7 @@ import { isElectron } from "./utils.js";
  * assets) is "web access to the desktop instance" and is served only once the user
  * opts into network access.
  */
-const LOCAL_INTEGRATION_PREFIXES = ["/mcp", "/api/clipper", "/etapi"];
+const LOCAL_INTEGRATION_PREFIXES = ["/api/clipper", "/etapi"];
 
 export function isLocalIntegrationPath(path: string): boolean {
     return LOCAL_INTEGRATION_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
@@ -31,9 +25,8 @@ export function isLocalIntegrationPath(path: string): boolean {
  * Whether an HTTP `Host` header names a loopback address. Used to keep the local
  * integrations reachable only from genuine same-machine clients: a page that has
  * DNS-rebound its own domain to 127.0.0.1 still connects from loopback (so an IP
- * check passes) but sends its original host, so the Host header is what exposes it
- * — the same defence MCP applies (see routes/mcp.ts). Guards the unauthenticated
- * web-clipper endpoint in particular.
+ * check passes) but sends its original host, so the Host header is what exposes it.
+ * Guards the unauthenticated web-clipper endpoint in particular.
  */
 export function isLoopbackHost(host: string | undefined): boolean {
     if (!host) {

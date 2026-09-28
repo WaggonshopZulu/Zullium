@@ -1,16 +1,14 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "preact/hooks";
+import { useContext, useMemo } from "preact/hooks";
 
 import appContext, { CommandNames } from "../../components/app_context";
 import FNote from "../../entities/fnote";
 import date_notes from "../../services/date_notes";
-import { LauncherWidgetDefinitionWithType } from "../../services/frontend_script_api_preact";
 import { t } from "../../services/i18n";
 import toast from "../../services/toast";
-import { getErrorMessage, isMobile } from "../../services/utils";
+import { isMobile } from "../../services/utils";
 import BasicWidget from "../basic_widget";
-import NoteContextAwareWidget from "../note_context_aware_widget";
 import QuickSearchWidget from "../quick_search";
-import { useGlobalShortcut, useLegacyWidget, useNoteLabel, useNoteRelationTarget } from "../react/hooks";
+import { useLegacyWidget, useNoteLabel } from "../react/hooks";
 import { ParentComponent } from "../react/react_utils";
 import { CustomNoteLauncher } from "./GenericButtons";
 import { LaunchBarActionButton, LaunchBarContext, launcherContextMenuHandler, LauncherNoteProps, useLauncherIconAndTitle } from "./launch_bar_widgets";
@@ -54,34 +52,6 @@ export function NoteLauncher({ launcherNote, ...restProps }: { launcherNote: FNo
     );
 }
 
-export function ScriptLauncher({ launcherNote }: LauncherNoteProps) {
-    const { icon, title } = useLauncherIconAndTitle(launcherNote);
-
-    const launch = useCallback(async () => {
-        if (launcherNote.isLabelTruthy("scriptInLauncherContent")) {
-            await launcherNote.executeScript();
-        } else {
-            const script = await launcherNote.getRelationTarget("script");
-            if (script) {
-                await script.executeScript();
-            }
-        }
-    }, [ launcherNote ]);
-
-    // Keyboard shortcut.
-    const [ shortcut ] = useNoteLabel(launcherNote, "keyboardShortcut");
-    useGlobalShortcut(shortcut, launch);
-
-    return (
-        <LaunchBarActionButton
-            launcherNote={launcherNote}
-            icon={icon}
-            text={title}
-            onClick={launch}
-        />
-    );
-}
-
 export function TodayLauncher({ launcherNote }: LauncherNoteProps) {
     return (
         <CustomNoteLauncher
@@ -108,45 +78,6 @@ export function QuickSearchLauncherWidget({ launcherNote }: LauncherNoteProps) {
     );
 }
 
-export function CustomWidget({ launcherNote }: LauncherNoteProps) {
-    const [ widgetNote ] = useNoteRelationTarget(launcherNote, "widget");
-    const [ widget, setWidget ] = useState<BasicWidget | NoteContextAwareWidget | LauncherWidgetDefinitionWithType>();
-
-    const parentComponent = useContext(ParentComponent) as BasicWidget | null;
-    parentComponent?.contentSized();
-
-    useEffect(() => {
-        (async function() {
-            let widget: BasicWidget;
-            try {
-                widget = await widgetNote?.executeScript();
-            } catch (e) {
-                toast.showError(t("toast.bundle-error.message", {
-                    id: widgetNote?.noteId,
-                    title: widgetNote?.title,
-                    message: getErrorMessage(e)
-                }));
-                return;
-            }
-
-            if (widgetNote && widget instanceof BasicWidget) {
-                widget._noteId = widgetNote.noteId;
-            }
-            setWidget(widget);
-        })();
-    }, [ widgetNote ]);
-
-    return (
-        <div onContextMenu={launcherContextMenuHandler(launcherNote)}>
-            {widget && (
-                ("type" in widget && widget.type === "preact-launcher-widget")
-                    ? <ReactWidgetRenderer widget={widget as LauncherWidgetDefinitionWithType} />
-                    : <LegacyWidgetRenderer widget={widget as BasicWidget} />
-            )}
-        </div>
-    );
-}
-
 export function LegacyWidgetRenderer({ widget }: { widget: BasicWidget }) {
     const [ widgetEl ] = useLegacyWidget(() => widget, {
         noteContext: appContext.tabManager.getActiveContext() ?? undefined
@@ -155,7 +86,4 @@ export function LegacyWidgetRenderer({ widget }: { widget: BasicWidget }) {
     return widgetEl;
 }
 
-function ReactWidgetRenderer({ widget }: { widget: LauncherWidgetDefinitionWithType }) {
-    const El = widget.render;
-    return <El />;
-}
+

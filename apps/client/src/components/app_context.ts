@@ -4,7 +4,6 @@ import { type LOCALE_IDS, SqlExecuteResponse } from "@triliumnext/commons";
 import { ColumnComponent } from "tabulator-tables";
 
 import type { Attribute } from "../services/attribute_parser.js";
-import bundleService from "../services/bundle.js";
 import froca from "../services/froca.js";
 import { initLocale, t } from "../services/i18n.js";
 import keyboardActionsService from "../services/keyboard_actions.js";
@@ -33,7 +32,6 @@ import type { ItemPickerDialogOptions } from "../widgets/dialogs/item_picker.js"
 import type { PromptDialogOptions } from "../widgets/dialogs/prompt.js";
 import type NoteTreeWidget from "../widgets/note_tree.js";
 import type { RightPaneTabId } from "../widgets/sidebar/RightPaneTabs.jsx";
-import type { ToolCall } from "../widgets/type_widgets/llm_chat/llm_chat_types.js";
 import Component from "./component.js";
 import Entrypoints from "./entrypoints.js";
 import MainTreeExecutors from "./main_tree_executors.js";
@@ -159,7 +157,6 @@ export type CommandMappings = {
     showNotePickerDialog: NotePickerDialogOptions;
     showInfoDialog: InfoProps;
     showLightbox: LightboxOptions;
-    showToolCallDetails: { toolCall: ToolCall };
     showConfirmDialog: ConfirmWithMessageOptions;
     showRecentChanges: CommandData & { ancestorNoteId: string };
     showDeletedNotes: CommandData & { ancestorNoteId?: string };
@@ -240,8 +237,6 @@ export type CommandMappings = {
     createNoteIntoInbox: CommandData;
 
     addNoteLauncher: ContextMenuCommandData;
-    addScriptLauncher: ContextMenuCommandData;
-    addWidgetLauncher: ContextMenuCommandData;
     addSpacerLauncher: ContextMenuCommandData;
     moveLauncherToVisible: ContextMenuCommandData;
     moveLauncherToAvailable: ContextMenuCommandData;
@@ -589,10 +584,6 @@ type EventMappings = {
     };
     noteTypeMimeChanged: { noteId: string };
     zenModeChanged: { isEnabled: boolean };
-    relationMapCreateChildNote: { ntxId: string | null | undefined };
-    relationMapResetPanZoom: { ntxId: string | null | undefined };
-    relationMapResetZoomIn: { ntxId: string | null | undefined };
-    relationMapResetZoomOut: { ntxId: string | null | undefined };
     activeNoteChanged: {ntxId: string | null | undefined};
     showAddLinkDialog: AddLinkOpts;
     showIncludeDialog: IncludeNoteOpts;
@@ -676,7 +667,6 @@ export class AppContext extends Component {
 
         this.tabManager.loadTabs();
 
-        setTimeout(() => bundleService.executeStartupBundles(), 2000);
     }
 
     initComponents() {

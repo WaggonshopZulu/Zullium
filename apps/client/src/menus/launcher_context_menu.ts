@@ -42,8 +42,6 @@ export default class LauncherContextMenu implements SelectMenuItemEventListener<
 
         const items: (MenuItem<LauncherCommandNames> | null)[] = [
             isVisibleRoot || isAvailableRoot ? { title: t("launcher_context_menu.add-note-launcher"), command: "addNoteLauncher", uiIcon: "bx bx-note" } : null,
-            isVisibleRoot || isAvailableRoot ? { title: t("launcher_context_menu.add-script-launcher"), command: "addScriptLauncher", uiIcon: "bx bx-code-curly" } : null,
-            isVisibleRoot || isAvailableRoot ? { title: t("launcher_context_menu.add-custom-widget"), command: "addWidgetLauncher", uiIcon: "bx bx-customize" } : null,
             isVisibleRoot || isAvailableRoot ? { title: t("launcher_context_menu.add-spacer"), command: "addSpacerLauncher", uiIcon: "bx bx-dots-horizontal" } : null,
             isVisibleRoot || isAvailableRoot ? { kind: "separator" } : null,
 

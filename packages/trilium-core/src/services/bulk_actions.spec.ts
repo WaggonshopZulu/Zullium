@@ -1,12 +1,11 @@
 import type { BulkAction } from "@triliumnext/commons";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import becca from "../becca/becca.js";
 import type BBranch from "../becca/entities/bbranch.js";
 import type BNote from "../becca/entities/bnote.js";
 import bulkActionService from "./bulk_actions.js";
 import cloningService from "./cloning.js";
-import config from "./config.js";
 import { getContext } from "./context.js";
 import noteService from "./notes.js";
 import { getSql } from "./sql/index.js";
@@ -31,17 +30,6 @@ function createNote(parentNoteId: string): { note: BNote; branch: BBranch } {
 }
 
 describe("bulk_actions service (real DB)", () => {
-    // The executeScript action runs a backend script, gated by the backendScriptingEnabled toggle.
-    const originalScriptingEnabled = config.Security.backendScriptingEnabled;
-
-    beforeAll(() => {
-        config.Security.backendScriptingEnabled = true;
-    });
-
-    afterAll(() => {
-        config.Security.backendScriptingEnabled = originalScriptingEnabled;
-    });
-
     describe("executeActions", () => {
         it("skips note IDs that don't resolve to a note", () => {
             // No note exists for this id, so nothing should throw and no handler runs.
@@ -73,10 +61,10 @@ describe("bulk_actions service (real DB)", () => {
         it("isolates per-note handler failures and keeps applying to remaining notes", () => {
             const note = createNote("root");
 
-            // executeScript throws (ReferenceError), but the failure is caught per action,
-            // so the subsequent addLabel action still runs against the same note.
+            // An unrecognized action name throws (no matching handler), but the failure is
+            // caught per action, so the subsequent addLabel action still runs against the same note.
             const actions: BulkAction[] = [
-                { name: "executeScript", script: "thisIsNotDefined()" },
+                { name: "bogusAction", script: "x" } as unknown as BulkAction,
                 { name: "addLabel", labelName: "appliedAfterFailure" }
             ];
 
@@ -185,51 +173,6 @@ describe("bulk_actions service (real DB)", () => {
             );
 
             expect(note.note.title).toBe(original);
-        });
-    });
-
-    describe("executeScript", () => {
-        it("runs the script against the note and persists changes", () => {
-            const note = createNote("root");
-
-            getContext().init(() =>
-                bulkActionService.executeActions(
-                    [{ name: "executeScript", script: "note.setLabel('scripted', 'yes')" }],
-                    [note.note.noteId]
-                )
-            );
-
-            expect(note.note.getOwnedLabelValue("scripted")).toBe("yes");
-        });
-
-        it("persists mutations even when the script returns early", () => {
-            // A top-level `return` (used to exit early) must not skip the implicit
-            // note.save(). A title change only reaches the DB via note.save(), so we
-            // assert against the persisted row (the in-memory becca entity reflects the
-            // mutation regardless of whether save() ran).
-            const note = createNote("root");
-
-            getContext().init(() =>
-                bulkActionService.executeActions(
-                    [{ name: "executeScript", script: "note.title = 'renamed by script';\nreturn;" }],
-                    [note.note.noteId]
-                )
-            );
-
-            const persistedTitle = getSql().getValue<string>("SELECT title FROM notes WHERE noteId = ?", [note.note.noteId]);
-            expect(persistedTitle).toBe("renamed by script");
-        });
-
-        it("is a no-op for an empty / whitespace-only script", () => {
-            const note = createNote("root");
-            const labelsBefore = note.note.getOwnedAttributes().length;
-
-            expect(() =>
-                getContext().init(() =>
-                    bulkActionService.executeActions([{ name: "executeScript", script: "   " }], [note.note.noteId])
-                )
-            ).not.toThrow();
-            expect(note.note.getOwnedAttributes().length).toBe(labelsBefore);
         });
     });
 

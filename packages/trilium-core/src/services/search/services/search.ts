@@ -1,5 +1,4 @@
 import type { HighlightedTokenInfo, SearchResultDetails } from "@triliumnext/commons";
-import { extractLlmChatText } from "@triliumnext/commons/src/lib/llm/extract_chat_text.js";
 import striptags from "striptags";
 
 import becca from "../../../becca/becca.js";
@@ -9,8 +8,6 @@ import blobService from "../../blob.js";
 import hoistedNoteService from "../../hoisted_note.js";
 import optionService from "../../options.js";
 import { getLog } from "../../log.js";
-import scriptService from "../../script.js";
-import { isScriptingEnabled } from "../../scripting_guard.js";
 import { escapeHtml, escapeRegExp, normalizePreservingLength, unescapeHtml } from "../../utils/index.js";
 import type Expression from "../expressions/expression.js";
 import {
@@ -80,25 +77,14 @@ function searchFromNote(note: BNote): SearchNoteResult {
 /**
  * Runs a saved search note, returning the raw {@link SearchResult}s together with
  * the {@link SearchContext} that produced them so callers can build snippets and
- * highlight token infos. Script-based searches (`~searchScript`) have no lexed
- * query, so `searchContext` is `null` for them (and there are no snippets/tokens).
+ * highlight token infos.
  */
 function searchFromNoteWithContext(note: BNote): {
     searchResults: SearchResult[];
     searchContext: SearchContext | null;
     error: string | null;
 } {
-    const searchScript = note.getRelationValue("searchScript");
     const searchString = note.getLabelValue("searchString") || "";
-
-    if (searchScript) {
-        const searchResults = searchFromRelation(note, "searchScript").map((noteId) => {
-            const notePath = becca.notes[noteId]?.getBestNotePath() ?? [noteId];
-            return new SearchResult(notePath);
-        });
-
-        return { searchResults, searchContext: null, error: null };
-    }
 
     const searchContext = new SearchContext({
         fastSearch: note.hasLabel("fastSearch"),
@@ -115,49 +101,6 @@ function searchFromNoteWithContext(note: BNote): {
     const searchResults = findResultsWithQuery(searchString, searchContext);
 
     return { searchResults, searchContext, error: searchContext.getError() };
-}
-
-function searchFromRelation(note: BNote, relationName: string) {
-    const scriptNote = note.getRelationTarget(relationName);
-
-    const log = getLog();
-    if (!scriptNote) {
-        log.info(`Search note's relation ${relationName} has not been found.`);
-
-        return [];
-    }
-
-    if (!isScriptingEnabled()) {
-        log.info("Script-based search is disabled (backend scripting is not enabled).");
-        return [];
-    }
-
-    if (!scriptNote.isJavaScript() || scriptNote.getScriptEnv() !== "backend") {
-        log.info(`Note ${scriptNote.noteId} is not executable.`);
-
-        return [];
-    }
-
-    if (!note.isContentAvailable()) {
-        log.info(`Note ${scriptNote.noteId} is not available outside of protected session.`);
-
-        return [];
-    }
-
-    const result = scriptService.executeNote(scriptNote, { originEntity: note });
-
-    if (!Array.isArray(result)) {
-        log.info(`Result from ${scriptNote.noteId} is not an array.`);
-
-        return [];
-    }
-
-    if (result.length === 0) {
-        return [];
-    }
-
-    // we expect either array of noteIds (strings) or notes, in that case we extract noteIds ourselves
-    return typeof result[0] === "string" ? result : result.map((item) => item.noteId);
 }
 
 function loadNeededInfoFromDatabase() {
@@ -577,7 +520,7 @@ function extractContentSnippet(noteId: string, searchTokens: HighlightedTokenInf
     try {
         let content: string | undefined;
 
-        if (["text", "code", "mermaid", "canvas", "mindMap", "llmChat"].includes(note.type)) {
+        if (["text", "code", "mermaid", "canvas", "mindMap"].includes(note.type)) {
             // Protection is already accounted for: a note hands back its content decrypted, and hands
             // back nothing at all when there is no session to decrypt it with.
             const raw = note.getContent();
@@ -622,12 +565,6 @@ function extractContentSnippet(noteId: string, searchTokens: HighlightedTokenInf
             // Decode HTML entities so the snippet shows real characters instead of escape codes
             // (e.g. "&lt;", "&amp;", "&nbsp;") — attribute-sourced text above is entity-encoded too.
             content = unescapeHtml(content).replace(/&nbsp;/g, " ");
-        } else if (note.type === "llmChat") {
-            // The note stores the whole conversation as a JSON blob; show the readable prose only.
-            content = extractLlmChatText(content);
-            if (!content) {
-                return "";
-            }
         }
 
         // Normalize whitespace while preserving paragraph breaks

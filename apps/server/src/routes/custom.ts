@@ -2,8 +2,6 @@ import { cls, type Request as CoreRequest, routes } from "@triliumnext/core";
 import type { Request, Response, Router } from "express";
 
 import { bindEmitter } from "../cls_provider.js";
-import { isScriptingEnabled } from "../services/scripting_guard.js";
-
 function register(router: Router) {
     // explicitly no CSRF middleware since it's meant to allow integration from external services
 
@@ -12,7 +10,7 @@ function register(router: Router) {
         bindEmitter(res);
 
         cls.init(() => routes.handleCustomRequest(
-            joinWildcardPath(req), req as unknown as CoreRequest, res, isScriptingEnabled
+            joinWildcardPath(req), req as unknown as CoreRequest, res
         ));
     });
 }

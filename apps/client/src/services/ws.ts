@@ -2,7 +2,6 @@ import { WebSocketMessage } from "@triliumnext/commons";
 
 import appContext from "../components/app_context.js";
 import type { EntityChange } from "../server_types.js";
-import bundleService from "./bundle.js";
 import froca from "./froca.js";
 import frocaUpdater from "./froca_updater.js";
 import { t } from "./i18n.js";
@@ -116,10 +115,6 @@ export async function dispatchMessage(message: WebSocketMessage) {
         toastService.showMessage(msg.message, msg.timeout);
     } else if (messageType === "unhandled-error") {
         showUnhandledError(msg.message, msg.stack);
-    } else if (messageType === "execute-script") {
-        const originEntity = msg.originEntityId ? await froca.getNote(msg.originEntityId) : null;
-
-        bundleService.getAndExecuteBundle(msg.currentNoteId, originEntity, msg.script, msg.params);
     }
 }
 

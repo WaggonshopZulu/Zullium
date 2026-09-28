@@ -5,7 +5,9 @@ import cloningService from "../../services/cloning.js";
 import dateUtils from "../../services/utils/date.js";
 import eraseService from "../../services/erase.js";
 import eventService from "../../services/events.js";
-import handlers from "../../services/handlers.js";
+// Side-effect only: handlers.ts registers sort-on-change, template-copy, inverse-relation
+// and hidden-subtree-check-on-deletion handlers by subscribing to events at import time.
+import "../../services/handlers.js";
 import noteService from "../../services/notes.js";
 import optionService from "../../services/options.js";
 import protectedSessionService from "../../services/protected_session.js";
@@ -330,18 +332,6 @@ class BNote extends AbstractBeccaEntity<BNote> {
         }
 
         return null;
-    }
-
-    /**
-     * Executes this note as a script. The note must be of type "Code: JS backend".
-     *
-     * @returns the return value of the executed script
-     */
-    executeScript() {
-        // Lazy require to avoid circular dependency (script.ts imports BNote as a type).
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const scriptService = require("../../services/script.js").default;
-        return scriptService.executeNote(this, { originEntity: this });
     }
 
     /**
@@ -1536,8 +1526,6 @@ class BNote extends AbstractBeccaEntity<BNote> {
             taskContext = new TaskContext("no-progress-reporting", "deleteNotes", null);
         }
 
-        // needs to be run before branches and attributes are deleted and thus attached relations disappear
-        handlers.runAttachedRelations(this, "runOnNoteDeletion", this);
         taskContext.noteDeletionHandlerTriggered = true;
 
         for (const branch of this.getParentBranches()) {

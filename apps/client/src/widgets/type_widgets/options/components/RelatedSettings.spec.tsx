@@ -27,7 +27,7 @@ describe("RelatedSettings", () => {
         const container = renderInto(
             <RelatedSettings items={[
                 { title: "Backup", targetPage: "_optionsBackup" },
-                { title: "Spellcheck", targetPage: "_optionsSpellcheck", enabled: false }
+                { title: "Shortcuts", targetPage: "_optionsShortcuts", enabled: false }
             ]} />
         );
 
@@ -40,7 +40,7 @@ describe("RelatedSettings", () => {
         expect(withDefault.querySelector(".tn-card-heading")?.textContent).toBe("settings.related_settings");
 
         const named = renderInto(
-            <RelatedSettings title="settings.related_actions" items={[ { title: "Space usage", targetPage: "_optionsContentManager" } ]} />
+            <RelatedSettings title="settings.related_actions" items={[ { title: "Shortcuts", targetPage: "_optionsShortcuts" } ]} />
         );
         expect(named.querySelector(".tn-card-heading")?.textContent).toBe("settings.related_actions");
     });
@@ -63,7 +63,7 @@ describe("RelatedSettings", () => {
     it("lets an entry with something of its own to do handle the press, link and all", () => {
         const onClick = vi.fn();
         const container = renderInto(
-            <RelatedSettings items={[ { title: "Space usage", targetPage: "_optionsContentManager", onClick } ]} />
+            <RelatedSettings items={[ { title: "Shortcuts", targetPage: "_optionsShortcuts", onClick } ]} />
         );
         const [ link ] = links(container);
 

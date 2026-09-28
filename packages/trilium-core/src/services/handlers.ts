@@ -1,8 +1,6 @@
 import { parseSortCriteria } from "@triliumnext/commons";
 
 import eventService from "./events.js";
-import { isScriptingEnabled } from "./scripting_guard.js";
-import scriptService from "./script.js";
 import treeService from "./tree.js";
 import noteService from "./notes.js";
 import becca from "../becca/becca.js";
@@ -10,32 +8,11 @@ import BAttribute from "../becca/entities/battribute.js";
 import hiddenSubtreeService from "./hidden_subtree.js";
 import oneTimeTimer from "./one_time_timer.js";
 import type BNote from "../becca/entities/bnote.js";
-import type AbstractBeccaEntity from "../becca/entities/abstract_becca_entity.js";
 import { DefinitionObject } from "@triliumnext/commons";
 
 type Handler = (definition: DefinitionObject, note: BNote, targetNote: BNote) => void;
 
-function runAttachedRelations(note: BNote, relationName: string, originEntity: AbstractBeccaEntity<any>) {
-    if (!note || !isScriptingEnabled()) {
-        return;
-    }
-
-    // the same script note can get here with multiple ways, but execute only once
-    const notesToRun = new Set(
-        note
-            .getRelations(relationName)
-            .map((relation) => relation.getTargetNote())
-            .filter((note) => !!note) as BNote[]
-    );
-
-    for (const noteToRun of notesToRun) {
-        scriptService.executeNoteNoException(noteToRun, { originEntity });
-    }
-}
-
 eventService.subscribe(eventService.NOTE_TITLE_CHANGED, (note) => {
-    runAttachedRelations(note, "runOnNoteTitleChange", note);
-
     if (!note.isRoot()) {
         const noteFromCache = becca.notes[note.noteId];
 
@@ -53,16 +30,11 @@ eventService.subscribe(eventService.NOTE_TITLE_CHANGED, (note) => {
 
 eventService.subscribe([eventService.ENTITY_CHANGED, eventService.ENTITY_DELETED], ({ entityName, entity }) => {
     if (entityName === "attributes") {
-        runAttachedRelations(entity.getNote(), "runOnAttributeChange", entity);
-
         if (entity.type === "label" && ["sorted", "sortDirection", "sortFoldersFirst", "sortNatural", "sortLocale"].includes(entity.name)) {
             handleSortedAttribute(entity);
         } else if (entity.type === "label") {
             handleMaybeSortingLabel(entity);
         }
-    } else if (entityName === "notes") {
-        // ENTITY_DELETED won't trigger anything since all branches/attributes are already deleted at this point
-        runAttachedRelations(entity, "runOnNoteChange", entity);
     }
 });
 
@@ -73,23 +45,11 @@ eventService.subscribe(eventService.ENTITY_CHANGED, ({ entityName, entity }) => 
         if (parentNote?.hasLabel("sorted")) {
             treeService.sortNotesIfNeeded(parentNote.noteId);
         }
-
-        const childNote = becca.getNote(entity.noteId);
-
-        if (childNote) {
-            runAttachedRelations(childNote, "runOnBranchChange", entity);
-        }
     }
-});
-
-eventService.subscribe(eventService.NOTE_CONTENT_CHANGE, ({ entity }) => {
-    runAttachedRelations(entity, "runOnNoteContentChange", entity);
 });
 
 eventService.subscribe(eventService.ENTITY_CREATED, ({ entityName, entity }) => {
     if (entityName === "attributes") {
-        runAttachedRelations(entity.getNote(), "runOnAttributeCreation", entity);
-
         if (entity.type === "relation" && entity.name === "template") {
             const note = becca.getNote(entity.noteId);
             if (!note) {
@@ -133,18 +93,10 @@ eventService.subscribe(eventService.ENTITY_CREATED, ({ entityName, entity }) => 
             handleMaybeSortingLabel(entity);
         }
     } else if (entityName === "branches") {
-        runAttachedRelations(entity.getNote(), "runOnBranchCreation", entity);
-
         if (entity.parentNote?.hasLabel("sorted")) {
             treeService.sortNotesIfNeeded(entity.parentNoteId);
         }
-    } else if (entityName === "notes") {
-        runAttachedRelations(entity, "runOnNoteCreation", entity);
     }
-});
-
-eventService.subscribe(eventService.CHILD_NOTE_CREATED, ({ parentNote, childNote }) => {
-    runAttachedRelations(parentNote, "runOnChildNoteCreation", childNote);
 });
 
 function processInverseRelations(entityName: string, entity: BAttribute, handler: Handler) {
@@ -238,17 +190,9 @@ eventService.subscribe(eventService.ENTITY_DELETED, ({ entityName, entity }) => 
         }
     });
 
-    if (entityName === "branches") {
-        runAttachedRelations(entity.getNote(), "runOnBranchDeletion", entity);
-    }
-
     if (entityName === "notes" && entity.noteId.startsWith("_")) {
         // "named" note has been deleted, we will probably need to rebuild the hidden subtree
         // scheduling so that bulk deletes won't trigger so many checks
         oneTimeTimer.scheduleExecution("hidden-subtree-check", 1000, () => hiddenSubtreeService.checkHiddenSubtree());
     }
 });
-
-export default {
-    runAttachedRelations
-};

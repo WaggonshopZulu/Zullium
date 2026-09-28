@@ -856,21 +856,6 @@ function findIncludeNoteLinks(content: string, foundLinks: FoundLink[]) {
     return content;
 }
 
-function findRelationMapLinks(content: string, foundLinks: FoundLink[]) {
-    try {
-        const obj = JSON.parse(content);
-
-        for (const note of obj.notes) {
-            foundLinks.push({
-                name: "relationMapLink",
-                value: note.noteId
-            });
-        }
-    } catch (e: any) {
-        getLog().error(`Could not scan for relation map links: ${e.message}`);
-    }
-}
-
 /**
  * Collects the notes a mind map's nodes link to.
  *
@@ -1018,8 +1003,6 @@ export function saveLinks(note: BNote, content: string | Uint8Array) {
         // Mind map node images are stored as attachments referenced by URL from the map JSON; scan
         // for orphans (inserted-then-removed images) so they get scheduled for erasure.
         ({ forceFrontendReload, content } = checkImageAttachments(note, content));
-    } else if (note.type === "relationMap" && typeof content === "string") {
-        findRelationMapLinks(content, foundLinks);
     } else if (note.type === "llmChat" && typeof content === "string") {
         findLlmChatLinks(content, foundLinks);
     } else {

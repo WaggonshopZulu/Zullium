@@ -629,12 +629,6 @@ importers:
         specifier: 8.5.2
         version: 8.5.2(supports-color@10.2.2)
 
-  apps/script-deployer:
-    devDependencies:
-      '@triliumnext/core':
-        specifier: workspace:*
-        version: link:../../packages/trilium-core
-
   apps/server:
     dependencies:
       '@agentclientprotocol/codex-acp':

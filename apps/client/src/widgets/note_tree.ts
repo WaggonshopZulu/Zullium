@@ -1846,16 +1846,6 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
         this.createLauncherNote(node, "note");
     }
 
-    addScriptLauncherCommand({ node }: CommandListenerData<"addScriptLauncher">) {
-        if (!node) return;
-        this.createLauncherNote(node, "script");
-    }
-
-    addWidgetLauncherCommand({ node }: CommandListenerData<"addWidgetLauncher">) {
-        if (!node) return;
-        this.createLauncherNote(node, "customWidget");
-    }
-
     addSpacerLauncherCommand({ node }: CommandListenerData<"addSpacerLauncher">) {
         if (!node) return;
         this.createLauncherNote(node, "spacer");

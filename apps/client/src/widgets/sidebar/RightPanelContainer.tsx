@@ -6,22 +6,18 @@ import clsx from "clsx";
 import { VNode } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 
-import appContext from "../../components/app_context";
-import { WidgetsByParent } from "../../services/bundle";
 import { t } from "../../services/i18n";
 import options from "../../services/options";
 import { DEFAULT_GUTTER_SIZE } from "../../services/resizer";
 import ActionButton from "../react/ActionButton";
 import Button from "../react/Button";
-import { useActiveNoteContext, useGetContextData, useLegacyWidget, useNoteProperty, useTriliumEvent, useTriliumOption, useTriliumOptionBool, useTriliumOptionJson } from "../react/hooks";
+import { useActiveNoteContext, useGetContextData, useNoteProperty, useTriliumEvent, useTriliumOption, useTriliumOptionJson } from "../react/hooks";
 import LazyComponent from "../react/LazyComponent";
 import NoItems from "../react/NoItems";
 import { PaneMode, usePaneMode, usePeekDismiss } from "../react/peek_pane";
-import LegacyRightPanelWidget from "../right_panel_widget";
 import AttributeList from "./AttributeList";
 import Backlinks from "./Backlinks";
 import BoardColumns from "./BoardColumns";
-import ChatHighlightsList from "./ChatHighlightsList";
 import HighlightsList from "./HighlightsList";
 import NoteMap from "./NoteMap";
 import NotePaths from "./NotePaths";
@@ -29,7 +25,7 @@ import PdfAnnotations from "./pdf/PdfAnnotations";
 import PdfAttachments from "./pdf/PdfAttachments";
 import PdfLayers from "./pdf/PdfLayers";
 import PdfPages from "./pdf/PdfPages";
-import RightPanelWidget, { CollapsibleWidgets, ExpandWidgetRequest, ExpandWidgetRequests } from "./RightPanelWidget";
+import { CollapsibleWidgets, ExpandWidgetRequest, ExpandWidgetRequests } from "./RightPanelWidget";
 import RightPanePeekButton from "./RightPanePeekButton";
 import RightPaneTabs, { RIGHT_PANE_TABS, RightPaneTabDefinition, RightPaneTabId } from "./RightPaneTabs";
 import TableOfContents from "./TableOfContents";
@@ -50,9 +46,9 @@ export interface RightPaneTabContents extends RightPaneTabDefinition {
     items: VNode[];
 }
 
-export default function RightPanelContainer({ widgetsByParent }: { widgetsByParent: WidgetsByParent }) {
+export default function RightPanelContainer() {
     const { mode, visible, mounted, togglePeek, toggleDocked, dock, close, dismiss } = usePaneMode("rightPaneVisible");
-    const tabs = useItems(mounted, widgetsByParent);
+    const tabs = useItems(mounted);
     const [ selectedTabId, setSelectedTabId ] = useTriliumOption("rightPaneSelectedTab");
     const [ expandRequest, setExpandRequest ] = useState<ExpandWidgetRequest | null>(null);
     useSplit(mode);
@@ -196,18 +192,13 @@ export default function RightPanelContainer({ widgetsByParent }: { widgetsByPare
     );
 }
 
-function useItems(rightPaneVisible: boolean, widgetsByParent: WidgetsByParent): RightPaneTabContents[] {
+function useItems(rightPaneVisible: boolean): RightPaneTabContents[] {
     const { note } = useActiveNoteContext();
     const noteType = useNoteProperty(note, "type");
     const noteMime = useNoteProperty(note, "mime");
     const [ highlightsList ] = useTriliumOptionJson<string[]>("highlightsList");
-    // Published by the LLM chat; drives the chat highlights widget's visibility (only shown once
-    // the chat has at least one highlight).
-    const chatHighlights = useGetContextData("chatHighlights");
     // Published by a board, which is what says the note is being shown as one.
     const boardColumns = useGetContextData("boardColumns");
-    // Subscribe to the AI toggle so the LLM chat is added/removed reactively without a page reload.
-    const [ aiEnabled ] = useTriliumOptionBool("aiEnabled");
     const isPdf = noteType === "file" && noteMime === "application/pdf";
 
     if (!rightPaneVisible) return [];
@@ -243,7 +234,7 @@ function useItems(rightPaneVisible: boolean, widgetsByParent: WidgetsByParent): 
         },
         {
             el: <TableOfContents />,
-            enabled: (noteType === "text" || noteType === "doc" || isPdf || noteType === "llmChat" || !!note?.isMarkdown()),
+            enabled: (noteType === "text" || noteType === "doc" || isPdf || !!note?.isMarkdown()),
             tab: "outline"
         },
         {
@@ -278,34 +269,6 @@ function useItems(rightPaneVisible: boolean, widgetsByParent: WidgetsByParent): 
             enabled: boardColumns !== undefined,
             tab: "outline"
         },
-        {
-            el: <ChatHighlightsList />,
-            enabled: noteType === "llmChat" && (chatHighlights?.highlights.length ?? 0) > 0,
-            tab: "outline"
-        },
-        {
-            // Loaded lazily because the chat pulls in the whole LLM + CKEditor graph,
-            // which users without the LLM experimental feature should never download.
-            el: <LazyComponent loader={() => import("./SidebarChat.jsx")} />,
-            enabled: noteType !== "llmChat" && aiEnabled,
-            position: 1000,
-            tab: "chat"
-        },
-        ...widgetsByParent.getLegacyWidgets("right-pane").map((widget) => ({
-            el: <CustomLegacyWidget key={widget._noteId} originalWidget={widget as LegacyRightPanelWidget} />,
-            enabled: true,
-            position: widget.position,
-            tab: "widgets" as const
-        })),
-        ...widgetsByParent.getPreactWidgets("right-pane").map((widget) => {
-            const El = widget.render;
-            return {
-                el: <El />,
-                enabled: true,
-                position: widget.position,
-                tab: "widgets" as const
-            };
-        })
     ];
 
     // A note-less pane (an empty tab) keeps its own empty state rather than an outline with nothing in
@@ -428,50 +391,4 @@ function useSplit(mode: PaneMode) {
     }, [ mode ]);
 }
 
-function CustomLegacyWidget({ originalWidget }: { originalWidget: LegacyRightPanelWidget }) {
-    const containerRef = useRef<HTMLDivElement>(null);
 
-    return (
-        <RightPanelWidget
-            id={originalWidget._noteId}
-            title={originalWidget.widgetTitle}
-            containerRef={containerRef}
-            contextMenuItems={[
-                {
-                    title: t("right_pane.custom_widget_go_to_source"),
-                    uiIcon: "bx bx-code-curly",
-                    handler: () => appContext.tabManager.openInNewTab(originalWidget._noteId, null, true)
-                }
-            ]}
-        >
-            <CustomWidgetContent originalWidget={originalWidget} />
-        </RightPanelWidget>
-    );
-}
-
-function CustomWidgetContent({ originalWidget }: { originalWidget: LegacyRightPanelWidget }) {
-    const { noteContext } = useActiveNoteContext();
-    const [ el ] = useLegacyWidget(() => {
-        originalWidget.contentSized();
-
-        // Monkey-patch the original widget by replacing the default initialization logic.
-        originalWidget.doRender = function doRender(this: LegacyRightPanelWidget) {
-            this.$widget = $("<div>");
-            this.$body = this.$widget;
-            const renderResult = this.doRenderBody();
-            if (typeof renderResult === "object" && "catch" in renderResult) {
-                this.initialized = renderResult.catch((e) => {
-                    this.logRenderingError(e);
-                });
-            } else {
-                this.initialized = Promise.resolve();
-            }
-        };
-
-        return originalWidget;
-    }, {
-        noteContext
-    });
-
-    return el;
-}

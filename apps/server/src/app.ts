@@ -14,7 +14,6 @@ import type serveStatic from "serve-static";
 import assets from "./routes/assets.js";
 import custom from "./routes/custom.js";
 import error_handlers from "./routes/error_handlers.js";
-import mcpRoutes from "./routes/mcp.js";
 import routes from "./routes/routes.js";
 import config from "./services/config.js";
 import { getLog } from "@triliumnext/core";
@@ -63,16 +62,7 @@ export default async function buildApp() {
     });
 
     if (!utils.isElectron) {
-        app.use(compression({
-            // Skip compression for SSE endpoints to enable real-time streaming
-            filter: (req, res) => {
-                // Skip compression for SSE-capable endpoints
-                if (req.path === "/api/llm-chat/stream" || req.path === "/mcp") {
-                    return false;
-                }
-                return compression.filter(req, res);
-            }
-        }));
+        app.use(compression());
     }
 
     let resourcePolicy = config["Network"]["corsResourcePolicy"] as 'same-origin' | 'same-site' | 'cross-origin' | undefined;
@@ -99,17 +89,12 @@ export default async function buildApp() {
     app.use(cookieParser());
 
     // Desktop only: gate web access (SPA/login, /share, /api, static assets) behind
-    // the network-access opt-in. Mounted before the static/app/share routes, and before
-    // MCP so that the gate's loopback-Host check applies there too — Express dispatches
-    // in registration order, so a route registered first would answer before this ever
-    // ran. The localhost integrations it exempts stay reachable on loopback while the
-    // web app does not, unless the user enables network access. No-op on the server build.
+    // the network-access opt-in. Mounted before the static/app/share routes, so the
+    // gate's loopback-Host check applies there too — Express dispatches in registration
+    // order, so a route registered first would answer before this ever ran. The
+    // localhost integrations it exempts stay reachable on loopback while the web app
+    // does not, unless the user enables network access. No-op on the server build.
     app.use(desktopNetworkAccessGate);
-
-    // MCP is registered before session/auth middleware — it authenticates with its own
-    // guard (an ETAPI token, always required) and never uses the Trilium session, which
-    // would make the endpoint CSRF-able.
-    mcpRoutes.register(app);
 
     app.use(express.static(path.join(publicDir, "root"), STATIC_OPTIONS));
     app.use(`/manifest.webmanifest`, express.static(path.join(publicAssetsDir, "manifest.webmanifest"), STATIC_OPTIONS));

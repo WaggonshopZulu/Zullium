@@ -432,21 +432,6 @@ describe("CodeMirror", () => {
         });
     });
 
-    describe("script api context", () => {
-        it("is safe to set before any MIME type is known", async () => {
-            editor = build();
-            await editor.setScriptApiContext({});
-            expect(editor.getText()).toBe("");
-        });
-
-        it("rebuilds the completion once a MIME type has been set", async () => {
-            editor = build();
-            await editor.setMimeType("text/plain");
-            await editor.setScriptApiContext({ customRequestHandler: true });
-            expect(editor.getText()).toBe("");
-        });
-    });
-
     describe("concurrent MIME changes", () => {
         it("keeps the language of the last request when an earlier one resolves late", async () => {
             // Each setMimeType bumps a token; a slow grammar load for a superseded MIME must not

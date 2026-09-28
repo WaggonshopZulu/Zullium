@@ -10,10 +10,8 @@ import byMimeType, { MIME_ALIASES } from "./syntax_highlighting.js";
 import smartIndentWithTab from "./extensions/custom_tab.js";
 import type { ThemeDefinition } from "./color_themes.js";
 import { createSearchHighlighter, SearchHighlighter, searchMatchHighlightTheme } from "./find_replace.js";
-import { buildTypeCompletion, type ScriptApiContext } from "./type_completion/index.js";
 
 export { default as ColorThemes, type ThemeDefinition, type ThemeVariant, getThemeById } from "./color_themes.js";
-export { isScriptMime, type ScriptApiContext, SCRIPT_MIME_BACKEND, SCRIPT_MIME_FRONTEND } from "./type_completion/index.js";
 export { triliumLogHighlighter } from "./extensions/trilium_log_highlighter.js";
 
 // Custom keymap to prevent Ctrl+Enter from inserting a newline
@@ -100,12 +98,8 @@ export default class CodeMirror extends EditorView {
     private namedCompartments = new Map<string, Compartment>();
     /** Named completion sources aggregated into the editor's single autocompletion. */
     private completionSources = new Map<string, CompletionSource>();
-    /** Monotonic token guarding against out-of-order async type-completion updates. */
-    private typeCompletionToken = 0;
-    /** Current MIME type, retained so the type completion can be rebuilt when only the api context changes. */
+    /** Current MIME type, retained for parity with earlier type-completion bookkeeping. */
     private currentMime: string | null = null;
-    /** Per-note context tuning the script `api` surface (e.g. custom-request-handler members). */
-    private scriptApiContext: ScriptApiContext = {};
 
     constructor(config: EditorConfig) {
         const languageCompartment = new Compartment();
@@ -418,38 +412,6 @@ export default class CodeMirror extends EditorView {
             effects: this.languageCompartment.reconfigure(newExtension)
         });
 
-        await this.#updateTypeCompletion(mime);
-    }
-
-    /**
-     * Updates the per-note script `api` context (e.g. whether the note is a custom
-     * request handler, which gates the `req`/`res`/`pathParams` members) and rebuilds
-     * the type completion in place. Safe to call before a MIME type is set — it takes
-     * effect on the next `setMimeType`.
-     */
-    async setScriptApiContext(context: ScriptApiContext) {
-        this.scriptApiContext = context;
-        if (this.currentMime !== null) {
-            await this.#updateTypeCompletion(this.currentMime);
-        }
-    }
-
-    /**
-     * Enables the TypeScript language service (full completion, hover docs and
-     * diagnostics) for backend/frontend script notes, and clears it otherwise.
-     * Guarded by a token so a slow async build for a previous MIME type can't
-     * overwrite a newer one.
-     */
-    async #updateTypeCompletion(mime: string) {
-        const token = ++this.typeCompletionToken;
-        const { extensions, source } = await buildTypeCompletion(mime, this.scriptApiContext);
-        if (token !== this.typeCompletionToken) {
-            return; // a newer setMimeType call superseded this one
-        }
-        this.dispatch({
-            effects: this.typeCompletionCompartment.reconfigure(extensions)
-        });
-        this.setCompletionSource("typescript", source);
     }
 
     /**

@@ -83,7 +83,6 @@ export type { CryptoProvider, ScryptOptions, Cipher } from "./services/encryptio
 export { default as note_types } from "./services/note_types";
 export { default as tree } from "./services/tree";
 export { default as cloning } from "./services/cloning";
-export { default as handlers } from "./services/handlers";
 export { default as TaskContext } from "./services/task_context";
 export { default as revisions } from "./services/revisions";
 export { default as erase } from "./services/erase";
@@ -128,7 +127,7 @@ export { type SearchParams } from "./services/search/services/types";
 export { checkImageAttachments, collectCanvasImageFileIds, default as note_service, findBookmarks, findLlmChatLinks, findMindMapLinks, saveLinks } from "./services/notes";
 export type { NoteParams } from "./services/notes";
 export * as sanitize from "./services/sanitizer";
-export { assertScriptingEnabled, assertSqlConsoleEnabled, isScriptingEnabled } from "./services/scripting_guard";
+export { assertSqlConsoleEnabled } from "./services/scripting_guard";
 export * as routes from "./routes";
 export { default as ws } from "./services/ws";
 export { default as request } from "./services/request";
@@ -174,8 +173,6 @@ export * as becca_mocking from "./test/becca_mocking";
 export { default as markdownImportService } from "./services/import/markdown";
 export { default as markdownExportService } from "./services/export/markdown";
 
-export { default as scriptService } from "./services/script";
-export { default as BackendScriptApi, type Api as BackendScriptApiInterface } from "./services/backend_script_api";
 export * as scheduler from "./services/scheduler";
 
 export async function initializeCore({ dbConfig, executionContext, crypto, zip, zipExportProviderFactory, translations, messaging, request, schema, extraAppInfo, platform, getDemoArchive, inAppHelp, log, backup, image, config, setupMarker, setupPlatform }: {

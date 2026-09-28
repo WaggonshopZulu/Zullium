@@ -248,24 +248,3 @@ describe("Unhandled type/mime combinations", () => {
         expect(preprocessContent("{}", "llmChat", "text/plain")).toEqual("{}");
     });
 });
-
-describe("LLM chat preprocessing", () => {
-    const type: NoteType = "llmChat";
-    const mime = "application/json";
-
-    it("supports empty / invalid JSON", () => {
-        expect(preprocessContent("{}", type, mime)).toEqual("");
-        expect(preprocessContent("", type, mime)).toEqual("");
-    });
-
-    it("reads conversation prose and skips metadata", () => {
-        const chat = JSON.stringify({
-            version: 1,
-            messages: [
-                { id: "1", role: "user", content: "What is a Branch?" },
-                { id: "2", role: "assistant", content: [ { type: "text", content: "A parent-child link." } ] }
-            ]
-        });
-        expect(preprocessContent(chat, type, mime)).toEqual("what is a branch? a parent-child link.");
-    });
-});

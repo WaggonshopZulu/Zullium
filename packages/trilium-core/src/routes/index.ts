@@ -15,7 +15,6 @@ import cloningApiRoute from "./api/cloning";
 import sqlRoute from "./api/sql";
 import attributesRoute from "./api/attributes";
 import revisionsApiRoute from "./api/revisions";
-import relationMapApiRoute from "./api/relation-map";
 import recentChangesApiRoute from "./api/recent_changes";
 import deletedNotesApiRoute from "./api/deleted_notes";
 import boardRoute from "./api/board";
@@ -30,7 +29,6 @@ import setupApiRoute from "./api/setup";
 import filesRoute from "./api/files";
 import importRoute from "./api/import";
 import exportRoute from "./api/export";
-import scriptRoute from "./api/script";
 import backendLogRoute from "./api/backend_log";
 import backupRoute from "./api/backup";
 import databaseInfoRoute from "./api/database_info";
@@ -40,7 +38,6 @@ import fontsRoute from "./api/fonts";
 import ocrRoute from "./api/ocr";
 import linkEmbedRoute from "./api/link_embed";
 import spreadsheetRoute from "./api/spreadsheet";
-import llmRoute from "./api/llm";
 
 export { type CustomRequestResponse, handleCustomRequest } from "./custom";
 
@@ -249,11 +246,6 @@ export function buildSharedApiRoutes({ route, asyncRoute, asyncRouteWithoutTrans
     apiRoute(GET, "/api/search/:searchString", searchRoute.search);
     apiRoute(GET, "/api/search-templates", searchRoute.searchTemplates);
 
-    // Streaming a chat is not here — it has no single form every runtime can serve.
-    // The server and the desktop app answer `/api/llm-chat/stream` with Server-Sent
-    // Events; standalone, whose bridge cannot hold a response open, registers
-    // `llmRoute.startChatStream` itself. See `apps/standalone`'s browser_routes.ts.
-    asyncApiRoute(PST, "/api/llm-chat/provider-models", llmRoute.getProviderModels);
 
     apiRoute(GET, "/api/autocomplete", autocompleteApiRoute.getAutocomplete);
 
@@ -327,7 +319,6 @@ export function buildSharedApiRoutes({ route, asyncRoute, asyncRouteWithoutTrans
     route(GET, "/api/fonts", [checkApiAuthOrElectron], fontsRoute.getFontCss);
 
     asyncApiRoute(GET, "/api/similar-notes/:noteId", similarNotesRoute.getSimilarNotes);
-    apiRoute(PST, "/api/relation-map", relationMapApiRoute.getRelationMap);
     apiRoute(GET, "/api/recent-changes/:ancestorNoteId", recentChangesApiRoute.getRecentChanges);
 
     apiRoute(GET, "/api/deleted-notes/:noteId/metadata", deletedNotesApiRoute.getDeletedNoteMetadata);
@@ -355,16 +346,6 @@ export function buildSharedApiRoutes({ route, asyncRoute, asyncRouteWithoutTrans
     // text is stored on the blob and syncs with it, so every client can show what was extracted.
     apiRoute(GET, "/api/ocr/notes/:noteId/text", ocrRoute.getNoteOCRText);
     apiRoute(GET, "/api/ocr/attachments/:attachmentId/text", ocrRoute.getAttachmentOCRText);
-    //#endregion
-
-    //#region Export
-    asyncRoute(PST, "/api/script/exec", [checkApiAuth, csrfMiddleware], scriptRoute.exec, apiResultHandler);
-
-    apiRoute(PST, "/api/script/run/:noteId", scriptRoute.run);
-    apiRoute(GET, "/api/script/startup", scriptRoute.getStartupBundles);
-    apiRoute(GET, "/api/script/widgets", scriptRoute.getWidgetBundles);
-    apiRoute(PST, "/api/script/bundle/:noteId", scriptRoute.getBundle);
-    apiRoute(GET, "/api/script/relation/:noteId/:relationName", scriptRoute.getRelationBundles);
     //#endregion
 
     //#region Password and protected session

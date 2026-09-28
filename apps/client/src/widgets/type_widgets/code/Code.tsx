@@ -104,7 +104,6 @@ export function EditableCode({ note, ntxId, noteContext, debounceUpdate, parentC
     const [ noteTabWidth ] = useNoteLabelInt(note, "tabWidth");
     const [ noteUseTabs ] = useNoteLabelOptionalBool(note, "indentWithTabs");
     const [ noteWrapLines ] = useNoteLabelOptionalBool(note, "wrapLines");
-    const [ customRequestHandler ] = useNoteLabel(note, "customRequestHandler");
     const mime = useNoteProperty(note, "mime");
     const spacedUpdate = useEditorSpacedUpdate({
         note,
@@ -157,7 +156,6 @@ export function EditableCode({ note, ntxId, noteContext, debounceUpdate, parentC
             ntxId={ntxId}
             editorRef={combinedEditorRef} containerRef={containerRef}
             mime={mime ?? "text/plain"}
-            customRequestHandler={customRequestHandler != null}
             className="note-detail-code-editor"
             placeholder={placeholder ?? t("editable_code.placeholder")}
             vimKeybindings={vimKeymapEnabled}

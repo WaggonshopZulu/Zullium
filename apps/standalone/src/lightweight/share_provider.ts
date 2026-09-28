@@ -36,10 +36,6 @@ export function registerShareProvider() {
             getColumn: (query, params = []) => getSql().getColumn(query, params)
         },
         readTemplate,
-        // A shared note's own EJS template runs arbitrary JavaScript in the renderer. The server
-        // gates that on backend scripting being enabled; this build has no such setting and no
-        // backend scripting, so a note's template is never executed.
-        isScriptingEnabled: () => false,
         // The share cache reads the same connection every other route does, so it is ready as soon
         // as the worker answers at all.
         isReady: () => true

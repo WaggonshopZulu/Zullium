@@ -4,7 +4,6 @@ import supertest from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { safeExtractMessageAndStackFromError } from "../services/utils.js";
-import config from "../services/config.js";
 
 let app: Application;
 
@@ -208,20 +207,17 @@ describe("Share API test", () => {
         expect(cannotSetHeadersCount).toBe(0);
     });
 
-    it("renders custom share template", async () => {
-        // Custom EJS templates require scripting to be enabled
-        const originalEnabled = config.Security.backendScriptingEnabled;
-        config.Security.backendScriptingEnabled = true;
-        try {
-            const response = await supertest(app)
-                .get("/share/pQvNLLoHcMwH")
-                .expect(200);
-            expect(cannotSetHeadersCount).toBe(0);
-            expect(response.text).toContain("Content Start");
-            expect(response.text).toContain("Content End");
-        } finally {
-            config.Security.backendScriptingEnabled = originalEnabled;
-        }
+    it("falls back to the default template for a note with a shareTemplate relation, since scripting has been removed", async () => {
+        // Custom EJS share templates ran through the (now-removed) backend scripting engine.
+        // A note still carrying a ~shareTemplate relation must degrade gracefully to the
+        // ordinary share rendering rather than erroring or leaking the template note's content.
+        const response = await supertest(app)
+            .get("/share/pQvNLLoHcMwH")
+            .expect(200);
+        expect(cannotSetHeadersCount).toBe(0);
+        expect(response.text).toContain("Shared that uses template");
+        expect(response.text).not.toContain("Content Start");
+        expect(response.text).not.toContain("Content End");
     });
 
     it("keeps the generated icon-pack stylesheet inside its style element", async () => {

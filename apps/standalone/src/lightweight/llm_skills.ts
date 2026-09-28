@@ -1,6 +1,4 @@
-import backendScripting from "@triliumnext/core/src/assets/llm/skills/backend_scripting.md?raw";
 import dashboards from "@triliumnext/core/src/assets/llm/skills/dashboards.md?raw";
-import frontendScripting from "@triliumnext/core/src/assets/llm/skills/frontend_scripting.md?raw";
 import searchSyntax from "@triliumnext/core/src/assets/llm/skills/search_syntax.md?raw";
 import { registerSkillReader } from "@triliumnext/core/src/services/llm/skills.js";
 
@@ -17,8 +15,6 @@ import { registerSkillReader } from "@triliumnext/core/src/services/llm/skills.j
  */
 const SKILL_SHEETS: Record<string, string> = {
     "search_syntax.md": searchSyntax,
-    "backend_scripting.md": backendScripting,
-    "frontend_scripting.md": frontendScripting,
     "dashboards.md": dashboards
 };
 

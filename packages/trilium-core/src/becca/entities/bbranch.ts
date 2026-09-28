@@ -3,7 +3,6 @@
 import type { BranchRow } from "@triliumnext/commons";
 
 import dateUtils from "../../services/utils/date";
-import handlers from "../../services/handlers.js";
 import { getLog } from "../../services/log.js";
 import TaskContext from "../../services/task_context.js";
 import AbstractBeccaEntity from "./abstract_becca_entity.js";
@@ -150,15 +149,6 @@ class BBranch extends AbstractBeccaEntity<BBranch> {
         taskContext.increaseProgressCount();
 
         const note = this.getNote();
-
-        if (!taskContext.noteDeletionHandlerTriggered) {
-            const parentBranches = note.getParentBranches();
-
-            if (parentBranches.length === 1 && parentBranches[0] === this) {
-                // needs to be run before branches and attributes are deleted and thus attached relations disappear
-                handlers.runAttachedRelations(note, "runOnNoteDeletion", note);
-            }
-        }
 
         if ((this.noteId === "root" || this.noteId === getHoistedNoteId()) && !this.isWeak) {
             throw new Error("Can't delete root or hoisted branch/note");

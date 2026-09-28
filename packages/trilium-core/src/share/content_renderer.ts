@@ -244,40 +244,6 @@ function renderNoteContentInternal(note: SNote | BNote, renderArgs: RenderArgs) 
         ...renderArgs,
     };
 
-    // Check if the user has their own template.
-    // Skip user-provided EJS templates when backend scripting is disabled since EJS can execute arbitrary JS.
-    if (note.hasRelation("shareTemplate") && getShareProvider().isScriptingEnabled()) {
-        // Get the template note and content
-        const templateId = note.getRelation("shareTemplate")?.value;
-        const templateNote = templateId && shaca.getNote(templateId);
-
-        // Make sure the note type is correct
-        if (templateNote && templateNote.type === "code" && templateNote.mime === "application/x-ejs") {
-            // EJS caches the result of this so we don't need to pre-cache
-            const includer = (path: string) => {
-                const childNote = templateNote.children.find((n) => path === n.title);
-                if (!childNote) throw new Error(`Unable to find child note: ${path}.`);
-                if (childNote.type !== "code" || childNote.mime !== "application/x-ejs") throw new Error("Incorrect child note type.");
-
-                const template = childNote.getContent();
-                if (typeof template !== "string") throw new Error("Invalid template content type.");
-
-                return { template };
-            };
-
-            // Try to render user's template, w/ fallback to default view
-            try {
-                const content = templateNote.getContent();
-                if (typeof content === "string") {
-                    return ejs.render(content, opts, { includer });
-                }
-            } catch (e: unknown) {
-                const [errMessage, errStack] = utils.safeExtractMessageAndStackFromError(e);
-                getLog().error(`Rendering user provided share template (${templateId}) threw exception ${errMessage} with stacktrace: ${errStack}`);
-            }
-        }
-    }
-
     // Render with the default view otherwise.
     return ejs.render(readShareTemplate("page"), opts, {
         includer: (path) => ({ template: readShareTemplate(path) })

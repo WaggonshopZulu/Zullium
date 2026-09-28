@@ -14,8 +14,6 @@ export interface ShareProvider {
     sql: ShareSql;
     /** Returns the share theme's EJS template of that name, such as `page` or `404`. */
     readTemplate(name: string): string;
-    /** Returns true when a shared note can bring its own EJS template, which runs arbitrary JavaScript. */
-    isScriptingEnabled(): boolean;
     /** Returns false while what {@link ShareProvider.sql} reads is still being opened. */
     isReady(): boolean;
 }

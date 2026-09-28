@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { type CoreConfig, getConfig, initConfig } from "./config.js";
 import {
-    assertScriptingEnabled,
-    assertSqlConsoleEnabled,
-    isScriptingEnabled
+    assertSqlConsoleEnabled
 } from "./scripting_guard.js";
 
 const original = getConfig();
@@ -24,20 +22,6 @@ function withSecurity(security: Partial<CoreConfig["Security"]>) {
 }
 
 describe("scripting_guard", () => {
-    it("assertScriptingEnabled passes when backend scripting is enabled", () => {
-        withSecurity({ backendScriptingEnabled: true });
-        expect(() => assertScriptingEnabled()).not.toThrow();
-        expect(isScriptingEnabled()).toBe(true);
-    });
-
-    it("assertScriptingEnabled throws when backend scripting is disabled", () => {
-        withSecurity({ backendScriptingEnabled: false });
-        expect(() => assertScriptingEnabled()).toThrow(
-            /Backend script execution is disabled/
-        );
-        expect(isScriptingEnabled()).toBe(false);
-    });
-
     it("assertSqlConsoleEnabled passes when the SQL console is enabled", () => {
         withSecurity({ sqlConsoleEnabled: true });
         expect(() => assertSqlConsoleEnabled()).not.toThrow();

@@ -452,6 +452,14 @@ export async function getExtendedWidgetType(note: FNote | null | undefined, note
         resultingType = "editableCode";
     } else if (type === "launcher") {
         resultingType = "doc";
+    } else if (type === "llmChat") {
+        // The AI chat note type was removed; any note left over from before shows as blank
+        // rather than crashing on a widget that no longer exists.
+        resultingType = "empty";
+    } else if (type === "relationMap") {
+        // The relation map note type was removed; any note left over from before shows as blank
+        // rather than crashing on a widget that no longer exists.
+        resultingType = "empty";
     } else {
         resultingType = type;
     }

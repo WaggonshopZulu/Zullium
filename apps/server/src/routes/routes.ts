@@ -21,7 +21,6 @@ import databaseRoute from "./api/database.js";
 import etapiTokensApiRoutes from "./api/etapi_tokens.js";
 import filesRoute from "./api/files.js";
 // API routes
-import llmChatRoute from "./api/llm_chat.js";
 import loginApiRoute from "./api/login.js";
 import metricsRoute from "./api/metrics.js";
 import ocrRoute from "./api/ocr.js";
@@ -156,8 +155,6 @@ function register(app: express.Application) {
 
     apiRoute(GET, "/api/database/check-integrity", databaseRoute.checkIntegrity);
 
-    // LLM chat endpoints
-    asyncRoute(PST, "/api/llm-chat/stream", [auth.checkApiAuthOrElectron, csrfMiddleware], llmChatRoute.streamChat, null);
 
     // no CSRF since this is called from android app
     asyncRoute(PST, "/api/sender/login", [loginRateLimiter], loginApiRoute.token, apiResultHandler);

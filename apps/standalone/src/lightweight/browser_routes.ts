@@ -4,8 +4,7 @@
  */
 
 import { BootstrapDefinition } from '@triliumnext/commons';
-import { checkIntegrity, consistency_checks, entity_changes, getContext, getPlatform, getSharedBootstrapItems, getSql, isScriptingEnabled, type Request, type Response, routes, sql_init } from '@triliumnext/core';
-import llmRoute from '@triliumnext/core/src/routes/api/llm.js';
+import { checkIntegrity, consistency_checks, entity_changes, getContext, getPlatform, getSharedBootstrapItems, getSql, type Request, type Response, routes, sql_init } from '@triliumnext/core';
 import type { ShareReply } from '@triliumnext/core/src/share/handlers.js';
 import { SHARE_ROUTE_PATHS, type ShareRoutePath } from '@triliumnext/core/src/share/route_paths.js';
 
@@ -332,15 +331,6 @@ export function registerRoutes(router: BrowserRouter): void {
     });
     apiRoute('get', '/bootstrap', bootstrapRoute);
 
-    // Streaming a chat, in the only form this runtime can serve it: the request
-    // starts the completion and returns, and the chunks arrive over the
-    // WebSocket-style channel (see core's routes/api/llm.ts). It is registered
-    // here rather than in the shared table because the server and the desktop app
-    // answer `/api/llm-chat/stream` with Server-Sent Events instead — they can
-    // hold a response open, and it delivers the chunks to the one client that
-    // asked rather than broadcasting them to every device signed in.
-    apiRoute('post', '/api/llm-chat/stream-start', llmRoute.startChatStream);
-    apiRoute('post', '/api/llm-chat/stream-abort', llmRoute.abortChatStream);
 
     // Keeping the database in order, which the server answers from its own routes (see the server's
     // `routes.ts`). Registered here rather than in the shared table because only two of the three
@@ -490,7 +480,7 @@ function registerCustomRoute(router: BrowserRouter) {
                 // Awaited because this runtime sends the response as soon as the handler is done,
                 // where Express holds the connection open past it. A script that answers after an
                 // `await` returns its promise, which has to settle before the body goes out.
-                await routes.handleCustomRequest(path, toCoreRequest(req), res, isScriptingEnabled);
+                await routes.handleCustomRequest(path, toCoreRequest(req), res);
 
                 if (!res._used) {
                     res.setHeader("Content-Type", "text/plain").status(500)

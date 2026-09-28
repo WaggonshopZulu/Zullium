@@ -10,7 +10,6 @@ import RenameLabelBulkAction from "../widgets/bulk_actions/label/rename_label.js
 import RenameRelationBulkAction from "../widgets/bulk_actions/relation/rename_relation.js";
 import UpdateLabelValueBulkAction from "../widgets/bulk_actions/label/update_label_value.js";
 import UpdateRelationTargetBulkAction from "../widgets/bulk_actions/relation/update_relation_target.js";
-import ExecuteScriptBulkAction from "../widgets/bulk_actions/execute_script.js";
 import AddLabelBulkAction from "../widgets/bulk_actions/label/add_label.js";
 import AddRelationBulkAction from "../widgets/bulk_actions/relation/add_relation.js";
 import RenameNoteBulkAction from "../widgets/bulk_actions/note/rename_note.js";
@@ -33,10 +32,6 @@ export const ACTION_GROUPS = [
         title: t("bulk_actions.notes"),
         actions: [RenameNoteBulkAction, MoveNoteBulkAction, ConvertNoteBulkAction, DeleteNoteBulkAction, SaveRevisionBulkAction, DeleteRevisionsBulkAction]
     },
-    {
-        title: t("bulk_actions.other"),
-        actions: [ExecuteScriptBulkAction]
-    }
 ];
 
 const ACTION_CLASSES = [
@@ -53,7 +48,6 @@ const ACTION_CLASSES = [
     AddRelationBulkAction,
     UpdateLabelValueBulkAction,
     UpdateRelationTargetBulkAction,
-    ExecuteScriptBulkAction,
     ConvertNoteBulkAction
 ];
 

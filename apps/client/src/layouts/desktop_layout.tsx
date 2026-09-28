@@ -1,5 +1,4 @@
 import type { AppContext } from "../components/app_context.js";
-import type { WidgetsByParent } from "../services/bundle.js";
 import { isExperimentalFeatureEnabled } from "../services/experimental_features.js";
 import options from "../services/options.js";
 import utils from "../services/utils.js";
@@ -54,12 +53,6 @@ import { applyModals } from "./layout_commons.js";
 
 export default class DesktopLayout {
 
-    private customWidgets: WidgetsByParent;
-
-    constructor(customWidgets: WidgetsByParent) {
-        this.customWidgets = customWidgets;
-    }
-
     getRootWidget(appContext: AppContext) {
         appContext.noteTreeWidget = new NoteTreeWidget();
 
@@ -103,7 +96,6 @@ export default class DesktopLayout {
                         new LeftPaneContainer()
                             .optChild(!launcherPaneIsHorizontal, new QuickSearchWidget())
                             .child(appContext.noteTreeWidget)
-                            .child(...this.customWidgets.get("left-pane"))
                     )
                     .child(
                         new FlexContainer("column")
@@ -164,19 +156,16 @@ export default class DesktopLayout {
                                                         )
                                                         .child(<ApiLog />)
                                                         .child(new FindWidget())
-                                                        .child(...this.customWidgets.get("note-detail-pane"))
                                                 )
                                             )
-                                            .child(...this.customWidgets.get("center-pane"))
 
                                     )
                                     .optChild(!isNewLayout,
                                         new RightPaneContainer()
                                             .child(new TocWidget())
                                             .child(new HighlightsListWidget())
-                                            .child(...this.customWidgets.get("right-pane"))
                                     )
-                                    .optChild(isNewLayout, <RightPanelContainer widgetsByParent={this.customWidgets} />)
+                                    .optChild(isNewLayout, <RightPanelContainer />)
                             )
                             .optChild(!launcherPaneIsHorizontal && isNewLayout, <StatusBar />)
                     )

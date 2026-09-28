@@ -6,8 +6,6 @@ import froca from "../../../services/froca";
 import link from "../../../services/link";
 import linkEmbedService, { type EmbedMetadata } from "../../../services/link_embed";
 import { useKeyboardShortcuts, useLegacyImperativeHandlers, useNoteContext, useSyncedRef, useTriliumOption, useTriliumOptionBool } from "../../react/hooks";
-import type { AiNoteLocation } from "./ai_assistant_stream";
-import { useAiMenuFooter, useAiQuickActions } from "./ai_quick_actions";
 import { buildConfig, BuildEditorOptions } from "./config";
 
 export type BoxSize = "small" | "medium" | "full" | "expandable";
@@ -96,29 +94,8 @@ export default function CKEditorWithWatchdog({ containerRef: externalContainerRe
     // the tag list, for the same by-value reason as `customReplacements` above.
     const [ htmlSupportEnabled ] = useTriliumOptionBool("textNoteHtmlSupportEnabled");
     const [ allowedHtmlTags ] = useTriliumOption("allowedHtmlTags");
-    // Whether the AI assistant is offered at all, which `buildConfig()` settles at creation time:
-    // it decides both the transport the command gates on and whether the toolbars carry the
-    // assistant's entries, neither of which a live editor can be told about afterwards. Switching
-    // the AI features off has to take the button away there and then, not at the next rebuild.
-    // The provider list is a rebuild trigger for the same reason — configuring the first one (or
-    // removing the last) is what makes the feature usable.
-    const [ aiEnabled ] = useTriliumOptionBool("aiEnabled");
-    const [ llmProviders ] = useTriliumOption("llmProviders");
-    // Deliberately *not* a rebuild trigger — pushed into the live editor by the effect below
-    // instead. The enabled content languages fill the assistant's Translate submenu, which now
-    // offers the row that edits them, so the change is made from inside the editor and several
-    // times over while the modal is open; the custom actions are notes, written and revised in the
-    // editor itself. A rebuild for either would cost the caret and the undo history of the note
-    // being written.
-    const quickActions = useAiQuickActions();
-    const menuFooter = useAiMenuFooter();
     const [ editor, setEditor ] = useState<CKTextEditor>();
     const { parentComponent, ntxId, note, notePath } = useNoteContext();
-    // Which note the assistant says a run is writing into. Kept in a ref for the same reason the
-    // snippets are: switching notes reuses the editor rather than rebuilding it, so a captured
-    // note would name whichever one happened to be open when the editor was built.
-    const noteLocationRef = useRef<AiNoteLocation | null>(null);
-    noteLocationRef.current = note ? { title: note.title, notePath } : null;
 
     useKeyboardShortcuts("text-detail", containerRef, parentComponent, ntxId);
 
@@ -283,8 +260,7 @@ export default function CKEditorWithWatchdog({ containerRef: externalContainerRe
                     isClassicEditor: !!isClassicEditor,
                     uiLanguage: uiLanguage as DISPLAYABLE_LOCALE_IDS,
                     contentLanguage: contentLanguage ?? null,
-                    templates: templatesRef.current,
-                    getNoteLocation: () => noteLocationRef.current
+                    templates: templatesRef.current
                 });
 
                 if (isStale) {
@@ -346,8 +322,7 @@ export default function CKEditorWithWatchdog({ containerRef: externalContainerRe
     }, [
         contentLanguage, uiLanguage, isClassicEditor, multilineToolbar, mathFieldEnabled,
         doubleQuoteStyle, singleQuoteStyle, punctuationReplacements, mathReplacements, symbolReplacements,
-        customReplacements, defaultContentLanguage, htmlSupportEnabled, allowedHtmlTags,
-        aiEnabled, llmProviders
+        customReplacements, defaultContentLanguage, htmlSupportEnabled, allowedHtmlTags
     ]);
 
     // Push snippet ("template") definitions into the live editor instead of rebuilding it. The premium
@@ -360,22 +335,6 @@ export default function CKEditorWithWatchdog({ containerRef: externalContainerRe
         }
     }, [ editor, templates ]);
 
-    // Likewise for the AI quick actions: enabling a content language or writing a `#aiQuickAction`
-    // note shows up in the menu without the note being edited losing its undo history.
-    useEffect(() => {
-        if (!editor) return;
-        if (editor.plugins.has("AiAssistantUI")) {
-            editor.plugins.get("AiAssistantUI").updateQuickActions(quickActions);
-        }
-    }, [ editor, quickActions ]);
-
-    // Likewise for the row naming the model a run speaks to, which restates itself once picked.
-    useEffect(() => {
-        if (!editor) return;
-        if (editor.plugins.has("AiAssistantUI")) {
-            editor.plugins.get("AiAssistantUI").updateMenuFooter(menuFooter);
-        }
-    }, [ editor, menuFooter ]);
 
 
     // React to notification warning callback.

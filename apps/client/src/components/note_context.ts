@@ -15,7 +15,6 @@ import utils from "../services/utils.js";
 import { ReactWrappedWidget } from "../widgets/basic_widget.js";
 import type { HighlightContext } from "../widgets/sidebar/HighlightsList.js";
 import type { HeadingContext } from "../widgets/sidebar/TableOfContents.js";
-import type { ChatHighlightsContext } from "../widgets/type_widgets/llm_chat/chat_highlights.js";
 import appContext, { type EventData, type EventListener } from "./app_context.js";
 import Component from "./component.js";
 
@@ -52,7 +51,6 @@ const READ_ONLY_CAPABLE_VIEW_TYPES: string[] = [
 export interface NoteContextDataMap {
     toc: HeadingContext;
     highlights: HighlightContext;
-    chatHighlights: ChatHighlightsContext;
     pdfPages: {
         totalPages: number;
         currentPage: number;

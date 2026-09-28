@@ -27,24 +27,6 @@ describe("scripting_guard", () => {
         vi.resetModules();
     });
 
-    describe("assertScriptingEnabled", () => {
-        it("should throw when scripting is disabled", async () => {
-            mockState.scriptingEnabled = false;
-
-            const { assertScriptingEnabled } = await import("./scripting_guard.js");
-            expect(() => assertScriptingEnabled()).toThrow(
-                /Backend script execution is disabled/
-            );
-        });
-
-        it("should not throw when scripting is enabled", async () => {
-            mockState.scriptingEnabled = true;
-
-            const { assertScriptingEnabled } = await import("./scripting_guard.js");
-            expect(() => assertScriptingEnabled()).not.toThrow();
-        });
-    });
-
     describe("assertSqlConsoleEnabled", () => {
         it("should throw when SQL console is disabled", async () => {
             mockState.sqlConsoleEnabled = false;
@@ -60,22 +42,6 @@ describe("scripting_guard", () => {
 
             const { assertSqlConsoleEnabled } = await import("./scripting_guard.js");
             expect(() => assertSqlConsoleEnabled()).not.toThrow();
-        });
-    });
-
-    describe("isScriptingEnabled", () => {
-        it("should return false when disabled", async () => {
-            mockState.scriptingEnabled = false;
-
-            const { isScriptingEnabled } = await import("./scripting_guard.js");
-            expect(isScriptingEnabled()).toBe(false);
-        });
-
-        it("should return true when enabled", async () => {
-            mockState.scriptingEnabled = true;
-
-            const { isScriptingEnabled } = await import("./scripting_guard.js");
-            expect(isScriptingEnabled()).toBe(true);
         });
     });
 });

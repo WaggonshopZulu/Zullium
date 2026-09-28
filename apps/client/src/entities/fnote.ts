@@ -1,6 +1,5 @@
 import { getNoteIcon, HighlightedTokenInfo } from "@triliumnext/commons";
 
-import bundleService from "../services/bundle.js";
 import cssClassManager from "../services/css_class_manager.js";
 import type { Froca } from "../services/froca-interface.js";
 import noteAttributeCache from "../services/note_attribute_cache.js";
@@ -1114,28 +1113,6 @@ export default class FNote {
         }
 
         return null;
-    }
-
-    /**
-     * Executes this {@link FNote} as a front-end or back-end script.
-     *
-     * @throws an {@link Error} if the note has an incorrect note type or MIME for execution.
-     * @returns a promise that resolves when the script has been run. Additionally, for front-end notes, the promise will contain the value that is returned by the script.
-     */
-    async executeScript() {
-        if (!(this.isJavaScript() || this.isJsx())) {
-            throw new Error(`Note ${this.noteId} is of type ${this.type} and mime ${this.mime} and thus cannot be executed`);
-        }
-
-        const env = this.getScriptEnv();
-
-        if (env === "frontend") {
-            return await bundleService.getAndExecuteBundle(this.noteId);
-        } else if (env === "backend") {
-            await server.post(`script/run/${this.noteId}`);
-        } else {
-            throw new Error(`Unrecognized env type ${env} for note ${this.noteId}`);
-        }
     }
 
     isShared() {

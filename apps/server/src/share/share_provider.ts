@@ -2,7 +2,6 @@ import { initShare } from "@triliumnext/core/src/share/index.js";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-import { isScriptingEnabled } from "../services/scripting_guard.js";
 import { getResourceDir } from "../services/utils.js";
 import sql, { isShareDbReady } from "./sql.js";
 
@@ -22,7 +21,6 @@ export function registerShareProvider() {
     initShare({
         sql,
         readTemplate,
-        isScriptingEnabled,
         isReady: isShareDbReady
     });
     registered = true;

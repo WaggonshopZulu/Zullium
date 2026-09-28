@@ -10,18 +10,10 @@ import optionService from "../../services/options.js";
 import protectedSessionService from "../../services/protected_session.js";
 import { getSql } from "../../services/sql/index.js";
 import date_utils from "../../services/utils/date.js";
-import Module from "module";
 
 import { encodeUtf8, unwrapStringOrBuffer } from "../../services/utils/binary.js";
 import { buildNote } from "../../test/becca_easy_mocking.js";
 import type BNote from "./bnote.js";
-
-// executeScript() does a lazy `require("../../services/script.js")` to avoid a
-// circular import. That bare-`.js` require is resolvable only in the bundled
-// production build (the source tree has script.ts, not script.js), so under
-// vitest the native CommonJS require throws. We intercept Module._load for that
-// exact specifier and hand back a stub exposing executeNote.
-const executeNoteMock = vi.fn();
 
 let counter = 0;
 
@@ -190,34 +182,6 @@ describe("BNote content / misc getters", () => {
 
             const plain = buildNote({ id: `env-none-${counter++}`, type: "text", mime: "text/plain" });
             expect(plain.getScriptEnv()).toBeNull();
-        });
-    });
-
-    describe("executeScript (lines 329-333)", () => {
-        it("delegates to scriptService.executeNote with this note as origin", () => {
-            const note = buildNote({ id: `exec-${counter++}`, type: "code", mime: "application/javascript;env=backend" });
-            executeNoteMock.mockReset();
-            executeNoteMock.mockReturnValue("result");
-
-            const moduleAny = Module as unknown as { _load: (...args: unknown[]) => unknown };
-            const originalLoad = moduleAny._load;
-            moduleAny._load = function (request: unknown, ...rest: unknown[]) {
-                if (request === "../../services/script.js") {
-                    return { default: { executeNote: (...args: unknown[]) => executeNoteMock(...args) } };
-                }
-                return originalLoad.call(this, request, ...rest);
-            };
-
-            try {
-                const result = note.executeScript();
-
-                expect(executeNoteMock).toHaveBeenCalledTimes(1);
-                expect(executeNoteMock.mock.calls[0]?.[0]).toBe(note);
-                expect(executeNoteMock.mock.calls[0]?.[1]).toEqual({ originEntity: note });
-                expect(result).toBe("result");
-            } finally {
-                moduleAny._load = originalLoad;
-            }
         });
     });
 

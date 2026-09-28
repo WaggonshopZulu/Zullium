@@ -1,50 +1,21 @@
 import { TypeWidgetProps } from "./type_widget";
 import { JSX } from "preact/jsx-runtime";
-import AppearanceSettings from "./options/appearance";
 import ShortcutSettings from "./options/shortcuts";
-import TextNoteSettings from "./options/text_notes";
-import CodeNoteSettings from "./options/code_notes";
-import ActiveContentSettings from "./options/active_content";
-import MediaSettings from "./options/media";
-import SpellcheckSettings from "./options/spellcheck";
-import PasswordSettings from "./options/password";
-import EtapiSettings from "./options/etapi";
 import BackupSettings from "./options/backup";
-import DatabaseSettings from "./options/database";
-import SyncOptions from "./options/sync";
-import DesktopSettings from "./options/desktop";
-import OtherSettings from "./options/other";
-import InternationalizationOptions from "./options/i18n";
-import AdvancedSettings from "./options/advanced";
-import SecuritySettings from "./options/security";
-import LlmSettings from "./options/llm";
 import "./ContentWidget.css";
 import { t } from "../../services/i18n";
 import BackendLog from "./code/BackendLog";
 import SpaceUsage from "./space_usage";
 
-export type OptionPages = "_optionsAppearance" | "_optionsShortcuts" | "_optionsTextNotes" | "_optionsCodeNotes" | "_optionsContentManager" | "_optionsMedia" | "_optionsSpellcheck" | "_optionsPassword" | "_optionsEtapi" | "_optionsBackup" | "_optionsDatabase" | "_optionsSync" | "_optionsDesktop" | "_optionsOther" | "_optionsLocalization" | "_optionsSecurity" | "_optionsAdvanced" | "_optionsLlm";
+// Every other settings page was cut for the guard build (see Phase 1 audit). Shortcuts and Backup
+// survive, but only reachable through the admin-mode entry point -- neither note ID below is a
+// child of the guard-facing "_options" tree any more (see hidden_subtree.ts).
+export type OptionPages = "_optionsShortcuts" | "_optionsBackup";
 
 /** The page behind each of these notes. Exported for the options search, which renders them all. */
 export const CONTENT_WIDGETS: Record<OptionPages | "_backendLog" | "_spaceUsage", (props: TypeWidgetProps) => JSX.Element> = {
-    _optionsAppearance: AppearanceSettings,
     _optionsShortcuts: ShortcutSettings,
-    _optionsTextNotes: TextNoteSettings,
-    _optionsCodeNotes: CodeNoteSettings,
-    _optionsContentManager: ActiveContentSettings,
-    _optionsMedia: MediaSettings,
-    _optionsSpellcheck: SpellcheckSettings,
-    _optionsPassword: PasswordSettings,
-    _optionsEtapi: EtapiSettings,
     _optionsBackup: BackupSettings,
-    _optionsDatabase: DatabaseSettings,
-    _optionsSync: SyncOptions,
-    _optionsDesktop: DesktopSettings,
-    _optionsOther: OtherSettings,
-    _optionsLocalization: InternationalizationOptions,
-    _optionsSecurity: SecuritySettings,
-    _optionsAdvanced: AdvancedSettings,
-    _optionsLlm: LlmSettings,
     _backendLog: BackendLog,
     _spaceUsage: SpaceUsage
 }

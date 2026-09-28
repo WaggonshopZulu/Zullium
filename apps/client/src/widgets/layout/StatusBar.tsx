@@ -22,13 +22,11 @@ import { BacklinksWidget, useBacklinkCount } from "../FloatingButtonsDefinitions
 import Dropdown, { DropdownProps } from "../react/Dropdown";
 import { FormDropdownDivider, FormListHeader, FormListItem } from "../react/FormList";
 import HelpDropdown from "../react/HelpDropdown";
-import { useActiveNoteContext, useLegacyImperativeHandlers, useNoteLabel, useNoteLabelInt, useNoteLabelOptionalBool, useNoteProperty, useStaticTooltip, useTriliumEvent, useTriliumEvents, useTriliumOptionBool, useTriliumOptionInt, useAttachments } from "../react/hooks";
+import { useActiveNoteContext, useNoteLabel, useNoteLabelInt, useNoteLabelOptionalBool, useNoteProperty, useStaticTooltip, useTriliumEvent, useTriliumEvents, useTriliumOptionBool, useTriliumOptionInt, useAttachments } from "../react/hooks";
 import Icon from "../react/Icon";
 import LinkButton from "../react/LinkButton";
 import { ParentComponent } from "../react/react_utils";
 import { ContentLanguagesModal, NoteTypeCodeNoteList, NoteTypeOptionsModal, useLanguageSwitcher, useMimeTypes } from "../ribbon/BasicPropertiesTab";
-import AttributeEditor, { AttributeEditorImperativeHandlers } from "../ribbon/components/AttributeEditor";
-import AttributeHelp from "../ribbon/components/AttributeHelp";
 import InheritedAttributesTab from "../ribbon/InheritedAttributesTab";
 import { NoteSizeWidget, useNoteMetadata } from "../ribbon/NoteInfoTab";
 import { NotePathsWidget, useSortedNotePaths } from "../ribbon/NotePathsTab";
@@ -408,16 +406,6 @@ function AttributesButton({ note, attributesShown, setAttributesShown }: Attribu
 
 function AttributesPane({ note, noteContext, attributesShown, setAttributesShown }: AttributesProps) {
     const parentComponent = useContext(ParentComponent);
-    const api = useRef<AttributeEditorImperativeHandlers>(null);
-
-    // The attribute editor pulls in CKEditor, so it is only mounted once the panel has been
-    // opened (and stays mounted afterwards so the imperative handlers keep working).
-    const [ editorMounted, setEditorMounted ] = useState(false);
-    useEffect(() => {
-        if (attributesShown) {
-            setEditorMounted(true);
-        }
-    }, [ attributesShown ]);
 
     const context = parentComponent && {
         componentId: parentComponent.componentId,
@@ -425,19 +413,7 @@ function AttributesPane({ note, noteContext, attributesShown, setAttributesShown
         hidden: !note
     };
 
-    // Show on keyboard shortcuts.
-    useTriliumEvents([ "addNewLabel", "addNewRelation" ], () => setAttributesShown(true));
     useTriliumEvents([ "toggleRibbonTabOwnedAttributes", "toggleRibbonTabInheritedAttributes" ], () => setAttributesShown(!attributesShown));
-
-    // Auto-focus the owned attributes.
-    useEffect(() => api.current?.focus(), [ attributesShown ]);
-
-    // Interaction with the attribute editor.
-    useLegacyImperativeHandlers(useMemo(() => ({
-        saveAttributesCommand: () => api.current?.save(),
-        reloadAttributesCommand: () => api.current?.refresh(),
-        updateAttributeListCommand: ({ attributes }) => api.current?.renderOwnedAttributes(attributes)
-    }), [ api ]));
 
     return (context &&
         <BottomPanel title={t("attributes_panel.title")}
@@ -449,19 +425,10 @@ function AttributesPane({ note, noteContext, attributesShown, setAttributesShown
                 tabId="attributes"
                 onOpened={() => setAttributesShown(false)}
             />}
-            helpPage={ATTRIBUTE_HELP_PAGE}
-            helpContent={<AttributeHelp />}>
+            helpPage={ATTRIBUTE_HELP_PAGE}>
 
             <span class="attributes-panel-label">{t("inherited_attribute_list.title")}</span>
             <InheritedAttributesTab {...context} emptyListString="inherited_attribute_list.none" />
-
-            {editorMounted && <AttributeEditor
-                {...context}
-                api={api}
-                ntxId={noteContext.ntxId}
-                // The panel's title bar already carries the same help.
-                hideHelpButton
-            />}
         </BottomPanel>
     );
 }

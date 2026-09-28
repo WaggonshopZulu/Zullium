@@ -1,7 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "preact/hooks";
 
 import FNote from "../../entities/fnote";
-import { isExperimentalFeatureEnabled } from "../../services/experimental_features";
 import froca from "../../services/froca";
 import { isDesktop, isMobile } from "../../services/utils";
 import TabSwitcher from "../mobile_widgets/TabSwitcher";
@@ -12,9 +11,8 @@ import CalendarWidget from "./CalendarWidget";
 import ColorSchemeSwitcher from "./ColorSchemeSwitcher";
 import HistoryNavigationButton from "./HistoryNavigation";
 import { LaunchBarContext } from "./launch_bar_widgets";
-import { CommandButton, CustomWidget, NoteLauncher, QuickSearchLauncherWidget, ScriptLauncher, TodayLauncher } from "./LauncherDefinitions";
+import { CommandButton, NoteLauncher, QuickSearchLauncherWidget, TodayLauncher } from "./LauncherDefinitions";
 import ProtectedSessionStatusWidget from "./ProtectedSessionStatusWidget";
-import SidebarChatButton from "./SidebarChatButton";
 import SpacerWidget from "./SpacerWidget";
 import SyncStatus from "./SyncStatus";
 
@@ -65,10 +63,6 @@ function Launcher({ note, isHorizontalLayout }: { note: FNote, isHorizontalLayou
             return <CommandButton launcherNote={note} />;
         case "note":
             return <NoteLauncher launcherNote={note} />;
-        case "script":
-            return <ScriptLauncher launcherNote={note} />;
-        case "customWidget":
-            return <CustomWidget launcherNote={note} />;
         case "builtinWidget":
             return initBuiltinWidget(note, isHorizontalLayout);
         default:
@@ -103,8 +97,6 @@ function initBuiltinWidget(note: FNote, isHorizontalLayout: boolean) {
             return <QuickSearchLauncherWidget launcherNote={note} />;
         case "mobileTabSwitcher":
             return <TabSwitcher launcherNote={note} />;
-        case "sidebarChat":
-            return isExperimentalFeatureEnabled("llm") ? <SidebarChatButton launcherNote={note} /> : undefined;
         case "colorSchemeSwitcher":
             return <ColorSchemeSwitcher launcherNote={note} />;
         default:

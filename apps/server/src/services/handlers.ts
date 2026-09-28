@@ -1,7 +1,6 @@
-import { events, getLog, handlers, options as optionService } from "@triliumnext/core";
+import { events, getLog, options as optionService } from "@triliumnext/core";
 
 import ocrService from "./ocr/ocr_service";
-export default handlers;
 
 export function registerOcrHandlers() {
     events.subscribe(events.ENTITY_CREATED, ({ entityName, entity }) => {

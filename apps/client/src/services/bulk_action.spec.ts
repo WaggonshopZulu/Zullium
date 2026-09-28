@@ -19,7 +19,6 @@ import ConvertNoteBulkAction from "../widgets/bulk_actions/note/convert_note";
 import DeleteNoteBulkAction from "../widgets/bulk_actions/note/delete_note";
 import SaveRevisionBulkAction from "../widgets/bulk_actions/note/save_revision";
 import DeleteRevisionsBulkAction from "../widgets/bulk_actions/note/delete_revisions";
-import ExecuteScriptBulkAction from "../widgets/bulk_actions/execute_script";
 import server from "./server.js";
 import ws from "./ws.js";
 import toast from "./toast.js";
@@ -55,8 +54,8 @@ describe("bulk_action service", () => {
 
     it("exposes the action metadata via the default export", () => {
         expect(bulkActionService.ACTION_CLASSES).toContain(AddLabelBulkAction);
-        // Four groups: labels, relations, notes, other.
-        expect(bulkActionService.ACTION_GROUPS).toHaveLength(4);
+        // Three groups: labels, relations, notes.
+        expect(bulkActionService.ACTION_GROUPS).toHaveLength(3);
         // Each group contains exactly its concrete action classes, in order.
         expect(bulkActionService.ACTION_GROUPS[0].actions).toEqual([
             AddLabelBulkAction,
@@ -78,8 +77,6 @@ describe("bulk_action service", () => {
             SaveRevisionBulkAction,
             DeleteRevisionsBulkAction
         ]);
-        // The "other" group contains exactly ExecuteScriptBulkAction.
-        expect(bulkActionService.ACTION_GROUPS[3].actions).toEqual([ExecuteScriptBulkAction]);
     });
 
     it("addAction posts an action attribute and waits for sync", async () => {

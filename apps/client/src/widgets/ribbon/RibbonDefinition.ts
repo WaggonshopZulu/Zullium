@@ -10,7 +10,6 @@ import NoteInfoTab from "./NoteInfoTab";
 import NoteMapTab from "./NoteMapTab";
 import NotePathsTab from "./NotePathsTab";
 import NotePropertiesTab from "./NotePropertiesTab";
-import OwnedAttributesTab from "./OwnedAttributesTab";
 import { TabConfiguration } from "./ribbon-interface";
 import ScriptTab from "./ScriptTab";
 import SearchDefinitionTab from "./SearchDefinitionTab";
@@ -32,7 +31,7 @@ export const RIBBON_TAB_DEFINITIONS: TabConfiguration[] = [
         content: ScriptTab,
         activate: true,
         show: ({ note }) => note &&
-            (note.isTriliumScript() || note.isTriliumSqlite()) &&
+            note.isTriliumSqlite() &&
             (note.hasLabel("executeDescription") || note.hasLabel("executeButton"))
     },
     {
@@ -78,14 +77,6 @@ export const RIBBON_TAB_DEFINITIONS: TabConfiguration[] = [
         content: BasicPropertiesTab,
         show: ({note}) => !note?.isLaunchBarConfig(),
         toggleCommand: "toggleRibbonTabBasicProperties"
-    },
-    {
-        title: t("owned_attribute_list.owned_attributes"),
-        icon: "bx bx-list-check",
-        content: OwnedAttributesTab,
-        show: ({note}) => !note?.isLaunchBarConfig(),
-        toggleCommand: "toggleRibbonTabOwnedAttributes",
-        stayInDom: true
     },
     {
         title: t("inherited_attribute_list.title"),

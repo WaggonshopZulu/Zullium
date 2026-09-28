@@ -96,7 +96,7 @@ export function NoteContextMenu({ note, noteContext, itemsAtStart, itemsNearNote
     const isElectron = getIsElectron();
     const isMac = getIsMac();
     const isMobile = getIsMobile();
-    const hasSource = ["text", "code", "relationMap", "mermaid", "canvas", "mindMap", "spreadsheet", "llmChat"].includes(noteType) || note.isSvg();
+    const hasSource = ["text", "code", "mermaid", "canvas", "mindMap", "spreadsheet", "llmChat"].includes(noteType) || note.isSvg();
     const isSearchOrBook = ["search", "book"].includes(noteType);
     const isBoard = noteType === "book" && viewType === "board";
     const isHelpPage = note.noteId.startsWith("_help");

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { WebSocketMessage } from "@triliumnext/commons";
-import { buildNote } from "../test/easy-froca";
 
 // Mutable spies the mocked dependencies delegate to, so we can assert on them
 // and swap behaviour per test without re-mocking.
@@ -13,7 +12,6 @@ const toast = vi.hoisted(() => ({
     closePersistent: vi.fn()
 }));
 const showUnhandledError = vi.hoisted(() => vi.fn());
-const bundle = vi.hoisted(() => ({ getAndExecuteBundle: vi.fn() }));
 const appCtx = vi.hoisted(() => ({ triggerEvent: vi.fn() }));
 const frocaUpdater = vi.hoisted(() => ({ processEntityChanges: vi.fn(async () => {}) }));
 const utilsCtrl = vi.hoisted(() => ({
@@ -23,7 +21,6 @@ const utilsCtrl = vi.hoisted(() => ({
 const optionsCtrl = vi.hoisted(() => ({ is: vi.fn(() => false) }));
 
 vi.mock("./toast.js", () => ({ default: toast, showUnhandledError }));
-vi.mock("./bundle.js", () => ({ default: bundle }));
 vi.mock("../components/app_context.js", () => ({ default: appCtx }));
 vi.mock("./froca_updater.js", () => ({ default: frocaUpdater }));
 vi.mock("./options.js", () => ({ default: optionsCtrl }));
@@ -101,32 +98,6 @@ describe("dispatchMessage", () => {
         expect(showUnhandledError).toHaveBeenCalledWith("Note 'abc' doesn't exist.", "at getNoteOrThrow");
     });
 
-    it("execute-script resolves the origin entity from froca when an id is present", async () => {
-        const ws = await loadWs();
-        const note = buildNote({ title: "Origin" });
-
-        await ws.dispatchMessage({
-            type: "execute-script",
-            originEntityId: note.noteId,
-            currentNoteId: "cur",
-            script: "return 1;",
-            params: [1, 2]
-        } as any);
-        expect(bundle.getAndExecuteBundle).toHaveBeenCalledWith("cur", note, "return 1;", [1, 2]);
-    });
-
-    it("execute-script passes a null origin entity when no id is provided", async () => {
-        const ws = await loadWs();
-
-        await ws.dispatchMessage({
-            type: "execute-script",
-            currentNoteId: "cur2",
-            script: "x",
-            params: []
-        } as any);
-        expect(bundle.getAndExecuteBundle).toHaveBeenCalledWith("cur2", null, "x", []);
-    });
-
     it("reloads when a ping reports the protected session expired on the backend", async () => {
         const ws = await loadWs();
         (window as any).glob.isProtectedSessionAvailable = true;
@@ -152,7 +123,6 @@ describe("dispatchMessage", () => {
         const ws = await loadWs();
         await ws.dispatchMessage({ type: "totally-unknown" } as any);
         expect(toast.showError).not.toHaveBeenCalled();
-        expect(bundle.getAndExecuteBundle).not.toHaveBeenCalled();
     });
 });
 
