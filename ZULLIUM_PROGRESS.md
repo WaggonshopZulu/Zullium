@@ -21,7 +21,7 @@ for a decision, not acting on it unasked.
 ## 13-item task list (TaskCreate/TaskUpdate tracked)
 1. Strip Settings/Options module — **DONE** (earlier session)
 2. Remove scripting engine, relation map, attribute editor — **DONE** (this session)
-3. Remove update-checker network call — NOT STARTED
+3. Remove update-checker network call — **DONE** (2026-09-28, uncommitted; see below)
 4. Build Shift Log / Reference sidebar navigation — NOT STARTED
 5. Scope the toolbar/ribbon — NOT STARTED
 6. Strip window chrome — NOT STARTED
@@ -117,7 +117,21 @@ pre-existing items below):**
 Both are real bugs worth fixing but are **out of Task 2's scope** — flagged for a
 dedicated cleanup pass, not touched this session.
 
+## Task #3 — update-checker removal (2026-09-28)
+Recovered from the VM disk into `C:\Zulliumecoveredepo`, committed as `cce19ec` on branch `zullium-work`
+(Tasks 1, 2, 13). Task 3 is on top of that, uncommitted.
+- The only automatic outbound call was the client-side `useTriliumUpdateStatus` hook in
+  `apps/client/src/widgets/buttons/global_menu.tsx` (GitHub releases API, every 8 h). Removed the hook,
+  `RELEASES_API_URL`, `parseLatestVersion`, the menu badge and the "download update" menu entry.
+- Deleted `global_menu.spec.tsx` (covered only that hook). Removed `isUpdateAvailable` from `services/utils.ts`
+  and its two tests; `compareVersions` kept. Removed the badge CSS from `global_menu.css`.
+- Left alone on purpose: the inert `checkForUpdates` option (no reader, settings UI already gone), the
+  `--global-menu-update-available-*` theme variables, translation keys, and the click-only releases link in
+  `dialogs/incorrect_cpu_arch.tsx` (no automatic request).
+- Verified: `pnpm typecheck` clean; `utils.spec.ts` 113/113. Dependencies installed with `pnpm install --frozen-lockfile`.
+- Environment: run pnpm 12.6.0 (`npm i -g pnpm`); `core.fileMode=false` set locally on this copy (NTFS lost exec bits).
+
 ## Recommended next step
-Task #3: Remove update-checker network call. Small/contained — good next task.
+Task #4: Shift Log / Reference sidebar navigation (or the 2 known pre-existing spec failures first).
 Tasks #9 (branding assets) and #10 (backup drive path) need one more concrete detail
 from Andrew before they can start (see task list above).

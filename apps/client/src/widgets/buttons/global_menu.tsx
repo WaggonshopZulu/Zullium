@@ -2,16 +2,16 @@ import "./global_menu.css";
 
 import { KeyboardActionNames } from "@triliumnext/commons";
 import { ComponentChildren, RefObject } from "preact";
-import { useContext, useEffect, useRef, useState } from "preact/hooks";
+import { useContext, useRef, useState } from "preact/hooks";
 
 import { CommandNames } from "../../components/app_context";
 import Component from "../../components/component";
 import { ExperimentalFeature, ExperimentalFeatureId, getAvailableExperimentalFeatures, isExperimentalFeatureEnabled, toggleExperimentalFeature } from "../../services/experimental_features";
 import { t } from "../../services/i18n";
-import utils, { isElectron, isMobile, isStandalone, reloadFrontendApp } from "../../services/utils";
+import { isElectron, isMobile, isStandalone, reloadFrontendApp } from "../../services/utils";
 import Dropdown from "../react/Dropdown";
 import { FormDropdownDivider, FormDropdownSubmenu, FormListHeader, FormListItem } from "../react/FormList";
-import { useStaticTooltip, useStaticTooltipWithKeyboardShortcut, useTriliumOption, useTriliumOptionBool } from "../react/hooks";
+import { useStaticTooltip, useStaticTooltipWithKeyboardShortcut, useTriliumOption } from "../react/hooks";
 import KeyboardShortcut from "../react/KeyboardShortcut";
 import { ParentComponent } from "../react/react_utils";
 
@@ -28,7 +28,6 @@ interface MenuItemProps<T> {
 export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout: boolean }) {
     const isVerticalLayout = !isHorizontalLayout;
     const parentComponent = useContext(ParentComponent);
-    const { isUpdateAvailable, latestVersion } = useTriliumUpdateStatus();
     const logoRef = useRef<SVGSVGElement>(null);
     useStaticTooltip(logoRef);
 
@@ -38,9 +37,6 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
             buttonClassName={`global-menu-button ${isHorizontalLayout ? "bx bx-menu" : ""}`} noSelectButtonStyle iconAction hideToggleArrow
             text={<>
                 {isVerticalLayout && <VerticalLayoutIcon logoRef={logoRef} />}
-                {isUpdateAvailable && <div class="global-menu-button-update-available">
-                    <span className="bx bxs-down-arrow-alt global-menu-button-update-available-button" title={t("update_available.update_available")} />
-                </div>}
             </>}
             noDropdownListStyle
             mobileBackdrop
@@ -71,13 +67,6 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
             <KeyboardActionMenuItem command="showHelp" icon="bx bx-help-circle" text={t("global_menu.show_help")} />
             <KeyboardActionMenuItem command="showCheatsheet" icon="bx bxs-keyboard" text={t("global_menu.show-cheatsheet")} />
             <MenuItem command="openAboutDialog" icon="bx bx-info-circle" text={t("global_menu.about")} />
-
-            {isUpdateAvailable &&  <>
-                <FormListHeader text={t("global_menu.new-version-available")} />
-                <MenuItem command={() => window.open("https://github.com/TriliumNext/Trilium/releases/latest")}
-                    icon="bx bx-download"
-                    text={t("global_menu.download-update", {latestVersion})} />
-            </>}
 
             {!isElectron() && !isStandalone && <BrowserOnlyOptions />}
             {glob.isDev && <DevelopmentOptions dropStart={!isVerticalLayout} />}
@@ -248,66 +237,4 @@ function ToggleWindowOnTop() {
             }}
         />
     );
-}
-
-/** GitHub's "latest release" endpoint, which already excludes drafts and pre-releases. */
-export const RELEASES_API_URL = "https://api.github.com/repos/TriliumNext/Trilium/releases/latest";
-
-/** How often to re-check for a newer release, in milliseconds. */
-export const UPDATE_CHECK_INTERVAL = 8 * 60 * 60 * 1000;
-
-/**
- * Watches GitHub for a release newer than the version this client is running, so the menu can show
- * the update badge and a download link.
- *
- * Standalone is left out: it is served from the web and picks up new versions on reload, so there is
- * no release for the user to go and download. Every other client — desktop and server alike — is
- * updated by hand and wants the hint.
- */
-export function useTriliumUpdateStatus() {
-    const [ latestVersion, setLatestVersion ] = useState<string>();
-    const [ checkForUpdates ] = useTriliumOptionBool("checkForUpdates");
-    const isUpdateAvailable = utils.isUpdateAvailable(latestVersion, window.glob.triliumVersion);
-
-    useEffect(() => {
-        if (!checkForUpdates || isStandalone) {
-            setLatestVersion(undefined);
-            return;
-        }
-
-        // A request still in flight when the option is switched off (or the menu unmounts) must not
-        // resurrect the version afterwards, so ignore whatever it resolves to.
-        let cancelled = false;
-
-        async function updateVersionStatus() {
-            let latestVersion: string | undefined;
-            try {
-                const resp = await fetch(RELEASES_API_URL);
-                const data = await resp.json();
-                latestVersion = parseLatestVersion(data);
-            } catch (e) {
-                console.warn("Unable to fetch latest version info from GitHub releases API", e);
-            }
-
-            if (!cancelled) {
-                setLatestVersion(latestVersion);
-            }
-        }
-
-        void updateVersionStatus();
-
-        const interval = setInterval(() => void updateVersionStatus(), UPDATE_CHECK_INTERVAL);
-        return () => {
-            cancelled = true;
-            clearInterval(interval);
-        };
-    }, [ checkForUpdates ]);
-
-    return { isUpdateAvailable, latestVersion };
-}
-
-/** Reads the version off a GitHub release payload, stripping the tag prefix (`v0.104.1` → `0.104.1`). */
-export function parseLatestVersion(payload: unknown): string | undefined {
-    const tagName = (payload as { tag_name?: unknown } | null | undefined)?.tag_name;
-    return typeof tagName === "string" ? tagName.replace(/^v/, "") : undefined;
 }

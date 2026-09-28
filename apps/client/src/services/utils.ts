@@ -813,16 +813,6 @@ function compareVersions(v1: string, v2: string): number {
     return 0;
 }
 
-/**
- * Compares two semantic version strings and returns `true` if the latest version is greater than the current version.
- */
-export function isUpdateAvailable(latestVersion: string | null | undefined, currentVersion: string): boolean {
-    if (!latestVersion) {
-        return false;
-    }
-    return compareVersions(latestVersion, currentVersion) > 0;
-}
-
 export function isLaunchBarConfig(noteId: string) {
     return ["_lbRoot", "_lbAvailableLaunchers", "_lbVisibleLaunchers", "_lbMobileRoot", "_lbMobileAvailableLaunchers", "_lbMobileVisibleLaunchers"].includes(noteId);
 }
@@ -1001,6 +991,5 @@ export default {
     downloadSvgAsPng,
     triggerDownload,
     compareVersions,
-    isUpdateAvailable,
     isLaunchBarConfig
 };

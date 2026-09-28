@@ -9,9 +9,6 @@
 }
 
 button.global-menu-button {
-    --update-badge-x-offset: 4%;
-    --update-badge-y-offset: -16%;
-
     position: relative;
     width: 100% !important;
     height: 100% !important;
@@ -56,28 +53,6 @@ button.global-menu-button {
 .global-menu-button:is(:hover, .show) svg path.st7 { fill:#E99547; transition-delay: 450ms; }
 .global-menu-button:is(:hover, .show) svg path.st8 { fill:#E47B19; transition-delay: 500ms; }
 
-.global-menu-button-update-available {
-    position: absolute;
-    display: flex;
-    width: 16px;
-    height: 16px;
-    right: calc(0px - var(--update-badge-x-offset));
-    bottom: calc(0px - var(--update-badge-y-offset));
-    justify-content: center;
-    align-items: center;
-    border-radius: 50%;
-    background: var(--global-menu-update-available-badge-background-color, var(--admonition-tip-accent-color));
-    color: var(--global-menu-update-available-badge-color, var(--main-background-color));
-    font-size: 16px;
-    transition: transform 200ms ease-in-out;
-    pointer-events: none;
-}
-
-.global-menu-button.show .global-menu-button-update-available {
-    transform: scale(.75);
-    transform-origin: center;
-}
-
 .global-menu .zoom-container {
     display: flex;
     flex-direction: row;
@@ -106,9 +81,5 @@ button.global-menu-button {
 .global-menu .zoom-state {
     margin-inline-start: 5px;
     margin-inline-end: 5px;
-}
-
-.global-menu-button-wrapper:hover .global-menu-button-update-available-button {
-    opacity: 1;
 }
 /* #endregion */

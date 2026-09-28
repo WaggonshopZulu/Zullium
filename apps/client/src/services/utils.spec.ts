@@ -22,7 +22,6 @@ import utils, {
     isMobileApp,
     isPreAuthScreen,
     isPWA,
-    isUpdateAvailable,
     mapToKeyValueArray,
     numberObjectsInPlace,
     openInAppHelpFromUrl,
@@ -807,16 +806,6 @@ describe("version comparison", () => {
         expect(utils.compareVersions("1", "1.0.1")).toBe(-1);
         // Pad the second (right) version too.
         expect(utils.compareVersions("1.0.1", "1")).toBe(1);
-    });
-
-    it("isUpdateAvailable returns false for missing latest version", () => {
-        expect(isUpdateAvailable(null, "1.0.0")).toBe(false);
-        expect(isUpdateAvailable(undefined, "1.0.0")).toBe(false);
-    });
-
-    it("isUpdateAvailable compares the two versions", () => {
-        expect(isUpdateAvailable("1.1.0", "1.0.0")).toBe(true);
-        expect(isUpdateAvailable("1.0.0", "1.0.0")).toBe(false);
     });
 });
 
