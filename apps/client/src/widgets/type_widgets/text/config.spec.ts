@@ -591,6 +591,19 @@ describe("CK config - mention feed", () => {
     });
 });
 
+describe("CK config - fonts and colors", () => {
+    it("configures the family and size lists and the two OneNote palettes, without document colors", async () => {
+        const config = await buildConfig(baseOpts()) as Record<string, any>;
+
+        expect(config.fontFamily.options[0]).toBe("default");
+        expect(config.fontSize.options).toContain(11);
+        expect(config.fontColor.colors).toHaveLength(10);
+        expect(config.fontColor.documentColors).toBe(0);
+        expect(config.fontBackgroundColor.colors).toHaveLength(16);
+        expect(config.fontBackgroundColor.columns).toBe(8);
+    });
+});
+
 describe("CK config - AI assistant", () => {
     it("is not offered, even with the feature switched on and a provider stored", async () => {
         optionsState.map["aiEnabled"] = "true";

@@ -1,13 +1,10 @@
 import "./Ribbon.css";
 
-import { KeyboardActionNames } from "@triliumnext/commons";
 import clsx from "clsx";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 
-import { EventNames } from "../../components/app_context";
 import { Indexed, numberObjectsInPlace } from "../../services/utils";
-import { useNoteContext, useNoteProperty, useStaticTooltipWithKeyboardShortcut, useTriliumEvents } from "../react/hooks";
-import NoteActions from "./NoteActions";
+import { useNoteContext, useNoteProperty } from "../react/hooks";
 import { shouldShowTab, TabConfiguration, TitleContext } from "./ribbon-interface";
 import { RIBBON_TAB_DEFINITIONS } from "./RibbonDefinition";
 
@@ -50,48 +47,12 @@ export default function Ribbon() {
         setActiveTabIndex(tabToActivate?.index);
     }, [ computedTabs, note?.noteId ]);
 
-    // Register keyboard shortcuts.
-    const eventsToListenTo = useMemo(() => TAB_CONFIGURATION.filter(config => config.toggleCommand).map(config => config.toggleCommand) as EventNames[], []);
-    useTriliumEvents(eventsToListenTo, useCallback((e, toggleCommand) => {
-        if (!computedTabs) return;
-        const correspondingTab = computedTabs.find(tab => tab.toggleCommand === toggleCommand);
-        if (correspondingTab?.shouldShow) {
-            if (activeTabIndex !== correspondingTab.index) {
-                setActiveTabIndex(correspondingTab.index);
-            } else {
-                setActiveTabIndex(undefined);
-            }
-        }
-    }, [ computedTabs, activeTabIndex ]));
-
     const shouldShowRibbon = (noteContext?.viewScope?.viewMode === "default" && !noteContext.noteId?.startsWith("_options"));
     return (
         <div
             className={clsx("ribbon-container", !shouldShowRibbon && "hidden-ext")}
             style={{ contain: "none" }}
         >
-            <div className="ribbon-top-row">
-                <div className="ribbon-tab-container">
-                    {computedTabs && computedTabs.map(({ title, icon, index, toggleCommand, shouldShow }) => (
-                        shouldShow && <RibbonTab
-                            icon={icon}
-                            title={typeof title === "string" ? title : title(titleContext)}
-                            active={index === activeTabIndex}
-                            toggleCommand={toggleCommand}
-                            onClick={() => {
-                                if (activeTabIndex !== index) {
-                                    setActiveTabIndex(index);
-                                } else {
-                                    // Collapse
-                                    setActiveTabIndex(undefined);
-                                }
-                            }}
-                        />
-                    ))}
-                </div>
-                <NoteActions />
-            </div>
-
             <div className="ribbon-body-container">
                 {computedTabs && computedTabs.map(tab => {
                     const isActive = tab.index === activeTabIndex;
@@ -120,28 +81,5 @@ export default function Ribbon() {
                 })}
             </div>
         </div>
-    );
-}
-
-function RibbonTab({ icon, title, active, onClick, toggleCommand }: { icon: string; title: string; active: boolean, onClick: () => void, toggleCommand?: KeyboardActionNames }) {
-    const iconRef = useRef<HTMLDivElement>(null);
-    useStaticTooltipWithKeyboardShortcut(iconRef, title, toggleCommand);
-
-    return (
-        <>
-            <div
-                className={`ribbon-tab-title ${active ? "active" : ""}`}
-                onClick={onClick}
-            >
-                <span
-                    ref={iconRef}
-                    className={`ribbon-tab-title-icon tn-icon ${icon}`}
-                />
-                &nbsp;
-                { active && <span class="ribbon-tab-title-label">{title}</span> }
-            </div>
-
-            <div class="ribbon-tab-spacer" />
-        </>
     );
 }

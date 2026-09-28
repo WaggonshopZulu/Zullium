@@ -17,6 +17,7 @@ import { resolveContentLanguage } from "../../../utils/formatters.js";
 import SAMPLE_DIAGRAMS from "../mermaid/sample_diagrams.js";
 import { buildQuoteTransformation, resolveQuoteSetting } from "./quotes.js";
 import { buildCustomTransformations, parseCustomReplacements } from "./replacements.js";
+import { FONT_COLOR_COLUMNS, FONT_COLORS, FONT_FAMILIES, FONT_SIZES, HIGHLIGHT_COLORS, HIGHLIGHT_COLUMNS } from "./guard_palette.js";
 import { buildToolbarConfig } from "./toolbar.js";
 
 /**
@@ -191,6 +192,10 @@ export async function buildConfig(opts: BuildEditorOptions): Promise<EditorConfi
             definitions: opts.templates
         },
         htmlSupport: buildHtmlSupportConfig(),
+        fontFamily: { options: FONT_FAMILIES, supportAllValues: false },
+        fontSize: { options: FONT_SIZES, supportAllValues: false },
+        fontColor: { colors: FONT_COLORS, columns: FONT_COLOR_COLUMNS, documentColors: 0 },
+        fontBackgroundColor: { colors: HIGHLIGHT_COLORS, columns: HIGHLIGHT_COLUMNS, documentColors: 0 },
         removePlugins: getDisabledPlugins(),
         // The locale's CKEditor translations, plus the dictionary of Trilium-authored editor
         // strings resolved through the app's i18n (see `messages.ts` in the ckeditor5 package).
@@ -306,7 +311,7 @@ export async function buildConfig(opts: BuildEditorOptions): Promise<EditorConfi
 
     return {
         ...config,
-        ...buildToolbarConfig(opts.isClassicEditor, false)
+        ...buildToolbarConfig()
     };
 }
 

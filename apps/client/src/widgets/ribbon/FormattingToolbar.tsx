@@ -5,8 +5,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 
 import NoteContext from "../../components/note_context";
 import FNote from "../../entities/fnote";
-import options from "../../services/options";
-import { useActiveNoteContext, useNoteProperty, useTriliumEvent, useTriliumEvents, useTriliumOption } from "../react/hooks";
+import { useActiveNoteContext, useNoteProperty, useTriliumEvent, useTriliumEvents } from "../react/hooks";
 import { TabConfiguration, TabContext } from "./ribbon-interface";
 
 /**
@@ -21,8 +20,6 @@ import { TabConfiguration, TabContext } from "./ribbon-interface";
  */
 export default function FormattingToolbar({ hidden, ntxId }: TabContext) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [ textNoteEditorType ] = useTriliumOption("textNoteEditorType");
-
     // Attach the toolbar from the CKEditor.
     useTriliumEvent("textEditorRefreshed", ({ ntxId: eventNtxId, editor }) => {
         if (eventNtxId !== ntxId || !containerRef.current) return;
@@ -35,7 +32,7 @@ export default function FormattingToolbar({ hidden, ntxId }: TabContext) {
         }
     });
 
-    return (textNoteEditorType === "ckeditor-classic" &&
+    return (
         <div
             ref={containerRef}
             className={`classic-toolbar-widget ${hidden ? "hidden-ext" : ""}`}
@@ -46,7 +43,6 @@ export default function FormattingToolbar({ hidden, ntxId }: TabContext) {
 /** Visibility predicate for the formatting toolbar, shared by the ribbon tab definition and the standalone usages (e.g. the popup editor). */
 export const showFormattingToolbar: TabConfiguration["show"] = async ({ note, noteContext }) =>
     note?.type === "text" && noteContext?.viewScope?.viewMode === "default"
-    && options.get("textNoteEditorType") === "ckeditor-classic"
     && !(await noteContext?.isReadOnly());
 
 const toolbarCache = new Map<string, HTMLElement | null | undefined>();
@@ -121,22 +117,21 @@ export function FixedFormattingToolbar() {
 }
 
 function useRenderState(activeNoteContext: NoteContext | undefined, activeNote: FNote | null | undefined) {
-    const [ textNoteEditorType ] = useTriliumOption("textNoteEditorType");
     const [ state, setState ] = useState("hidden");
 
     useTriliumEvents([ "newNoteContextCreated", "noteContextRemoved", "readOnlyTemporarilyDisabled", "noteTypeMimeChanged" ], () => {
-        getFormattingToolbarState(activeNoteContext, activeNote, textNoteEditorType).then(setState);
+        getFormattingToolbarState(activeNoteContext, activeNote).then(setState);
     });
 
     useEffect(() => {
-        getFormattingToolbarState(activeNoteContext, activeNote, textNoteEditorType).then(setState);
-    }, [ activeNoteContext, activeNote, textNoteEditorType ]);
+        getFormattingToolbarState(activeNoteContext, activeNote).then(setState);
+    }, [ activeNoteContext, activeNote ]);
 
     return state;
 }
 
-export async function getFormattingToolbarState(activeNoteContext: NoteContext | undefined, activeNote: FNote | null | undefined, textNoteEditorType: string) {
-    if (!activeNoteContext || textNoteEditorType !== "ckeditor-classic") {
+export async function getFormattingToolbarState(activeNoteContext: NoteContext | undefined, activeNote: FNote | null | undefined) {
+    if (!activeNoteContext) {
         return "hidden";
     }
 

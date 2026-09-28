@@ -63,16 +63,12 @@ describe("Formatting toolbar logic", () => {
         return noteContexts[activeIndex];
     }
 
-    async function testSplit(noteContextInfos: NoteContextInfo[], activeIndex: number = 0, editor = "ckeditor-classic") {
+    async function testSplit(noteContextInfos: NoteContextInfo[], activeIndex: number = 0) {
         const noteContext = await buildConfig(noteContextInfos, activeIndex);
-        return await getFormattingToolbarState(noteContext, noteContext.note, editor);
+        return await getFormattingToolbarState(noteContext, noteContext.note);
     }
 
     describe("Single split", () => {
-        it("should be hidden for floating toolbar", async () => {
-            expect(await testSplit([ { type: "text" } ], 0, "ckeditor-balloon")).toBe("hidden");
-        });
-
         it("should be visible for single text note", async () => {
             expect(await testSplit([ { type: "text" } ])).toBe("visible");
         });
@@ -91,13 +87,6 @@ describe("Formatting toolbar logic", () => {
     });
 
     describe("Multi split", () => {
-        it("should be hidden for floating toolbar", async () => {
-            expect(await testSplit([
-                { type: "text" },
-                { type: "text" },
-            ], 0, "ckeditor-balloon")).toBe("hidden");
-        });
-
         it("should be visible for two text notes", async () => {
             expect(await testSplit([
                 { type: "text" },

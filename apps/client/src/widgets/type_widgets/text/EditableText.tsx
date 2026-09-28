@@ -44,13 +44,10 @@ export default function EditableText({ note, parentComponent, ntxId, noteContext
     /** The open icon picker request and its balloon container, or `null` when none is open. */
     const [ iconPickerRequest, setIconPickerRequest ] = useState<IconPickerOpts & { container: HTMLElement } | null>(null);
     const [ language ] = useNoteLabel(note, "language");
-    const [ textNoteEditorType ] = useTriliumOption("textNoteEditorType");
     const [ codeBlockWordWrap ] = useTriliumOptionBool("codeBlockWordWrap");
     const [ codeBlockTabWidth ] = useTriliumOption("codeBlockTabWidth");
     const isClassicEditor = usesClassicToolbar({
-        floatingToolbarRequested: noteContext?.viewScope?.floatingToolbar,
-        isMobile: isMobile(),
-        textNoteEditorType
+        floatingToolbarRequested: noteContext?.viewScope?.floatingToolbar
     });
     const initialized = useRef(deferred<void>());
     const spacedUpdate = useEditorSpacedUpdate({

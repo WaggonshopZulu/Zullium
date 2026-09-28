@@ -23,7 +23,7 @@ for a decision, not acting on it unasked.
 2. Remove scripting engine, relation map, attribute editor — **DONE** (this session)
 3. Remove update-checker network call — **DONE** (2026-09-28, uncommitted; see below)
 4. Build Shift Log / Reference sidebar navigation — **DONE** (2026-09-28, uncommitted; see below)
-5. Scope the toolbar/ribbon — NOT STARTED
+5. Scope the toolbar/ribbon — **DONE** (2026-09-28; see below)
 6. Strip window chrome — NOT STARTED
 7. Lock down launch bar — NOT STARTED
 8. Build admin-gated entry point (Option C) — NOT STARTED
@@ -165,7 +165,50 @@ year > month > day nesting.
   pattern that does not lead with the number would need `#sorted=dateNote` on each level, which the day-note service
   does not set); Shift Log / Reference remain renamable; standalone still imports the demo notes.
 
+## Task #5 — toolbar and ribbon scope (2026-09-28)
+Phase 2 blueprint scope: bold, italic, underline; highlight color; font family and size; font color; search; image insert.
+- `type_widgets/text/toolbar.ts` rewritten: one item list (`TOOLBAR_ITEMS`) shared by the classic and floating bars, no
+  block toolbar, no groups, nothing grouped behind an overflow button. `usesClassicToolbar` is now "classic unless a
+  narrow view (the geo map pane) asks for the floating one"; the `textNoteEditorType` option and mobile branch are no
+  longer read. The AI-assistant parameter is gone with the feature.
+- `type_widgets/text/guard_palette.ts` (new): OneNote's 16 highlight colors (Yellow is the approved `#fde047`), its 10
+  standard font colors, 9 font families all present on Windows, 13 sizes. `config.ts` sets `fontFamily`, `fontSize`,
+  `fontColor` and `fontBackgroundColor` from it, with `documentColors: 0`. The custom color picker and "remove color"
+  button are CKEditor's defaults and stay.
+- Ribbon: `RibbonDefinition.ts` now holds only the formatting bar and the saved-search parameters panel. The tab strip and
+  the note-actions menu are gone from `Ribbon.tsx`, and the formatting bar has no toggle command that could collapse it.
+  Deleted `NoteMapTab`, `NotePropertiesTab`, `ScriptTab` (unreferenced). The other tab components remain because the
+  experimental new-layout surfaces (status bar, note badges, inline title) still import them; that layout is reachable
+  only from the dev-mode menu.
+- Tests: `toolbar.spec.ts` rewritten, `RibbonDefinition.spec.ts` new, a fonts-and-colors case in `config.spec.ts`.
+- **Search, decided 2026-09-28 by the user:** toolbar search finds within the current note; sidebar search is across all
+  notes with a selectable date range. Built:
+  - `packages/ckeditor5/src/plugins/guard_toolbar.ts` (new, `TriliumGuardToolbar`, registered in `plugins.ts`): a
+    `findInNote` toolbar button ("Find in note", opens the existing find bar through `findInText`), and a text label
+    beside every toolbar button (`withText`), with "Highlight" and "Font color" for the two color dropdowns.
+  - `quick_search.ts`: "Entry dates" From / To date inputs and "Clear dates" under the search field; the search button
+    now reads "Search" beside its icon. The range filters on the `#dateNote` label of Shift Log day notes
+    (`#dateNote >= "…" #dateNote <= "…"`, either end optional, reversed range swapped), combines with typed words,
+    and carries into "Show in full search". Reference pages have no entry date, so a range excludes them; leave the
+    dates empty to search everything. New English strings under `quick-search.*`.
+  - Tests: `guard_toolbar.spec.ts` (real Chromium; installed with `pnpm exec playwright install chromium`),
+    `date_range_search.spec.ts` (real search over day notes), new cases in `quick_search.spec.ts`.
+- **Fixed on the way:** the ribbon's formatting bar only rendered when the `textNoteEditorType` option equalled
+  `ckeditor-classic` (a fresh database has that; a database missing it falls back to `ckeditor-balloon` and would show no
+  toolbar). `FormattingToolbar.tsx` no longer reads the option; its spec no longer has the balloon cases.
+- **Attachments, decided 2026-09-28 by the user: images and files.** `attachFile` ("Attach file", paper clip) in
+  `guard_toolbar.ts` opens the system file picker (`FileDialogButtonView`, multiple files) and runs the existing
+  `fileUpload` command, the same path a dropped or pasted file takes. `imageUpload` stays for pictures.
+- **NEW STANDING REQUIREMENT (user, 2026-09-28): every icon needs a visible text label** (the user is neurodivergent and
+  cannot read pictograms). See memory `icons-need-text-labels`. Done so far: editor toolbar, sidebar search button and
+  date fields. Still icon-only, to be handled in Tasks 6 and 7: the launch bar (53 px column, needs widening or a
+  horizontal layout), the global menu button, tree header buttons (collapse, scroll to active, tree settings), the tab
+  row buttons, the title-row split-pane buttons, and every other `ActionButton` (about 40 uses; it is the shared
+  icon-only button, and its `text` prop is only a tooltip today, so one change there can surface it as a label).
+- **Left for later tasks:** keyboard shortcuts and typing shortcuts still work (Ctrl+K link, `# ` heading, `1. ` list,
+  Ctrl+Z); the split-pane buttons in the note title row; the note context menu in the tree.
+
 ## Recommended next step
-Task #5: scope the toolbar/ribbon (Phase 2: bold/italic/underline, highlight, font colour, font family + size, search, image insert).
+Task #6: strip window chrome (native menu bar, branded title bar, no dev tools / Inspect).
 Tasks #9 (branding assets) and #10 (backup drive path) need one more concrete detail
 from Andrew before they can start (see task list above).

@@ -23,6 +23,7 @@ import IncludeNote from "./plugins/includenote.js";
 import InlineIcon from "./plugins/inline_icon/inline_icon.js";
 import LinkEmbed from "./plugins/link_embed/link_embed.js";
 import Uploadfileplugin from "./plugins/file_upload/uploadfileplugin.js";
+import GuardToolbar from "./plugins/guard_toolbar.js";
 import FindInLinkWidgets from "./plugins/find_in_link_widgets.js";
 import SyntaxHighlighting from "./plugins/syntax_highlighting/index.js";
 import Kbd from "./plugins/keyboard_marker/keyboard_marker.js";
@@ -75,6 +76,7 @@ const TRILIUM_PLUGINS: typeof Plugin[] = [
     InlineIcon,
     LinkEmbed,
     Uploadfileplugin,
+    GuardToolbar,
     SyntaxHighlighting,
     CodeBlockLanguageDropdown,
     CodeBlockToolbar,
