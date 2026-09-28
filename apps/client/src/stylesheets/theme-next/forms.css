@@ -129,7 +129,6 @@ button.tn-low-profile:hover {
  * Icon buttons
  */
 
-:root .icon-action:not(.global-menu-button),
 :root .tn-tool-button,
 :root .btn-group .tn-tool-button:not(:last-child),
 :root .btn-group .tn-tool-button:last-child {
@@ -140,6 +139,25 @@ button.tn-low-profile:hover {
     padding: 0;
     text-align: center;
     color: var(--icon-button-color);
+}
+
+/* icon-action carries a visible text label beside its icon by default (see ActionButton.tsx), so
+   unlike tn-tool-button above it sizes to its content rather than to a fixed icon-sized square — the
+   icon itself (::before, below) keeps the same fixed size either way. `action-button-icon-only`
+   (ActionButton's `hideLabel`) is the one case that stays the old fixed square, for the rare spot a
+   label genuinely does not fit. */
+:root .icon-action:not(.global-menu-button) {
+    height: var(--icon-button-size);
+    border: unset !important;
+    border-radius: 8px;
+    padding-inline: 8px;
+    text-align: center;
+    color: var(--icon-button-color);
+}
+
+:root .icon-action.action-button-icon-only:not(.global-menu-button) {
+    width: var(--icon-button-size);
+    padding-inline: 0;
 }
 
 .btn-group .tn-tool-button + .tn-tool-button {

@@ -346,29 +346,66 @@ Task 6 deleted) and `_lbSidebarChat` (`builtinWidget: "sidebarChat"`, never a ca
 `initBuiltinWidget` switch — orphaned since Task 13 removed AI Chat) both pointed at nothing. Marked
 `enforceDeleted: true`, matching the existing `_lbLlmChat` pattern. `hidden_subtree_launcherbar.spec.ts` updated.
 
-**Icon labels — tree header done, the rest needs a decision (see the question in chat).** Labelled the tree's three
-floating buttons (Collapse, Scroll to active note, Tree settings) — `note_tree.ts`'s `.tree-actions` bar had room to
-grow, so this was a straightforward CSS change (flex `gap` instead of fixed `inset-inline-end` offsets per button,
-plus a text `<span>` next to each icon). **Not done, and each needs its own decision, not a silent default:**
-- The vertical launcher rail is a hard **53px** width, shared by the global menu button and every launch-bar icon —
-  they are literally the same design decision (same rail), not separable as originally planned.
-- Most other icon-only buttons across the app (title-row split-pane buttons, and roughly 40 more call sites) go
-  through the shared `ActionButton` component, whose `text` prop is currently tooltip-only. Fixing `ActionButton`
-  itself would touch all ~40 at once, but they sit in visibly different contexts (tab row, dropdown rows, toolbars,
-  dialogs) with no single width headroom to check — a blanket change risks breaking layouts I have not individually
-  reviewed. The tab row in particular (many small per-tab buttons in a repeating scrollable row) is a case where a
-  full visible-text label per instance may not even be the right shape of fix (a browser's own tab-close buttons face
-  the same problem) — worth the user's steer specifically, not just a width increase.
-
 **Also confirmed, no work needed:** the "should the default *visible* launcher set itself be curated for guards"
 question flagged after reading `hidden_subtree_launcherbar.ts` (Settings gear aside — above) mostly resolves itself:
 `_commandPalette` and `_lbBackendLog` are in `desktopAvailableLaunchers`, not the visible set, and with "Configure
 Launch Bar" now unreachable, a guard has no way to move them into the visible bar at all.
 
+## Icon labels — the full pass (2026-09-28, decided by the user: "widen the rail and give everything labels")
+
+**Tree header:** labelled the tree's three floating buttons (Collapse, Scroll to active note, Tree settings) —
+`note_tree.ts`'s `.tree-actions` bar had room to grow, so this was a straightforward CSS change (flex `gap` instead
+of fixed `inset-inline-end` offsets per button, plus a text `<span>` next to each icon).
+
+**`ActionButton` (`widgets/react/ActionButton.tsx`), the shared component behind roughly 40 call sites across the
+app, now shows its `text` as a visible label by default**, not only as a hover tooltip. A button with a visible
+label and no keyboard shortcut now carries no tooltip at all (nothing left for one to add); a button that does have
+a shortcut still gets one, carrying just the shortcut hint rather than repeating the label. New `hideLabel` prop
+keeps the old icon-only square + full tooltip + `aria-label` behaviour, documented as being for "a repeating
+micro-control inside something already tight for room" — not a general opt-out. CSS: `.icon-action` (style.css,
+theme-next/forms.css) is now `auto`-width with a flex row and a gap instead of a fixed icon-sized square;
+`.action-button-label` resets off the icon's own (often much larger) font-size; `.action-button-icon-only` keeps the
+old fixed square for `hideLabel` buttons. `.tn-tool-button` (the overlay controls that float over a map/diagram
+canvas, and the calendar widget's own internal buttons) is a **separate, untouched class** — genuinely different,
+space-constrained context, left alone rather than forced through the same treatment.
+
+**The vertical launch bar rail is widened from 58px to 190px** (`--launcher-pane-vert-size`,
+`theme-next/base.css`), with a new, separate `--launcher-pane-vert-button-height` (40px) token — a button's height
+no longer equals the rail's width, so widening the rail doesn't turn every button into an oversized square. Vertical
+buttons are now a left-aligned icon+label row (`theme-next/shell.css`) instead of a centred icon in a square; icon
+size trimmed from 150% to 120% now that a label sits beside it. The global menu button gets the same treatment: a
+"Menu" label added next to its SVG crest for the vertical layout. Most of the default visible bar (New Note, Search,
+Jump To, Recent Changes, Today, Deleted Notes) already routed through `ActionButton`/`LaunchBarActionButton`, so
+picked up labels for free; `LaunchBarDropdownButton` (Bookmarks, Calendar) needed one small fix — it already
+received a `title` string for its tooltip, now also rendered as a visible label. `SyncStatus` is unaffected: it only
+renders once a sync server is configured, which this build's single-workstation design never does.
+
+**Not covered in this pass, flagged rather than silently swept in or ignored:**
+- **Horizontal launch bar layout** (an alternate orientation, off by default, reachable via the launch bar's own
+  right-click "Launch bar orientation"): still forces the old fixed-square button sizing, so a label may overflow
+  the button if someone switches to it. Not broken-crashing, just not redesigned to match — needs the same kind of
+  work the vertical rail got, if this orientation matters in practice.
+- **The tab row's own close/pin buttons** (`tab_row.ts`): hand-rolled markup, not routed through `ActionButton`, so
+  untouched by this pass either way. Still the one place raised as a genuine trade-off (a full text label repeated
+  down a scrolling strip of many open tabs) rather than a simple width fix — worth a specific look before deciding.
+- **`.tn-tool-button`** (map/diagram overlay controls, the calendar widget's internal day/month buttons): a second,
+  smaller set of icon-only controls outside `ActionButton` entirely. Not swept in.
+- A full sweep for any *other* hand-rolled (non-`ActionButton`) icon-only button elsewhere in the app has not been
+  done — only what surfaced while working through the launch bar and tree.
+
+**Verification:** typecheck clean throughout. New/updated tests: `ActionButton.spec.tsx` and
+`ActionButton.mobile.spec.tsx` (label-by-default, `hideLabel`, tooltip-carries-shortcut-only, touch-device
+behaviour), `launch_bar_widgets.spec.tsx` (new, `LaunchBarDropdownButton`'s label). Full suites after everything in
+this Task 7 entry: client 406/5464, server 367/5162 (48 pre-existing skips), standalone 261/4220 (32 pre-existing
+skips) — all clean. (One server failure seen mid-session, `setup_marker.spec.ts`, was a stale `document.db` file
+left on disk by an earlier interrupted run on this machine — not a code issue; cleared by deleting the stray file,
+confirmed on a clean rerun.) **Not verified: the actual rendered layout** — CSS and structure only, no live/visual
+check. The user should look at the built app once and say if anything reads wrong.
+
 ## Recommended next step
-Two things need the user's input before continuing (see the question in chat): the launch bar's icon-label width
-decision, and what to do about `_lbSettings`. Once answered, Task #8 (admin-gated entry point) is next — it also
-completes the "TODO(Task 8)" items above (Advanced menu, Options) by giving them a real gate instead of an
+`_lbSettings` (the flagged still-clickable Settings launcher icon in the default visible bar) is still open — see
+above. Otherwise Task #8 (admin-gated entry point) is next — it also completes the "TODO(Task 8)" items above
+(Advanced menu, Options) by giving them a real gate instead of an
 unconditional disable.
 Task #9 (branding assets) has the user's placement picks (see task list above) but still needs: whether the four JPGs
 are used anywhere, and whether the crest goes in the About box (moot if the About dialog itself is cut per the Task 6

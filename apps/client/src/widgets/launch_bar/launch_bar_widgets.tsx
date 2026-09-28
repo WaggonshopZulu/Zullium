@@ -47,7 +47,7 @@ export function LaunchBarActionButton({ className, launcherNote, onContextMenu, 
     );
 }
 
-export function LaunchBarDropdownButton({ children, icon, dropdownOptions, launcherNote, buttonProps, ...props }: Pick<DropdownProps, "title" | "children" | "onShown" | "dropdownOptions" | "dropdownRef" | "buttonProps"> & { icon: string, launcherNote?: FNote }) {
+export function LaunchBarDropdownButton({ children, icon, title, dropdownOptions, launcherNote, buttonProps, ...props }: Pick<DropdownProps, "title" | "children" | "onShown" | "dropdownOptions" | "dropdownRef" | "buttonProps"> & { icon: string, launcherNote?: FNote }) {
     const { isHorizontalLayout } = useContext(LaunchBarContext);
     const titlePosition = getTitlePosition(isHorizontalLayout);
 
@@ -60,7 +60,11 @@ export function LaunchBarDropdownButton({ children, icon, dropdownOptions, launc
             className="right-dropdown-widget"
             buttonClassName="right-dropdown-button launcher-button"
             hideToggleArrow
-            text={<Icon icon={icon} />}
+            text={<>
+                <Icon icon={icon} />
+                {typeof title === "string" && <span class="action-button-label">{title}</span>}
+            </>}
+            title={title}
             titlePosition={titlePosition}
             titleOptions={DROPDOWN_TITLE_OPTIONS}
             dropdownOptions={{

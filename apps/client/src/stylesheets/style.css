@@ -344,15 +344,36 @@ button.custom-title-bar-button {
 }
 
 .icon-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     border: 1px solid transparent;
-    padding: 5px;
-    width: 37px;
+    padding: 5px 10px;
+    width: auto;
     height: 35px;
     cursor: pointer;
     font-size: 1.5em;
     color: var(--button-text-color);
     background: var(--button-background-color);
     border-radius: var(--button-border-radius);
+}
+
+/* Every icon button carries its name in words next to the icon, not as a hover-only tooltip — see
+   ActionButton.tsx. Reset off the icon's own (often much larger) font-size, which this would
+   otherwise inherit. */
+.action-button-label {
+    font-size: 13px;
+    font-weight: normal;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* The rare button that keeps its name in the tooltip alone (ActionButton's hideLabel) stays the
+   icon-only square it always was. */
+.action-button-icon-only {
+    width: 37px;
+    padding: 5px;
+    justify-content: center;
 }
 
 .icon-action-always-border {

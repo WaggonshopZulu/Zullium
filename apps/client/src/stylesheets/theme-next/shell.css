@@ -270,11 +270,22 @@ body.layout-horizontal > .horizontal {
     }
 }
 
-#launcher-pane .launcher-button,
-#launcher-pane .right-dropdown-widget,
-#launcher-pane .global-menu {
+#launcher-pane.horizontal .launcher-button,
+#launcher-pane.horizontal .right-dropdown-widget,
+#launcher-pane.horizontal .global-menu {
     width: calc(var(--launcher-pane-size) - (var(--launcher-pane-button-margin) * 2)) !important;
     height: calc(var(--launcher-pane-size) - (var(--launcher-pane-button-margin) * 2)) !important;
+    margin: var(--launcher-pane-button-gap) var(--launcher-pane-button-margin);
+}
+
+/* Vertical: a button no longer sizes itself off the rail's own width — it fills the rail width and
+   stands a fixed, compact height, so a wide rail doesn't turn every button into an oversized square.
+   See --launcher-pane-vert-size / --launcher-pane-vert-button-height in base.css. */
+#launcher-pane.vertical .launcher-button,
+#launcher-pane.vertical .right-dropdown-widget,
+#launcher-pane.vertical .global-menu {
+    width: calc(var(--launcher-pane-size) - (var(--launcher-pane-button-margin) * 2)) !important;
+    height: var(--launcher-pane-vert-button-height) !important;
     margin: var(--launcher-pane-button-gap) var(--launcher-pane-button-margin);
 }
 
@@ -315,6 +326,18 @@ body.layout-horizontal > .horizontal {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* Vertical: icon and label sit side by side, left-aligned in the now-wide rail, instead of a
+   centered icon alone in a square. Beats the rule above on specificity (class + ancestor id vs.
+   tag + class) regardless of source order. */
+#launcher-pane.vertical .launcher-button,
+#launcher-pane.vertical .global-menu button {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    padding-inline-start: 10px;
 }
 
 #launcher-pane .launcher-button {

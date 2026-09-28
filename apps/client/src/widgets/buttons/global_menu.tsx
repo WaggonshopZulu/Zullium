@@ -37,6 +37,7 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
             buttonClassName={`global-menu-button ${isHorizontalLayout ? "bx bx-menu" : ""}`} noSelectButtonStyle iconAction hideToggleArrow
             text={<>
                 {isVerticalLayout && <VerticalLayoutIcon logoRef={logoRef} />}
+                {isVerticalLayout && <span class="action-button-label">{t("global_menu.menu")}</span>}
             </>}
             noDropdownListStyle
             mobileBackdrop

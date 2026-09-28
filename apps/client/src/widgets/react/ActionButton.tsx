@@ -29,21 +29,36 @@ export interface ActionButtonProps extends Pick<HTMLAttributes<HTMLButtonElement
     frame?: boolean;
     active?: boolean;
     disabled?: boolean;
+    /**
+     * Suppresses the visible text label this button shows by default (`text` still becomes its
+     * tooltip and its accessible name). For the rare spot where `text` cannot be shown as a label at
+     * all — a repeating micro-control inside something already tight for room, e.g. one tab's own
+     * close button repeated down a scrolling tab row — not for "it would take more work to fit". The
+     * team member reading this button needs a word, same as everywhere else; only use this where a
+     * word genuinely does not fit.
+     */
+    hideLabel?: boolean;
 }
 
 const cachedIsMobile = isMobile();
 
-export default function ActionButton({ text, icon, className, triggerCommand, titlePosition, tooltipClass, tooltipHtml, noIconActionClass, noTooltipOnTouch, frame, active, disabled, ...restProps }: ActionButtonProps) {
+export default function ActionButton({ text, icon, className, triggerCommand, titlePosition, tooltipClass, tooltipHtml, noIconActionClass, noTooltipOnTouch, frame, active, disabled, hideLabel, ...restProps }: ActionButtonProps) {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [ keyboardShortcut, setKeyboardShortcut ] = useState<string[]>();
 
-    const title = keyboardShortcut?.length
-        ? `${text} (${keyboardShortcut.map((shortcut) => joinShortcut(formatShortcut(shortcut))).join(", ")})`
-        : text;
-    const titleRef = useRef(title);
-    titleRef.current = title;
+    const shortcutHint = keyboardShortcut?.length
+        ? `(${keyboardShortcut.map((shortcut) => joinShortcut(formatShortcut(shortcut))).join(", ")})`
+        : undefined;
     const declined = !!noTooltipOnTouch && cachedIsMobile;
-    const hasTitle = !!title && title.length > 0 && !declined;
+    // A button with a visible label already has its name on screen, so its tooltip only needs to add
+    // the keyboard shortcut, and nothing when there is none — the full "label (shortcut)" tooltip is
+    // for hideLabel buttons alone, which have no other way to say their name.
+    const tooltipText = hideLabel
+        ? (shortcutHint ? `${text} ${shortcutHint}` : text)
+        : shortcutHint;
+    const titleRef = useRef(tooltipText);
+    titleRef.current = tooltipText;
+    const hasTitle = !!tooltipText && !declined;
 
     // The tooltip is recreated only when its structural options (or its presence) change — not when
     // the label text changes. A plain text change is pushed into the live tooltip via setContent
@@ -63,9 +78,9 @@ export default function ActionButton({ text, icon, className, triggerCommand, ti
 
     useEffect(() => {
         if (buttonRef.current) {
-            Tooltip.getInstance(buttonRef.current)?.setContent({ ".tooltip-inner": title ?? "" });
+            Tooltip.getInstance(buttonRef.current)?.setContent({ ".tooltip-inner": tooltipText ?? "" });
         }
-    }, [title]);
+    }, [tooltipText]);
 
     useEffect(() => {
         if (triggerCommand) {
@@ -80,12 +95,16 @@ export default function ActionButton({ text, icon, className, triggerCommand, ti
         // inside a <form>, pressing Enter could activate it instead of submitting
         // (e.g. the error-dismiss button stealing the login form's Enter).
         type="button"
-        class={`${className ?? ""} ${!noIconActionClass ? "icon-action" : "btn"} ${icon} ${frame ? "btn btn-primary" : ""} ${disabled ? "disabled" : ""} ${active ? "active" : ""}`}
+        class={`${className ?? ""} action-button ${hideLabel ? "action-button-icon-only" : ""} ${!noIconActionClass ? "icon-action" : "btn"} ${icon} ${frame ? "btn btn-primary" : ""} ${disabled ? "disabled" : ""} ${active ? "active" : ""}`}
         data-trigger-command={triggerCommand}
-        // Only where the tooltip that would otherwise carry it has been declined: elsewhere the
-        // tooltip is the button's name, and a second one here would be read out beside it.
-        aria-label={declined ? title : undefined}
+        // Only where the tooltip that would otherwise carry it has been declined, or where there is
+        // no visible label to give the button its accessible name: elsewhere the label (or, failing
+        // that, the tooltip) already is the button's name, and a second one here would be read out
+        // beside it.
+        aria-label={(declined || hideLabel) ? text : undefined}
         disabled={disabled}
         {...restProps}
-    />;
+    >
+        {!hideLabel && <span class="action-button-label">{text}</span>}
+    </button>;
 }

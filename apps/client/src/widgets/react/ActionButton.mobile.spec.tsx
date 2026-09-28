@@ -38,13 +38,26 @@ describe("ActionButton on a touch screen", () => {
         expect(button?.getAttribute("aria-label")).toBe("Back");
     });
 
-    it("keeps the tooltip, and leaves the name to it, for a button that did not ask", async () => {
+    it("carries no tooltip for an ordinary labeled button with nothing left for one to add", async () => {
         await act(async () => render(
             <ActionButton icon="bx bx-refresh" text="Measure again" />, container));
 
         const button = container.querySelector("button");
 
-        expect(button && Tooltip.getInstance(button)).not.toBeNull();
+        // The visible label already names the button; with no keyboard shortcut, a tooltip would
+        // have nothing to say that is not already on screen.
+        expect(button?.textContent).toBe("Measure again");
+        expect(button && Tooltip.getInstance(button)).toBeNull();
         expect(button?.getAttribute("aria-label")).toBeNull();
+    });
+
+    it("keeps the tooltip, on a tap, for an icon-only button that did not ask to decline it", async () => {
+        await act(async () => render(
+            <ActionButton icon="bx bx-refresh" text="Measure again" hideLabel />, container));
+
+        const button = container.querySelector("button");
+
+        expect(button && Tooltip.getInstance(button)).not.toBeNull();
+        expect(button?.getAttribute("aria-label")).toBe("Measure again");
     });
 });
