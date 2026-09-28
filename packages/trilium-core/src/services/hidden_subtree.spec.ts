@@ -17,21 +17,25 @@ import noteService from "./notes.js";
 
 /**
  * Re-create a deprecated hidden-subtree note under its declared parent so the
- * enforceDeleted branch in checkHiddenSubtree has something to delete. Both
- * deprecated entries live directly under "_options" in the definition.
+ * enforceDeleted branch in checkHiddenSubtree has something to delete. The one
+ * remaining enforceDeleted entry is the withdrawn AI Chat launcher, `_lbLlmChat`,
+ * which sits directly under "_lbRoot" in the definition.
  */
 function materialiseDeprecatedNote(noteId: string) {
     getContext().init(() =>
         noteService.createNewNote({
             noteId,
             title: `deprecated-${noteId}`,
-            type: "contentWidget",
-            parentNoteId: "_options",
+            type: "launcher",
+            parentNoteId: "_lbRoot",
             content: "",
             ignoreForbiddenParents: true
         })
     );
 }
+
+/** The settings pages the guard build keeps, both reached only through admin mode. */
+const ADMIN_SETTINGS_PAGES = [ "_optionsShortcuts", "_optionsBackup" ];
 
 function checkHiddenSubtree(force = false) {
     return getContext().init(() => hiddenSubtreeService.checkHiddenSubtree(force));
@@ -108,14 +112,25 @@ describe("hidden_subtree (real DB)", () => {
             }
         });
 
-        it("marks the settings pages that have nothing to set in the standalone build", () => {
-            // The client's settings navigation reads these (isOptionPageVisibleOnPlatform); a rename
-            // here would silently put the pages back rather than fail anywhere.
-            for (const pageId of [ "_optionsPassword", "_optionsEtapi" ]) {
-                expect(becca.notes[pageId]?.isLabelTruthy("notInStandalone"), pageId).toBe(true);
-            }
-            // Not a blanket mark: the pages that do apply everywhere carry nothing.
-            expect(becca.notes._optionsAppearance?.isLabelTruthy("notInStandalone")).toBe(false);
+        it("does not re-create the settings pages cut from the guard build", () => {
+            // The fixture database is seeded with the full upstream set of pages, and the
+            // definition no longer lists most of them. Clear the stale ones, then check that
+            // a run builds back only what the definition declares.
+            getContext().init(() => {
+                for (const branch of [ ...becca.notes["_options"].getChildBranches() ]) {
+                    if (!ADMIN_SETTINGS_PAGES.includes(branch.noteId)) {
+                        becca.notes[branch.noteId]?.deleteNote();
+                    }
+                }
+            });
+
+            checkHiddenSubtree();
+
+            const pages = becca.notes["_options"].getChildBranches()
+                .filter((branch) => !branch.isDeleted)
+                .map((branch) => branch.noteId)
+                .sort();
+            expect(pages).toEqual([ ...ADMIN_SETTINGS_PAGES ].sort());
         });
     });
 
@@ -178,27 +193,20 @@ describe("hidden_subtree (real DB)", () => {
 
     describe("enforceDeleted", () => {
         it("removes deprecated notes marked enforceDeleted", () => {
-            // _optionsImages and _optionsAi are declared with enforceDeleted: true.
-            // Materialise them first so checkHiddenSubtree actually has a note to
-            // delete — otherwise the assertion would pass vacuously even if the
-            // enforceDeleted branch were removed.
-            for (const deprecatedId of ["_optionsImages", "_optionsAi"]) {
-                materialiseDeprecatedNote(deprecatedId);
-                const note = becca.notes[deprecatedId] as BNote | undefined;
-                expect(note, `${deprecatedId} should have been created`).toBeDefined();
-            }
+            // _lbLlmChat is declared with enforceDeleted: true. Materialise it first so
+            // checkHiddenSubtree actually has a note to delete — otherwise the assertion
+            // would pass vacuously even if the enforceDeleted branch were removed.
+            const deprecatedId = "_lbLlmChat";
+            materialiseDeprecatedNote(deprecatedId);
+            expect(becca.notes[deprecatedId], `${deprecatedId} should have been created`).toBeDefined();
 
             checkHiddenSubtree();
 
-            // The enforceDeleted branch must purge each materialised note.
-            for (const deprecatedId of ["_optionsImages", "_optionsAi"]) {
-                const note = becca.notes[deprecatedId] as BNote | undefined;
-                expect(note, `${deprecatedId} should have been deleted`).toBeUndefined();
-            }
+            expect(becca.notes[deprecatedId], `${deprecatedId} should have been deleted`).toBeUndefined();
         });
 
         it("re-deletes a deprecated note if it reappears", () => {
-            const deprecatedId = "_optionsImages";
+            const deprecatedId = "_lbLlmChat";
 
             // First reappearance: recreate the note and confirm a check deletes it.
             materialiseDeprecatedNote(deprecatedId);
@@ -218,29 +226,29 @@ describe("hidden_subtree (real DB)", () => {
     });
 
     describe("the order the settings pages are held in", () => {
-        /** The settings pages under `_options`, read in the order the tree holds them. */
+        /** The admin settings pages under `_options`, read in the order the tree holds them. */
         function pageOrder() {
             return becca.notes["_options"].getChildBranches()
-                .filter((branch) => !branch.isDeleted)
+                .filter((branch) => !branch.isDeleted && ADMIN_SETTINGS_PAGES.includes(branch.noteId))
                 .sort((a, b) => a.notePosition - b.notePosition)
                 .map((branch) => branch.noteId);
         }
 
         it("puts them back in the declared order after one is moved, not only on a new database", () => {
             const before = pageOrder();
-            expect(before[0]).toBe("_optionsAppearance");
+            expect(before).toEqual(ADMIN_SETTINGS_PAGES);
             expect(before.length).toBeGreaterThan(1);
 
             // A database that already holds them in some other order: send the first page last.
             const moved = becca.notes["_options"].getChildBranches()
-                .find((branch) => branch.noteId === "_optionsAppearance");
+                .find((branch) => branch.noteId === "_optionsShortcuts");
             getContext().init(() => {
                 if (moved) {
                     moved.notePosition = 999;
                     moved.save();
                 }
             });
-            expect(pageOrder()[0]).not.toBe("_optionsAppearance");
+            expect(pageOrder()[0]).not.toBe("_optionsShortcuts");
 
             checkHiddenSubtree();
 

@@ -104,18 +104,18 @@ pre-existing items below):**
 - `packages/commons`: 833/833, complete run.
 - `packages/codemirror`: 335/335, complete run.
 
-**Two PRE-EXISTING failures found, NOT caused by Task 2, NOT fixed — still open:**
-- `apps/standalone/src/lightweight/browser_routes.spec.ts` — "serves the LLM
-  provider-models route" and "serves the LLM stream routes" both get 404 instead of
-  400. Diff shows this is leftover from Task 13 (AI Chat removal, prior session) —
-  the `/api/llm-chat/stream-start` / `stream-abort` route registrations were removed
-  from this file but the corresponding tests weren't updated.
-- `packages/trilium-core/src/services/hidden_subtree.spec.ts` — 4 failures, all about
-  `_optionsPassword` / `_optionsEtapi` / `_optionsImages` settings pages. Looks like
-  leftover from Task 1 (Settings/Options module removal, prior session).
-
-Both are real bugs worth fixing but are **out of Task 2's scope** — flagged for a
-dedicated cleanup pass, not touched this session.
+**Two pre-existing failures found in the Task 2 sweep — FIXED 2026-09-28 (uncommitted, on top of `4488c69`):**
+- `apps/standalone/src/lightweight/browser_routes.spec.ts` — the two LLM route tests now assert the removed
+  `/api/llm-chat/*` routes answer 404 (one test, replaces both). 21/21 pass.
+- `packages/trilium-core/src/services/hidden_subtree.spec.ts` — four failures from the Task 1 settings cut.
+  `_options` now declares only `_optionsShortcuts` and `_optionsBackup`; the spec was rewritten to match. The
+  `enforceDeleted` tests now use the `_lbLlmChat` launcher (the one remaining `enforceDeleted` entry). The
+  "notInStandalone" test became "does not re-create the settings pages cut from the guard build".
+  14/14 pass under both `apps/server` and `apps/standalone` runners.
+- **Watch item:** the seeded fixture DB still carries the old upstream settings pages, and the definition does not
+  delete pages it no longer lists. A fresh install builds only the two declared pages, so this only bites a database
+  created before the cut. `OptionsDialog` lists every child of `_options` (`useChildNotes`), so if a stale database
+  is ever reused, mark the withdrawn ids `enforceDeleted`. Decide when doing the admin-gated entry point (Task 8).
 
 ## Task #3 — update-checker removal (2026-09-28)
 Recovered from the VM disk into `C:\Zulliumecoveredepo`, committed as `cce19ec` on branch `zullium-work`
@@ -132,6 +132,6 @@ Recovered from the VM disk into `C:\Zulliumecoveredepo`, committed as `cce19ec
 - Environment: run pnpm 12.6.0 (`npm i -g pnpm`); `core.fileMode=false` set locally on this copy (NTFS lost exec bits).
 
 ## Recommended next step
-Task #4: Shift Log / Reference sidebar navigation (or the 2 known pre-existing spec failures first).
+Task #4: Shift Log / Reference sidebar navigation.
 Tasks #9 (branding assets) and #10 (backup drive path) need one more concrete detail
 from Andrew before they can start (see task list above).
