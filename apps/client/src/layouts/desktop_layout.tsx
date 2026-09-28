@@ -43,6 +43,7 @@ import NoteActions from "../widgets/ribbon/NoteActions.jsx";
 import ScrollPadding from "../widgets/scroll_padding.js";
 import SearchResult from "../widgets/search_result.jsx";
 import SharedInfo from "../widgets/shared_info.jsx";
+import SidebarBrandHeader from "../widgets/sidebar_brand_header.jsx";
 import RightPanelContainer from "../widgets/sidebar/RightPanelContainer.jsx";
 import TabRowWidget from "../widgets/tab_row.js";
 import TabHistoryNavigationButtons from "../widgets/TabHistoryNavigationButtons.jsx";
@@ -92,6 +93,7 @@ export default class DesktopLayout {
                     .optChild(!launcherPaneIsHorizontal, launcherPane)
                     .child(
                         new LeftPaneContainer()
+                            .child(<SidebarBrandHeader />)
                             .optChild(!launcherPaneIsHorizontal, new QuickSearchWidget())
                             .child(appContext.noteTreeWidget)
                     )

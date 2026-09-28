@@ -1,0 +1,22 @@
+.sidebar-brand-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--left-pane-collapsed-border-color, var(--main-border-color));
+    flex-shrink: 0;
+}
+
+.sidebar-brand-header-crest {
+    height: 28px;
+    width: auto;
+}
+
+.sidebar-brand-header-name {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--left-pane-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

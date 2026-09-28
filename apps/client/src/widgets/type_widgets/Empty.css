@@ -3,6 +3,10 @@ body.desktop {
         container-type: size;
         padding-top: 50px;
         min-width: 350px;
+        background-image: url(../../assets/brand-crest-faint.png);
+        background-repeat: no-repeat;
+        background-position: center 45%;
+        background-size: min(420px, 60%) auto;
     }
 
     .note-detail-empty > * {

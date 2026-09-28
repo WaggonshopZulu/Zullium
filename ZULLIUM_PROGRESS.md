@@ -28,10 +28,7 @@ for a decision, not acting on it unasked.
 7. Lock down launch bar — **DONE, plus a chunk of the icon-label pass** (2026-09-28; see below). The rest of the
    icon-label pass needs a decision — see below.
 8. Build admin-gated entry point (Option C) — **DONE** (2026-09-28; see below)
-9. Wire in branding — NOT STARTED (assets at C:\Zullium\art). User's picks (2026-09-28): sidebar top = small crest
-   beside the name; sidebar bottom = nothing; empty pane = faint crest. Still open: whether the four JPGs
-   (House_Guards.jpg, 37_Crisp.jpg, ZuluRPT_6.jpg, ZuluOne_Crest.jpg) are used anywhere, and whether the crest goes in
-   the About box.
+9. Wire in branding — **DONE** (2026-09-28; see below).
 10. Configure backup destination — mostly pre-built. `apps/client/.../options/backup.tsx` already
     has a working "Select Location" folder picker (Electron only) writing to the `customDbBackupDir` option, with a
     reset-to-default button; `backup_provider.ts` resolves it each run rather than caching a drive letter, so a
@@ -468,11 +465,70 @@ same as Task 7), desktop 509/511 + 1 skipped, all clean **except one pre-existin
 (`/tmp/trilium-data/...`) compared against Node's own `path.join`, which produces backslashes on Windows —
 confirmed reproducible in isolation and untouched by this task's files, not a regression.
 
+## Task #9 — branding assets (2026-09-28)
+Wired in the crest (the "Zulu One" coat of arms — crown, crossed swords, maple wreath, the mansion,
+six figures, a banner reading "ZULU ONE") at the three placements the user picked; nothing at the
+sidebar bottom, per that same call.
+
+- **Source assets used:** only `crest_master.png` and `logo_master_gold_transparent.png` from
+  `C:\Zullium\art` — the user's call: the other four files there (`House_Guards.jpg`, `37_Crisp.jpg`,
+  `ZuluOne_Crest.jpg`, `ZuluRPT_6.jpg`) are earlier drafts that fed into those two finished pieces, left
+  alone as source material rather than referenced from the app.
+- **App icon** (`.exe`/taskbar, Windows and Linux packaging): `daily_brief_logbook.ico` already existed
+  in `C:\Zullium\art` as a proper multi-resolution `.ico` (16/32/48/256px) with a square icon composition
+  of the crest already prepared for small sizes — used as the source rather than re-deriving one, since
+  it's already a considered square crop the poster-format masters aren't. Copied into
+  `apps/desktop/electron-forge/app-icon/icon.ico`, and generated the full non-dev PNG size set
+  (16/32/128/256/512/1000/1024) the packaging config also reads, resizing from the ico's own frames
+  where available and upscaling from its 256px frame above that (mild softening at 512/1024, accepted —
+  this fork ships Windows only, where 512/1024 icons see little use). Left untouched, out of scope for a
+  single-workstation Windows build: the `-dev` (nightly-channel) variants, `icon.icns`/`icon.icon`
+  (macOS), and `ios/apple-touch-icon.png` (mobile) — none of which this deployment builds.
+- **Sidebar top — crest beside the name:** no such header existed before this; added
+  `SidebarBrandHeader` (new widget, `apps/client/src/widgets/sidebar_brand_header.tsx`) as the first
+  child of the note-tree pane (`LeftPaneContainer`, in `desktop_layout.tsx`), above the quick-search box.
+  Shows the crest (28px tall) beside `APP_NAME`. The crest is decorative — `alt=""` and
+  `aria-hidden="true"` — so a screen reader isn't told the name twice. Small-size legibility was flagged
+  and the user's call was to use it anyway rather than wait for a simplified mark or drop detail below a
+  size floor.
+- **Empty pane — faint crest:** `type_widgets/Empty.css`'s `.note-detail-empty` (the "no note open"
+  panel with the search box) now carries the crest as a low-opacity background image, centered, capped at
+  60% width. Baked the low opacity into the PNG itself (5% alpha) rather than a CSS `opacity`/`filter`,
+  since either of those would also fade the search box sitting in front of it.
+- **About dialog:** per the user's call on Task 6's open question, added the crest above the version
+  info, replacing the dialog's `<div className="icon" />` (an empty div previously styled with
+  Trilium's own `icon.svg` via CSS `background-image` — now genuinely unused) with an `<img>` of the
+  crest. The box sizing changed from a fixed 160×160 square to a height-160px auto-width box, since the
+  crest is portrait (roughly 3:4), not square like Trilium's original mark.
+- **New/changed asset files:** `apps/client/src/assets/brand-crest.png` (480×640, transparent gold,
+  sidebar header + About dialog) and `brand-crest-faint.png` (675×900, same art at 5% alpha, empty pane).
+  Generated from `logo_master_gold_transparent.png` via Pillow (trimmed to its content bounding box first,
+  so neither asset wastes resolution on transparent margin).
+
+**Found, flagged, not fixed (visible branding gap outside the three requested placements):** the
+first-run setup screen, the login screen, and the "session locked" unlock screen (`setup.tsx`,
+`login.tsx`, `setup_unlock.tsx`) all still show Trilium's own logo (`assets/icon-color.svg`), and the
+brief Electron setup window itself uses a separate still-Trilium `icon.png` (`window.ts`'s `getIcon()`).
+Neither is one of the three placements the user specified, and both sit in front of the actual person
+using the app rather than deep in a menu, so it's worth a follow-up pass rather than leaving it assumed
+to be covered by this task. `apps/client/src/assets/icon.svg` also became unreferenced by this task's
+About dialog change — left in place rather than deleted, since it's a single small orphaned file and
+deleting assets outside what this task touched felt like more scope than the branding placements called
+for.
+
+**Verification:** typecheck clean (`pnpm typecheck` — no errors). New test: `sidebar_brand_header.spec.tsx`
+(crest is decorative and non-announced, app name renders). Full client suite: 5480/5480 passed. Not run
+again for server/standalone/desktop — this task touched only `apps/client` and `apps/desktop`'s packaged
+icon assets (no source code in either of those two apps' runtime paths), so the client suite is the
+relevant one; the `pnpm typecheck` pass already covers cross-package type correctness. **Not verified:
+the actual rendered result** — image generation and CSS sizing only, no live/visual check of the built
+app. The user should look at the sidebar header, the empty pane, the About dialog, and the packaged
+`.ico` once built, and say if any of the sizing or placement reads wrong.
+
 ## Recommended next step
-Task #8 is done (see above) — the `_lbSettings` gap is closed, and Advanced/Options are gated for real
-instead of unconditionally disabled. Not yet acted on: the 8 dangling `showOptions` section-id call sites
-flagged at the end of the Task 8 entry (harmless under the new gate, but still worth a cleanup pass).
-Task #9 (branding assets) has the user's placement picks (see task list above) but still needs: whether the four JPGs
-are used anywhere, and whether the crest goes in the About box (moot if the About dialog itself is cut per the Task 6
-finding above). Task #10 (backup) needs only the external drive's folder path, entered through the existing picker —
-now reachable through Task 8's admin mode — no more code to write there.
+Task #8 and Task #9 are both done (see above). Two flagged, not-yet-acted-on findings sit behind them:
+the 8 dangling `showOptions` section-id call sites (Task 8, harmless under the admin gate but still worth
+a cleanup pass), and the setup/login/unlock screens plus the setup window's own icon still showing
+Trilium's original logo (Task 9, a real visible gap outside the three placements that were actually
+asked for). Task #10 (backup) needs only the external drive's folder path, entered through the existing
+picker — now reachable through Task 8's admin mode — no more code to write there.

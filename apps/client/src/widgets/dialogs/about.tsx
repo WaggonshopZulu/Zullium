@@ -5,6 +5,7 @@ import type { ComponentChildren } from "preact";
 import { useCallback, useRef, useState } from "preact/hooks";
 import { Trans } from "react-i18next";
 
+import crest from "../../assets/brand-crest.png";
 import { t } from "../../services/i18n.js";
 import server from "../../services/server.js";
 import { formatDateTime } from "../../utils/formatters.js";
@@ -40,7 +41,7 @@ export default function AboutDialog() {
         >
             <div className="about-dialog-content">
 
-                <div className="icon" />
+                <img className="icon" src={crest} alt="" aria-hidden="true" />
                 <h2>{APP_NAME}</h2>
 
                 <PropertySheet className="about-dialog-property-sheet">
