@@ -413,7 +413,6 @@ export type CommandMappings = {
     renderActiveNote: CommandData;
     unhoist: CommandData;
     reloadFrontendApp: CommandData;
-    openDevTools: CommandData;
     findInText: CommandData & { searchTerms?: string[] };
     toggleLeftPane: CommandData;
     toggleFullscreen: CommandData;

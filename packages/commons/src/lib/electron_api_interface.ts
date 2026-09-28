@@ -134,9 +134,6 @@ export interface ElectronWindowApi {
     /** Toggles the always-on-top (pinned) state of the window. */
     setAlwaysOnTop(enabled: boolean): void;
 
-    /** Opens or closes Chromium DevTools for the current window. */
-    toggleDevTools(): void;
-
     /**
      * Synchronously returns whether DevTools is currently open and docked into this window
      * (as opposed to detached into a separate window).

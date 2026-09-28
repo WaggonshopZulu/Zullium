@@ -98,7 +98,6 @@ export default function HelpDialog() {
                 <Card title={t("help.troubleshooting")}>
                     <ul>
                         <KeyboardShortcut commands="reloadFrontendApp" description={t("help.reloadFrontend")} />
-                        <KeyboardShortcut commands="openDevTools" description={t("help.showDevTools")} />
                         <KeyboardShortcut commands="showSQLConsole" description={t("help.showSQLConsole")} />
                     </ul>
                 </Card>

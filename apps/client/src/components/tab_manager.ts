@@ -1,3 +1,5 @@
+import { APP_NAME } from "@triliumnext/commons";
+
 import Component from "./component.js";
 import SpacedUpdate from "../services/spaced_update.js";
 import server from "../services/server.js";
@@ -933,7 +935,7 @@ export default class TabManager extends Component {
         const titleFragments = [
             // it helps to navigate in history if note title is included in the title
             await activeNoteContext.getNavigationTitle(),
-            "Trilium Notes"
+            APP_NAME
         ].filter(Boolean);
 
         document.title = titleFragments.join(" - ");

@@ -1,3 +1,4 @@
+import { APP_NAME } from "@triliumnext/commons";
 import { describe, expect, it, vi } from "vitest";
 
 import appContext from "./app_context.js";
@@ -252,3 +253,24 @@ function openEmptyTabs(tm: TabManager, count: number) {
 function ntxOrder(tm: TabManager) {
     return tm.mainNoteContexts.map((nc) => nc.ntxId);
 }
+
+describe("updateDocumentTitle", () => {
+    it("carries the app's own name, never Trilium's", async () => {
+        const tm = new TabManager();
+        const noteContext = { getNavigationTitle: () => Promise.resolve("28 - Monday") } as any;
+
+        await tm.updateDocumentTitle(noteContext);
+
+        expect(document.title).toBe(`28 - Monday - ${APP_NAME}`);
+        expect(document.title).not.toContain("Trilium");
+    });
+
+    it("is a no-op with no active context", async () => {
+        const tm = new TabManager();
+        document.title = "unchanged";
+
+        await tm.updateDocumentTitle(null);
+
+        expect(document.title).toBe("unchanged");
+    });
+});

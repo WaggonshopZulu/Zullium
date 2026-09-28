@@ -68,9 +68,6 @@ contextBridge.exposeInMainWorld("electronApi", {
         setAlwaysOnTop(enabled: boolean) {
             ipcRenderer.send("set-always-on-top", enabled);
         },
-        toggleDevTools() {
-            ipcRenderer.send("toggle-dev-tools");
-        },
         isDevToolsDocked(): boolean {
             return ipcRenderer.sendSync("is-dev-tools-docked");
         },

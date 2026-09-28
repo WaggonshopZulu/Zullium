@@ -97,7 +97,6 @@ const enum KeyboardActionNamesEnum {
     toggleNoteHoisting,
     unhoist,
     reloadFrontendApp,
-    openDevTools,
     findInText,
     toggleLeftPane,
     toggleFullscreen,

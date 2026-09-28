@@ -23,7 +23,6 @@ async function main() {
     build.copy("/packages/trilium-core/src/assets/schema.sql", "assets/schema.sql");
     // Same story for the LLM skill sheets: core owns them, the server reads them
     // from RESOURCE_DIR at runtime. See core_assets.ts.
-    build.copy("/packages/trilium-core/src/assets/llm/skills", "assets/llm/skills/");
     // PDFium rasterizes scanned PDF pages for OCR. Its own loader resolves the wasm relative to
     // `import.meta.url`, which in a split bundle is a hash-named file under chunks/, so the bytes
     // are handed to it explicitly from here instead. See pdf_renderer.ts.

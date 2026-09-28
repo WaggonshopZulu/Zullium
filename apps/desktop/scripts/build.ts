@@ -28,7 +28,6 @@ async function main() {
     build.copy("/packages/trilium-core/src/assets/schema.sql", "assets/schema.sql");
     // The LLM skill sheets moved to core with the rest of the stack, but the
     // Node hosts still read them from RESOURCE_DIR. See server core_assets.ts.
-    build.copy("/packages/trilium-core/src/assets/llm/skills", "assets/llm/skills/");
     // The Codex ACP adapter runs as a script of its own in a worker thread. See the server's
     // codex_binary.ts.
     build.copy("/node_modules/@agentclientprotocol/codex-acp/dist/index.js", "assets/codex-acp.mjs");

@@ -18,10 +18,6 @@ export default class Entrypoints extends Component {
         super();
     }
 
-    openDevToolsCommand() {
-        window.electronApi?.window.toggleDevTools();
-    }
-
     async createNoteIntoInboxCommand() {
         const inboxNote = await dateNoteService.getInboxNote();
         if (!inboxNote) {

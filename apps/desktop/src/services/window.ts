@@ -1,4 +1,5 @@
 import { app_info, cls, events, getLog, isSetupRequested, keyboard_actions as keyboardActionsService, options as optionService, sql_init, utils as coreUtils } from "@triliumnext/core";
+import { APP_NAME } from "@triliumnext/commons";
 import { RESOURCE_DIR } from "@triliumnext/server/src/services/resource_dir.js";
 import { supportsBackgroundMaterial } from "@triliumnext/server/src/services/utils.js";
 import { type BrowserWindow, type BrowserWindowConstructorOptions, default as electron, type Session, type WebContents } from "electron";
@@ -84,7 +85,7 @@ function getExtraWindowOptions(): BrowserWindowConstructorOptions {
     return {
         width: 1000,
         height: 800,
-        title: "Trilium Notes",
+        title: APP_NAME,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -141,7 +142,7 @@ async function createMainWindow(startHidden = false) {
         height: mainWindowState.height,
         minWidth: 500,
         minHeight: 400,
-        title: "Trilium Notes",
+        title: APP_NAME,
         // Start hidden (launched at login with hide-on-autostart) means the window
         // is never shown until the user summons it from the tray. Constructing it
         // hidden avoids a visible flash that show()-then-hide() would cause.
@@ -619,10 +620,6 @@ export function setupWindowing() {
         electron.nativeTheme.themeSource = source;
     });
 
-    electron.ipcMain.on("toggle-dev-tools", (event) => {
-        event.sender.toggleDevTools();
-    });
-
     electron.ipcMain.on("is-dev-tools-docked", (event) => {
         event.returnValue = isDevToolsDocked(event.sender);
     });
@@ -706,8 +703,10 @@ export function setupWindowing() {
 }
 
 /**
- * Installs an application menu without the `minimize` role. `setMenuBarVisibility(false)` keeps
- * the menu accelerators active, and `minimize` binds Ctrl+M, the text editor's math shortcut.
+ * Installs the only application menu this build carries: Edit, for the clipboard accelerators
+ * (Cut/Copy/Paste/Select All/Undo/Redo) some Windows input contexts need a menu to route at all.
+ * No File, View or Window menu, so nothing shows if the hidden bar is revealed with Alt — in
+ * particular, none of View's Reload, Force Reload, Toggle Developer Tools or Zoom.
  */
 function setupApplicationMenu() {
     // Cmd+M is standard on macOS. The app can be ready before `initializeCore()` makes
@@ -717,10 +716,7 @@ function setupApplicationMenu() {
     }
 
     electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate([
-        { role: "fileMenu" },
-        { role: "editMenu" },
-        { role: "viewMenu" },
-        { role: "windowMenu", submenu: [{ role: "close" }] }
+        { role: "editMenu" }
     ]));
 }
 

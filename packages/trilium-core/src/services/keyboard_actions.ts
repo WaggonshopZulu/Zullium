@@ -813,14 +813,6 @@ function getDefaultKeyboardActions() {
             scope: "window"
         },
         {
-            actionName: "openDevTools",
-            friendlyName: t("keyboard_action_names.open-developer-tools"),
-            iconClass: "bx bx-bug-alt",
-            defaultShortcuts: isElectron() ? ["CommandOrControl+Shift+I"] : [],
-            isElectronOnly: true,
-            scope: "window"
-        },
-        {
             actionName: "findInText",
             friendlyName: t("keyboard_action_names.find-in-text"),
             iconClass: "bx bx-search",

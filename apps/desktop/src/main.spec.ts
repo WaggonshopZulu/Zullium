@@ -803,9 +803,9 @@ describe("initializeCore dbConfig callbacks + getDemoArchive", () => {
         expect(h.beccaLoad).toHaveBeenCalledTimes(1);
         expect(h.recalculateMaxEntityChangeId).toHaveBeenCalledTimes(2);
 
-        // getDemoArchive reads the demo zip.
+        // getDemoArchive: a new database gets the Shift Log / Reference structure only, no demo notes.
         const archive = await getDemoArchive();
-        expect(archive).toBeInstanceOf(Buffer);
+        expect(archive).toBeNull();
     });
 });
 

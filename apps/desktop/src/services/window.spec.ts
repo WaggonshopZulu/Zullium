@@ -982,12 +982,6 @@ describe("window service", () => {
             expect(electronSurface.nativeTheme.themeSource).toBe("dark");
         });
 
-        it("toggle-dev-tools toggles dev tools on the sender", () => {
-            const ev = makeEvent();
-            fireOn("toggle-dev-tools", ev);
-            expect(ev.sender.toggleDevTools).toHaveBeenCalled();
-        });
-
         it("is-dev-tools-docked reports whether DevTools shares the sender's window", () => {
             const closed = makeEvent();
             fireOn("is-dev-tools-docked", closed);
@@ -1113,7 +1107,7 @@ describe("window service", () => {
             Object.defineProperty(process, "platform", { value: realPlatform, configurable: true });
         });
 
-        it("installs a menu without the minimize accelerator, except on macOS", async () => {
+        it("installs only the Edit menu, so nothing else is reachable if the hidden bar is revealed, except on macOS", async () => {
             const { buildFromTemplate, setApplicationMenu } = electronSurface.Menu;
 
             for (const platform of ["linux", "win32"] as const) {
@@ -1125,14 +1119,9 @@ describe("window service", () => {
 
                 const items = flattenItems(buildFromTemplate.mock.calls[0]?.[0] ?? []);
                 const roles = items.map((item) => item.role);
-                expect(roles).toEqual(
-                    expect.arrayContaining(["fileMenu", "editMenu", "viewMenu", "close"])
-                );
-                expect(roles).not.toContain("minimize");
-                // Without its own submenu, a `windowMenu` gets Electron's defaults and `minimize`.
-                const defaultWindowMenus = items.filter((item) =>
-                    item.role === "windowMenu" && !Array.isArray(item.submenu));
-                expect(defaultWindowMenus).toEqual([]);
+                // No File, View or Window menu: nothing to reveal but the clipboard commands, and
+                // in particular none of View's Reload, Force Reload, Toggle Developer Tools or Zoom.
+                expect(roles).toEqual(["editMenu"]);
             }
 
             await setupWindowingOn("darwin");

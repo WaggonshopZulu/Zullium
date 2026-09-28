@@ -182,11 +182,6 @@ describe("preload script", () => {
             expect(ipcRendererSent).toContainEqual({ channel: "set-always-on-top", args: [true] });
         });
 
-        it("toggleDevTools sends correct IPC message", () => {
-            win().toggleDevTools();
-            expect(ipcRendererSent).toContainEqual({ channel: "toggle-dev-tools", args: [] });
-        });
-
         it("isDevToolsDocked uses sendSync", () => {
             ipcRendererSyncResults.set("is-dev-tools-docked:undefined", true);
             expect(win().isDevToolsDocked()).toBe(true);

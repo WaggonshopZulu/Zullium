@@ -24,11 +24,19 @@ for a decision, not acting on it unasked.
 3. Remove update-checker network call — **DONE** (2026-09-28, uncommitted; see below)
 4. Build Shift Log / Reference sidebar navigation — **DONE** (2026-09-28, uncommitted; see below)
 5. Scope the toolbar/ribbon — **DONE** (2026-09-28; see below)
-6. Strip window chrome — NOT STARTED
+6. Strip window chrome — **DONE** (2026-09-28; see below)
 7. Lock down launch bar — NOT STARTED
 8. Build admin-gated entry point (Option C) — NOT STARTED
-9. Wire in branding — NOT STARTED (assets at C:\Zullium\art)
-10. Configure backup destination — NOT STARTED (needs exact external drive letter/path)
+9. Wire in branding — NOT STARTED (assets at C:\Zullium\art). User's picks (2026-09-28): sidebar top = small crest
+   beside the name; sidebar bottom = nothing; empty pane = faint crest. Still open: whether the four JPGs
+   (House_Guards.jpg, 37_Crisp.jpg, ZuluRPT_6.jpg, ZuluOne_Crest.jpg) are used anywhere, and whether the crest goes in
+   the About box.
+10. Configure backup destination — mostly pre-built, folded into Task 8. `apps/client/.../options/backup.tsx` already
+    has a working "Select Location" folder picker (Electron only) writing to the `customDbBackupDir` option, with a
+    reset-to-default button; `backup_provider.ts` resolves it each run rather than caching a drive letter, so a
+    reassigned drive letter does not break it as long as the folder still exists. `_optionsBackup` is one of the two
+    settings pages Task 4 kept, admin-gated. Nothing left to build here except making that page reachable (Task 8);
+    once it is, point it at the external drive by hand.
 11. Build and smoke-test — NOT STARTED
 12. Sync finished code back to C:\Zullium\repo — NOT STARTED
 13. Remove the AI Chat feature entirely — **DONE** (earlier session)
@@ -208,7 +216,76 @@ Phase 2 blueprint scope: bold, italic, underline; highlight color; font family a
 - **Left for later tasks:** keyboard shortcuts and typing shortcuts still work (Ctrl+K link, `# ` heading, `1. ` list,
   Ctrl+Z); the split-pane buttons in the note title row; the note context menu in the tree.
 
+## Task #6 — window chrome (2026-09-28)
+- **App name, one source of truth.** New `packages/commons/src/lib/guard_structure.js`-style shared constant
+  `APP_NAME = "Daily Brief Logbook"` in `packages/commons/src/lib/app_name.ts`. Wired into: `apps/desktop/src/app-info.ts`
+  (`PRODUCT_NAME`, feeds the packaged `.exe`/forge name and `app.setName()`), the two `BrowserWindow` `title` options in
+  `apps/desktop/src/services/window.ts` (main window, extra window), `apps/client/index.html` `<title>` (literal, an
+  HTML file can't import), and `apps/client/src/components/tab_manager.ts`'s `updateDocumentTitle`. No "Trilium" or
+  "TriliumNext" text now reaches the title bar, taskbar or `.exe` name. **Not touched, out of scope for a Windows-first
+  desktop build:** the standalone/mobile `<title>`, and `apps/desktop/e2e/example.spec.ts` (asserts `"Trilium Notes"`
+  and opens the now-removed "Trilium Demo" note; e2e isn't run by the routine suite — revisit at Task 11).
+- **Native menu bar.** `setupApplicationMenu()` in `window.ts` now installs only `{ role: "editMenu" }` — no File, View
+  or Window menu at all, so nothing shows if the hidden bar is revealed with Alt (Windows convention). Previously it
+  kept `fileMenu`/`viewMenu`/`windowMenu`, which meant View's **Reload, Force Reload and Toggle Developer Tools were
+  one Alt-press away** — a real gap the charter's "no dev tools" line didn't cover on its own. Edit is kept because
+  some Windows Electron/Chromium versions need a menu for Ctrl+C/V/X/A/Z to route into inputs reliably; this was
+  already the existing code's own stated reason for keeping a menu at all.
+- **No dev tools, code-level.** Removed everywhere, not just hidden: the `openDevTools` keyboard action (Ctrl+Shift+I)
+  from `keyboard_actions.ts` and its interface entry; the `openDevToolsCommand` handler in `entrypoints.ts`; the command
+  type in `app_context.ts`; the menu item in `global_menu.tsx`'s Advanced submenu; the shortcut row in `help.tsx`; and
+  the whole IPC path — `toggleDevTools()` in `preload.ts` and `electron_api_interface.ts`, the `toggle-dev-tools`
+  `ipcMain` handler in `window.ts`. Left alone on purpose: `isDevToolsDocked()` / `dev-tools-dock-changed` (used by
+  `desktop.ts` to suspend background transparency effects if DevTools ever is open by some other means — reacts to the
+  state, doesn't open it, so keeping it isn't a new way in).
+- **Right-click Inspect: already true, nothing to remove.** Confirmed `apps/client/src/menus/electron_context_menu.ts`
+  replaces Chromium's menu entirely with Trilium's own (Cut/Copy/Paste/spellcheck/note actions) — Electron ships no
+  context menu of its own absent this code, so there was never an "Inspect Element" entry to strip.
+- **Window controls: unmodified**, confirmed — minimize/maximize/close and the native title bar overlay code
+  (`native_window.ts`) were not touched.
+- **Icon labels (standing rule):** not done this task. Deferred to Task 7 together with the launch bar rework, since
+  the launch bar's 53px column is the one that actually needs a layout change to fit labels, and doing the global menu
+  button / tree header buttons / tab row / title-row buttons separately first would mean touching the same files twice.
+- **Two things found during this sweep, flagged, NOT acted on — need a decision:**
+  1. **`global_menu.tsx`'s Advanced submenu** (Hidden Subtree, Search History, Backend Log, **SQL Console** — raw SQL
+     against `document.db`, arguably a bigger risk than the scripting engine Task 2 already removed — SQL Console
+     History, Reload Frontend) is fully guard-visible today, with **no admin gate at all**. Task 1's audit covered the
+     Settings dialog and named services only; it never looked at this menu, so these were never weighed against "no
+     guard needs it." `showSQLConsole` even has its own default shortcut (Alt+O). Options: cut some/all of it now (Task
+     2-style), or fold it behind the Task 8 admin gate alongside Backup/Shortcuts. **Left in place, untouched, pending
+     the user's call.**
+  2. **The About dialog** (`about.tsx`) is heavily Trilium-branded: "Trilium Notes" heading, `triliumnotes.org` link,
+     `github.com/TriliumNext/Trilium` links (GitHub + license + contributors), donate link. Reachable from the still
+     ungated global menu. The blueprint's "no Trilium/TriliumNext text" line sits under Title Bar specifically; whether
+     it also means the About dialog is a real design call (keep for AGPL attribution vs. rewrite vs. remove the menu
+     entry) rather than something to rewrite unilaterally. **Left in place, untouched, pending the user's call.**
+- Tests: `main.spec.ts`'s `getDemoArchive` assertion was still expecting a `Buffer` from the pre-Task-4 desktop code —
+  a leftover from Task 4, caught and fixed here (now asserts `null`). `window.spec.ts`'s menu-template test rewritten
+  for the Edit-only menu. New case in `tab_manager.spec.ts` for the title. `preload.spec.ts` / `window.spec.ts` had
+  their `toggleDevTools`/`toggle-dev-tools` cases removed along with the code.
+- **Pre-existing failure found, NOT caused by Task 6, NOT fixed — flagged:** `apps/desktop/src/services/startup_metrics.spec.ts`
+  ("records a metric relative to the baseline...") fails consistently, alone and in the full suite, on an untouched
+  file (`startup_metrics.ts`, unrelated to anything in this or any earlier Zullium commit). `writeFileSync` is never
+  called even though the test stubs `TRILIUM_ENV=dev` before importing the module; root cause not chased down — could
+  be this recovered environment (Node v24.16.0 vs the repo's `.nvmrc` v24.21.0) rather than the code. Needs a dedicated
+  look.
+- **Another Task 2/13 leftover found and FIXED, from finally running the full standalone suite (flagged as not yet
+  re-run after Task 4; this is that re-run):** `apps/standalone/src/lightweight/llm_skills.ts` imported
+  `@triliumnext/core/src/services/llm/skills.js` and two `.md` files under `packages/trilium-core/src/assets/llm/skills/`
+  — all deleted by Task 2, so the module (and its spec) failed to resolve. It registered a skill reader for the LLM
+  tool stack Task 13 also removed — dead code with no caller worth keeping. Deleted the module, its spec, and the
+  `import()` call site in `local-server-worker.ts`. Also removed two now-dangling `build.copy(".../assets/llm/skills", …)`
+  lines (`apps/server/scripts/build.ts`, `apps/desktop/scripts/build.ts`) that would have thrown `ENOENT` at Task 11's
+  build step, copying a directory Task 2 already deleted.
+- **Full-suite verification after all of Task 6 and the above fix:** client 404/5450 green, server 367/5161 (48 skipped,
+  pre-existing) green, standalone 261/4219 (32 skipped, pre-existing) green, desktop 24/25 files green — only the
+  flagged `startup_metrics.spec.ts` still fails, confirmed unrelated.
+
 ## Recommended next step
-Task #6: strip window chrome (native menu bar, branded title bar, no dev tools / Inspect).
-Tasks #9 (branding assets) and #10 (backup drive path) need one more concrete detail
-from Andrew before they can start (see task list above).
+Task #7: lock down the launch bar, together with the icon-label pass (global menu button, tree header buttons, tab
+row, title-row buttons, and the launch bar itself — the one that needs an actual layout change: 53px is too narrow for
+a label, so it needs widening or a horizontal layout).
+Task #9 (branding assets) has the user's placement picks (see task list above) but still needs: whether the four JPGs
+are used anywhere, and whether the crest goes in the About box (moot if the About dialog itself is cut per the Task 6
+finding above). Task #10 (backup) needs only the external drive's folder path, entered through the existing picker
+once Task 8's admin gate exists — no more code to write there.
