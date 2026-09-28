@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "preact/hooks";
 
 import FNote from "../../entities/fnote";
+import { isAdminMode } from "../../services/admin_mode";
 import froca from "../../services/froca";
 import { isDesktop, isMobile } from "../../services/utils";
 import TabSwitcher from "../mobile_widgets/TabSwitcher";
@@ -37,21 +38,34 @@ export default function LauncherContainer({ isHorizontalLayout }: { isHorizontal
             <LaunchBarContext.Provider value={{
                 isHorizontalLayout
             }}>
-                {childNotes?.map(childNote => {
-                    if (childNote.type !== "launcher") {
-                        console.warn(`Note '${childNote.noteId}' '${childNote.title}' is not a launcher even though it's in the launcher subtree`);
-                        return false;
-                    }
-
-                    if (!isDesktop() && childNote.isLabelTruthy("desktopOnly")) {
-                        return false;
-                    }
-
-                    return <Launcher key={childNote.noteId} note={childNote} isHorizontalLayout={isHorizontalLayout} />;
-                })}
+                {childNotes?.map(childNote =>
+                    shouldShowLauncher(childNote) && <Launcher key={childNote.noteId} note={childNote} isHorizontalLayout={isHorizontalLayout} />
+                )}
             </LaunchBarContext.Provider>
         </div>
     );
+}
+
+/**
+ * Whether `note` belongs in the rendered bar right now: a real launcher, desktop-only ones dropped
+ * on a non-desktop platform, and admin-only ones (Task 8 — e.g. `_lbSettings`, which points at
+ * something `showOptions` would refuse to open anyway) dropped outside admin mode.
+ */
+export function shouldShowLauncher(note: FNote): boolean {
+    if (note.type !== "launcher") {
+        console.warn(`Note '${note.noteId}' '${note.title}' is not a launcher even though it's in the launcher subtree`);
+        return false;
+    }
+
+    if (!isDesktop() && note.isLabelTruthy("desktopOnly")) {
+        return false;
+    }
+
+    if (!isAdminMode() && note.isLabelTruthy("adminOnly")) {
+        return false;
+    }
+
+    return true;
 }
 
 function Launcher({ note, isHorizontalLayout }: { note: FNote, isHorizontalLayout: boolean }) {

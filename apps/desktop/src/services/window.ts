@@ -72,11 +72,11 @@ function trackWindowFocus(win: BrowserWindow) {
  * into a window in the opener's renderer process; both paths end in
  * `adoptExtraWindow()`.
  */
-async function createExtraWindow(extraWindowHash: string) {
+async function createExtraWindow(extraWindowHash: string, isAdmin = false) {
     const { BrowserWindow } = await import("electron");
 
     const win = new BrowserWindow(getExtraWindowOptions());
-    win.loadURL(`${TRILIUM_APP_BASE_URL}?extraWindow=1${extraWindowHash}`);
+    win.loadURL(`${TRILIUM_APP_BASE_URL}?extraWindow=1${isAdmin ? "&admin=1" : ""}${extraWindowHash}`);
     adoptExtraWindow(win);
 }
 
@@ -183,6 +183,9 @@ async function createMainWindow(startHidden = false) {
     }
 
     mainWindow.setMenuBarVisibility(false);
+    // Never `?admin=1` here: this is the one window a plain launch (or a plain relaunch's
+    // second-instance focus, below) always reveals, so it must always be a guard window — an
+    // admin launch gets its own separate window instead (see wantsAdminMode() in main.ts).
     mainWindow.loadURL(TRILIUM_APP_BASE_URL);
     // Close-to-tray: when enabled, closing the main window hides it to the tray
     // instead of quitting. Only intercepts a genuine window close (not an app

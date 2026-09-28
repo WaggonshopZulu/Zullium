@@ -171,6 +171,13 @@ describe("buildLaunchBarConfig", () => {
         expect(jumpTo.attributes?.some((a) => a.type === "label" && a.name === "desktopOnly")).toBe(true);
     });
 
+    it("marks _lbSettings adminOnly, so a guard's window never shows it (Task 8)", () => {
+        const config = buildLaunchBarConfig();
+
+        const settings = byId(config.desktopVisibleLaunchers, "_lbSettings");
+        expect(settings.attributes?.some((a) => a.type === "label" && a.name === "adminOnly")).toBe(true);
+    });
+
     it("reuses the shared launcher definitions across desktop and mobile entries", () => {
         const config = buildLaunchBarConfig();
 

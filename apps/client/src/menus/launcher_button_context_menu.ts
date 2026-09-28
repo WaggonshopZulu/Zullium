@@ -1,3 +1,5 @@
+import appContext from "../components/app_context.js";
+import { isAdminMode } from "../services/admin_mode.js";
 import { t } from "../services/i18n.js";
 import { isMobile, reloadFrontendApp } from "../services/utils.js";
 import contextMenu, { type ContextMenuEvent, type MenuItem } from "./context_menu.js";
@@ -12,14 +14,13 @@ export interface ShowLauncherContextMenuOptions<T extends string> {
 
 /**
  * Displays the launch bar icon context menu: the shared launch-bar management segment (layout
- * orientation only — see {@link buildLaunchBarManagementItems}), plus whichever launcher-specific
- * items are supplied (e.g. "Open in new tab" for note-based launchers).
+ * orientation, plus "Configure launch bar" in admin mode only — see
+ * {@link buildLaunchBarManagementItems}), plus whichever launcher-specific items are supplied
+ * (e.g. "Open in new tab" for note-based launchers).
  *
- * "Configure launch bar" and "Remove from launch bar" are deliberately not offered here: the
+ * "Remove from launch bar" is deliberately not offered here at all, admin mode included: the
  * launch bar in this build ships with a fixed set of icons (Phase 2 blueprint, Launch Bar
- * Lockdown), so there is no guard-facing way to add, remove or rearrange them. The underlying
- * capability (the `_lbRoot` tree, `showLaunchBarSubtree`) is untouched for a future admin mode —
- * only the entry points into it are gone.
+ * Lockdown) — rearranging or dropping one is exactly what "Configure launch bar" is for.
  */
 export async function showLauncherContextMenu<T extends string>(
     launcherNote: unknown,
@@ -50,19 +51,30 @@ export async function showLauncherContextMenu<T extends string>(
  * widget-specific `onCommand` router.
  */
 function buildLaunchBarManagementItems(): MenuItem<string>[] {
-    if (isMobile()) {
-        return [];
+    const items: MenuItem<string>[] = [];
+
+    if (isAdminMode()) {
+        items.push({
+            title: t("launcher_button_context_menu.configure_launch_bar"),
+            uiIcon: "bx " + (isMobile() ? "bx-mobile" : "bx-sidebar"),
+            handler: () => appContext.triggerCommand("showLaunchBarSubtree")
+        });
     }
 
-    const orientation = options.get("layoutOrientation");
-    return [{
-        title: t("launcher_button_context_menu.launch_bar_orientation"),
-        uiIcon: "bx bx-layout",
-        items: [
-            buildOrientationItem("vertical", orientation),
-            buildOrientationItem("horizontal", orientation)
-        ]
-    }];
+    // The layout orientation only applies to the desktop layout; the mobile layout is always horizontal.
+    if (!isMobile()) {
+        const orientation = options.get("layoutOrientation");
+        items.push({
+            title: t("launcher_button_context_menu.launch_bar_orientation"),
+            uiIcon: "bx bx-layout",
+            items: [
+                buildOrientationItem("vertical", orientation),
+                buildOrientationItem("horizontal", orientation)
+            ]
+        });
+    }
+
+    return items;
 }
 
 function buildOrientationItem(target: "vertical" | "horizontal", currentOrientation: string): MenuItem<string> {

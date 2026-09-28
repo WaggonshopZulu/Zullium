@@ -26,6 +26,7 @@ import CompositeMessagingProvider from "./composite_messaging_provider";
 import IpcMessagingProvider from "./ipc_messaging_provider";
 import DesktopPlatformProvider from "./platform_provider";
 import { registerTriliumAppScheme, setupTriliumAppProtocol } from "./protocol";
+import { wantsAdminMode } from "./services/admin_mode";
 import { applyLaunchOnStartup, setupAutoLaunch, wasLaunchedHidden } from "./services/auto_launch";
 import { setupCustomDictionary } from "./services/custom_dictionary";
 import { setupReferer } from "./services/referer";
@@ -147,7 +148,12 @@ export async function main() {
     });
 
     app.on("second-instance", (event, commandLine) => {
-        if (commandLine.includes("--new-window")) {
+        if (wantsAdminMode(commandLine)) {
+            // Always a new, separate window — never reveal or repurpose whatever the running
+            // main window is. A guard's plain relaunch below must always find that main window
+            // still gated, whether or not an admin window is also open right now.
+            windowService.createExtraWindow("", true);
+        } else if (commandLine.includes("--new-window")) {
             windowService.createExtraWindow("");
         } else {
             // A window that started hidden has no focus history, so use the main window.
@@ -360,6 +366,13 @@ async function onReady() {
         // available to summon it from.
         const startHidden = wasLaunchedHidden() && !options.getOptionBool("disableTray");
         await windowService.createMainWindow(startHidden);
+
+        // Andrew's own admin shortcut, launched before the app is already running: the main
+        // window above is (deliberately, always) a guard window, so admin mode gets a second,
+        // separate window of its own rather than ever becoming the one a plain relaunch reveals.
+        if (wantsAdminMode(process.argv)) {
+            await windowService.createExtraWindow("", true);
+        }
 
         // Repair the OS autostart entry so it matches the stored option (it can
         // drift if the user toggled it elsewhere). Options are loaded now that the

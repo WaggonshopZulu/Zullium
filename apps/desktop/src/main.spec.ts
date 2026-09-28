@@ -80,6 +80,7 @@ const h = vi.hoisted(() => ({
     setupAutoLaunch: vi.fn(),
     applyLaunchOnStartup: vi.fn(),
     wasLaunchedHidden: vi.fn(() => false),
+    wantsAdminMode: vi.fn((..._a: unknown[]) => false),
     disableTray: false,
     mainWindow: null as FakeWindow | null,
     unregisterAll: vi.fn(),
@@ -239,6 +240,9 @@ vi.mock("./services/auto_launch", () => ({
     applyLaunchOnStartup: (...a: unknown[]) => h.applyLaunchOnStartup(...a),
     wasLaunchedHidden: () => h.wasLaunchedHidden()
 }));
+vi.mock("./services/admin_mode", () => ({
+    wantsAdminMode: (...a: unknown[]) => h.wantsAdminMode(...a)
+}));
 vi.mock("./services/shell", () => ({ setupShellHandlers: vi.fn() }));
 vi.mock("./services/onenote", () => ({ setupOneNoteHandlers: vi.fn() }));
 // Reaches the server's restore session, and through it the data directory, which this spec does not have.
@@ -299,6 +303,8 @@ function resetState() {
     h.registerGlobalShortcuts.mockClear();
     h.wasLaunchedHidden.mockReset();
     h.wasLaunchedHidden.mockReturnValue(false);
+    h.wantsAdminMode.mockReset();
+    h.wantsAdminMode.mockReturnValue(false);
     h.disableTray = false;
     h.unregisterAll.mockClear();
     h.startServer = () => Promise.resolve({});
@@ -557,6 +563,19 @@ describe("app event handlers", () => {
             expect(h.createExtraWindow).toHaveBeenCalledWith("");
         });
 
+        it("opens a separate admin window on --admin, rather than revealing or repurposing whatever is already running", async () => {
+            const targetWindow = { isMinimized: () => false, restore: vi.fn(), show: vi.fn(), focus: vi.fn() };
+            h.lastFocusedWindow = targetWindow;
+            await bootAndReady();
+            const handler = h.appOn.get("second-instance");
+
+            h.wantsAdminMode.mockReturnValue(true);
+            handler?.({}, ["--admin"]);
+
+            expect(h.createExtraWindow).toHaveBeenCalledWith("", true);
+            expect(h.showAndFocusWindow).not.toHaveBeenCalled();
+        });
+
         it("reveals the last-focused window", async () => {
             const targetWindow = {
                 isMinimized: () => true,
@@ -662,6 +681,22 @@ describe("app event handlers", () => {
             await bootAndReady();
             await h.appOn.get("ready")?.();
             expect(h.createMainWindow).toHaveBeenCalledWith(false);
+        });
+
+        it("opens a separate admin extra window on a first launch with --admin, leaving the main window a guard window", async () => {
+            h.wantsAdminMode.mockReturnValue(true);
+            await bootAndReady();
+            await h.appOn.get("ready")?.();
+
+            expect(h.createMainWindow).toHaveBeenCalledWith(false);
+            expect(h.createExtraWindow).toHaveBeenCalledWith("", true);
+        });
+
+        it("opens no extra window on an ordinary launch", async () => {
+            await bootAndReady();
+            await h.appOn.get("ready")?.();
+
+            expect(h.createExtraWindow).not.toHaveBeenCalled();
         });
 
         it("does not register activate on non-darwin even when DB is initialized", async () => {

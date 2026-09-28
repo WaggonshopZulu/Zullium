@@ -467,6 +467,12 @@ describe("window service", () => {
             expect(win.webContents.session.setSpellCheckerLanguages).toHaveBeenCalled();
         });
 
+        it("carries the admin marker in the loaded URL when asked, ahead of the window's own hash", async () => {
+            await windowService.createExtraWindow("#root/abc", true);
+            const win = state.windows[state.windows.length - 1];
+            expect(win.loadURL).toHaveBeenCalledWith("trilium-app://app/?extraWindow=1&admin=1#root/abc");
+        });
+
         it("adopts a window the renderer opened through window.open", async () => {
             state.optionBools = { spellCheckEnabled: false };
             await windowService.createExtraWindow("#opener");

@@ -6,6 +6,7 @@ import { useCallback, useContext, useLayoutEffect, useRef, useState } from "prea
 import appContext from "../../components/app_context";
 import NoteContext from "../../components/note_context";
 import type FNote from "../../entities/fnote";
+import { requireAdminMode } from "../../services/admin_mode";
 import { t } from "../../services/i18n";
 import utils, { isElectron, isStandalone } from "../../services/utils";
 import NoteDetail from "../NoteDetail";
@@ -52,18 +53,23 @@ export default function OptionsDialog() {
     // they wait for a search to have begun rather than for the field to have been tapped.
     const showsMobileResults = searching && hasSearchTerms(searchQuery);
 
+    // Admin-gated: both remaining pages (Shortcuts, Backup) are Phase 1's "Keep — admin-gated,
+    // not guard-facing". The menu entry that reaches this is disabled outside admin mode too, but
+    // a launcher icon still calls straight into this event, bypassing that — this is the backstop.
     useTriliumEvent("showOptions", async ({ section }) => {
-        const noteContext = new NoteContext("_options-dialog");
-        await noteContext.setNote(section ?? lastSection ?? DEFAULT_SECTION, { keepActiveDialog: true });
-        setSearchQuery("");
-        setSearching(false);
+        await requireAdminMode(async () => {
+            const noteContext = new NoteContext("_options-dialog");
+            await noteContext.setNote(section ?? lastSection ?? DEFAULT_SECTION, { keepActiveDialog: true });
+            setSearchQuery("");
+            setSearching(false);
 
-        // Events triggered at note context level (e.g. the save indicator) would not work since the note context has no parent component. Propagate events to parent component so that they can be handled properly.
-        noteContext.triggerEvent = (name, data) => parentComponent?.handleEventInChildren(name, data);
-        setNoteContext(noteContext);
-        // Requesting a specific section (e.g. "set up a password") skips the mobile master list.
-        resetMobileView(section ? "page" : "list");
-        setShown(true);
+            // Events triggered at note context level (e.g. the save indicator) would not work since the note context has no parent component. Propagate events to parent component so that they can be handled properly.
+            noteContext.triggerEvent = (name, data) => parentComponent?.handleEventInChildren(name, data);
+            setNoteContext(noteContext);
+            // Requesting a specific section (e.g. "set up a password") skips the mobile master list.
+            resetMobileView(section ? "page" : "list");
+            setShown(true);
+        });
     });
 
     // Keep navigation between settings pages (sidebar entries, "Related settings" links) inside the

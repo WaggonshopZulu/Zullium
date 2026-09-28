@@ -5,6 +5,9 @@ vi.mock("../services/utils.js", () => ({
     isMobile: () => mockState.mobile,
     reloadFrontendApp: vi.fn()
 }));
+vi.mock("../services/admin_mode.js", () => ({ isAdminMode: () => mockState.admin }));
+const triggerCommand = vi.hoisted(() => vi.fn());
+vi.mock("../components/app_context.js", () => ({ default: { triggerCommand } }));
 
 const optionsState = vi.hoisted(() => ({ layoutOrientation: "vertical" }));
 vi.mock("../services/options.js", () => ({
@@ -24,7 +27,7 @@ vi.mock("./context_menu.js", () => ({
     }
 }));
 
-const mockState = { mobile: false };
+const mockState = { mobile: false, admin: false };
 
 import { showLauncherContextMenu } from "./launcher_button_context_menu.js";
 
@@ -41,17 +44,33 @@ function fakeEvent() {
 describe("showLauncherContextMenu", () => {
     beforeEach(() => {
         mockState.mobile = false;
+        mockState.admin = false;
         optionsState.layoutOrientation = "vertical";
+        triggerCommand.mockClear();
     });
 
     afterEach(() => vi.restoreAllMocks());
 
-    it("never offers a way to configure or remove from the launch bar", async () => {
+    it("never offers a way to remove from the launch bar, admin mode included", async () => {
+        await showLauncherContextMenu(null, fakeEvent());
+        mockState.admin = true;
         await showLauncherContextMenu(null, fakeEvent());
 
-        const all = titles(shown.items as unknown[]);
-        expect(all).not.toContain("launcher_button_context_menu.configure_launch_bar");
-        expect(all).not.toContain("launcher_button_context_menu.remove_from_launch_bar");
+        expect(titles(shown.items as unknown[])).not.toContain("launcher_button_context_menu.remove_from_launch_bar");
+    });
+
+    it("offers Configure Launch Bar only in admin mode, and it triggers showLaunchBarSubtree", async () => {
+        await showLauncherContextMenu(null, fakeEvent());
+        expect(titles(shown.items as unknown[])).not.toContain("launcher_button_context_menu.configure_launch_bar");
+
+        mockState.admin = true;
+        await showLauncherContextMenu(null, fakeEvent());
+        const items = shown.items as { title?: string; handler?: () => void }[];
+        const configureItem = items.find((item) => item.title === "launcher_button_context_menu.configure_launch_bar");
+        expect(configureItem).toBeDefined();
+
+        configureItem?.handler?.();
+        expect(triggerCommand).toHaveBeenCalledWith("showLaunchBarSubtree");
     });
 
     it("offers the layout orientation submenu on desktop, not on mobile", async () => {

@@ -6,6 +6,7 @@ import { useContext, useRef, useState } from "preact/hooks";
 
 import { CommandNames } from "../../components/app_context";
 import Component from "../../components/component";
+import { isAdminMode } from "../../services/admin_mode";
 import { ExperimentalFeature, ExperimentalFeatureId, getAvailableExperimentalFeatures, isExperimentalFeatureEnabled, toggleExperimentalFeature } from "../../services/experimental_features";
 import { t } from "../../services/i18n";
 import { isElectron, isMobile, isStandalone, reloadFrontendApp } from "../../services/utils";
@@ -60,21 +61,26 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
 
             <SwitchToOptions />
             {/*
-              * "Configure Launch Bar" is gone, not disabled: the Phase 2 blueprint's Launch Bar
-              * Lockdown calls for no add/rearrange affordance to be guard-visible at all, not a
-              * greyed-out one (unlike Advanced/Options below, which Phase 1 classified as
-              * admin-gated features the guard build still keeps, just not reachable yet). The
-              * underlying capability (the `_lbRoot` tree, `showLaunchBarSubtree`) is untouched for
-              * Task 8's admin mode to wire a way back in.
+              * Guard-visible only in admin mode (Task 8): the Phase 2 blueprint's Launch Bar
+              * Lockdown calls for no add/rearrange affordance to be guard-visible at all. The
+              * underlying capability (the `_lbRoot` tree, `showLaunchBarSubtree`) was always kept
+              * for this; `requireAdminMode` in the command itself is the real gate, not this line.
               */}
-            <AdvancedMenu dropStart={!isVerticalLayout} />
+            {isAdminMode() && <MenuItem command="showLaunchBarSubtree" icon={`bx ${isMobile() ? "bx-mobile" : "bx-sidebar"}`} text={t("global_menu.configure_launchbar")} />}
             {/*
-              * Disabled for the same reason as Advanced above: Phase 1's audit classified Shortcuts
-              * and Backup as "Keep — admin-gated, not guard-facing", but Task 8's admin gate doesn't
-              * exist yet. Same pattern as Advanced — TODO(Task 8): gate on admin mode instead.
+              * Disabled outside admin mode (Task 8): Phase 1's audit classified SQL Console, Backend
+              * Log, Hidden Subtree, Search History and SQL Console History "no guard needs it". The
+              * commands themselves check requireAdminMode too — this greys out the menu, it is not
+              * the actual gate.
+              */}
+            <AdvancedMenu dropStart={!isVerticalLayout} disabled={!isAdminMode()} />
+            {/*
+              * Disabled outside admin mode (Task 8): Phase 1's audit classified Shortcuts and
+              * Backup "Keep — admin-gated, not guard-facing". showOptionsCommand checks
+              * requireAdminMode too — this greys out the menu, it is not the actual gate.
               */}
             <MenuItem command="showOptions" icon="bx bx-cog" text={t("global_menu.options")}
-                disabled title={t("global_menu.options_disabled")} />
+                disabled={!isAdminMode()} title={isAdminMode() ? undefined : t("global_menu.options_disabled")} />
             <FormDropdownDivider />
 
             <KeyboardActionMenuItem command="showHelp" icon="bx bx-help-circle" text={t("global_menu.show_help")} />
@@ -97,10 +103,10 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
  * TODO(Task 8): once the admin-gated entry point exists, gate this on admin mode instead of
  * disabling unconditionally.
  */
-function AdvancedMenu({ dropStart }: { dropStart: boolean }) {
+function AdvancedMenu({ dropStart, disabled }: { dropStart: boolean, disabled: boolean }) {
     return (
         <FormDropdownSubmenu icon="bx bx-chip" title={t("global_menu.advanced")} dropStart={dropStart}
-            disabled disabledTooltip={t("global_menu.advanced_disabled")}>
+            disabled={disabled} disabledTooltip={t("global_menu.advanced_disabled")}>
             <MenuItem command="showHiddenSubtree" icon="bx bx-hide" text={t("global_menu.show_hidden_subtree")} />
             <MenuItem command="showSearchHistory" icon="bx bx-search-alt" text={t("global_menu.open_search_history")} />
             <FormDropdownDivider />

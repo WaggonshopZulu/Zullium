@@ -1,3 +1,4 @@
+import { requireAdminMode } from "../services/admin_mode.js";
 import dateNoteService from "../services/date_notes.js";
 import froca from "../services/froca.js";
 import openService from "../services/open.js";
@@ -24,14 +25,18 @@ export default class RootCommandExecutor extends Component {
     }
 
     async showSQLConsoleCommand() {
-        const sqlConsoleNote = await dateNoteService.createSqlConsole();
-        if (!sqlConsoleNote) {
-            return;
-        }
+        // Admin-gated: raw SQL against the database (Phase 1 audit; Task 6/7 disabled every
+        // guard-facing route to this — this is the backstop, so nothing reaches it another way).
+        await requireAdminMode(async () => {
+            const sqlConsoleNote = await dateNoteService.createSqlConsole();
+            if (!sqlConsoleNote) {
+                return;
+            }
 
-        const noteContext = await appContext.tabManager.openTabWithNoteWithHoisting(sqlConsoleNote.noteId, { activate: true });
+            const noteContext = await appContext.tabManager.openTabWithNoteWithHoisting(sqlConsoleNote.noteId, { activate: true });
 
-        appContext.triggerEvent("focusOnDetail", { ntxId: noteContext.ntxId });
+            appContext.triggerEvent("focusOnDetail", { ntxId: noteContext.ntxId });
+        });
     }
 
     async searchNotesCommand({ searchString, ancestorNoteId }: CommandListenerData<"searchNotes">) {
@@ -86,7 +91,8 @@ export default class RootCommandExecutor extends Component {
     }
 
     async showBackendLogCommand() {
-        await appContext.tabManager.openTabWithNoteWithHoisting("_backendLog", { activate: true });
+        // Admin-gated: see showSQLConsoleCommand above.
+        await requireAdminMode(() => appContext.tabManager.openTabWithNoteWithHoisting("_backendLog", { activate: true }));
     }
 
     async showSpaceUsageCommand() {
@@ -98,8 +104,12 @@ export default class RootCommandExecutor extends Component {
     }
 
     async showLaunchBarSubtreeCommand() {
-        const rootNote = utils.isMobile() ? "_lbMobileRoot" : "_lbRoot";
-        appContext.triggerCommand("openInTreePopup", { noteIdOrPath: rootNote, hoistedNoteId: rootNote });
+        // Admin-gated: the launch bar ships with a fixed set of icons for a guard (Phase 2
+        // blueprint, Launch Bar Lockdown); this is Andrew's way back into editing it.
+        await requireAdminMode(() => {
+            const rootNote = utils.isMobile() ? "_lbMobileRoot" : "_lbRoot";
+            appContext.triggerCommand("openInTreePopup", { noteIdOrPath: rootNote, hoistedNoteId: rootNote });
+        });
     }
 
     async showShareSubtreeCommand() {
@@ -107,15 +117,16 @@ export default class RootCommandExecutor extends Component {
     }
 
     async showHiddenSubtreeCommand() {
-        await this.showAndHoistSubtree("_hidden");
+        // Admin-gated: see showSQLConsoleCommand above.
+        await requireAdminMode(() => this.showAndHoistSubtree("_hidden"));
     }
 
     async showSQLConsoleHistoryCommand() {
-        await this.showAndHoistSubtree("_sqlConsole");
+        await requireAdminMode(() => this.showAndHoistSubtree("_sqlConsole"));
     }
 
     async showSearchHistoryCommand() {
-        await this.showAndHoistSubtree("_search");
+        await requireAdminMode(() => this.showAndHoistSubtree("_search"));
     }
 
     async showAndHoistSubtree(subtreeNoteId: string) {

@@ -181,7 +181,12 @@ export default function buildLaunchBarConfig() {
             title: t("hidden-subtree.settings-title"),
             type: "launcher",
             command: "showOptions",
-            icon: "bx bx-cog"
+            icon: "bx bx-cog",
+            // Task 8: everything showOptions opens (Shortcuts, Backup) is admin-only, so a guard
+            // should not see a button for it at all — LauncherContainer.tsx filters this label the
+            // same way it already filters desktopOnly, above. showOptionsCommand itself is also
+            // admin-gated, so this is belt-and-braces, not the only thing standing in the way.
+            attributes: [{ type: "label", name: "adminOnly" }]
         }
     ];
 

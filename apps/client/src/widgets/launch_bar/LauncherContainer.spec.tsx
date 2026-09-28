@@ -1,12 +1,19 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const mockState = vi.hoisted(() => ({ admin: false, desktop: true }));
+vi.mock("../../services/admin_mode.js", () => ({ isAdminMode: () => mockState.admin }));
+vi.mock("../../services/utils.js", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("../../services/utils.js")>()),
+    isDesktop: () => mockState.desktop
+}));
 
 import Component from "../../components/component.js";
 import type FNote from "../../entities/fnote.js";
 import { buildNote } from "../../test/easy-froca.js";
 import { ParentComponent } from "../react/react_utils.js";
-import { useLauncherChildNotes } from "./LauncherContainer.js";
+import { shouldShowLauncher, useLauncherChildNotes } from "./LauncherContainer.js";
 
 let container: HTMLDivElement;
 
@@ -69,5 +76,50 @@ describe("useLauncherChildNotes", () => {
         const freshNote = getChildNotes()?.[0];
         expect(freshNote?.title).toBe("My secret launcher");
         expect(freshNote).not.toBe(staleNote);
+    });
+});
+
+describe("shouldShowLauncher", () => {
+    afterEach(() => {
+        mockState.admin = false;
+        mockState.desktop = true;
+    });
+
+    function launcherNote(labels: Record<string, string> = {}) {
+        const attrs = Object.fromEntries(Object.entries(labels).map(([ name, value ]) => [ `#${name}`, value ]));
+        return buildNote({ id: "_lbTest", title: "Test launcher", type: "launcher", ...attrs });
+    }
+
+    it("shows an ordinary launcher regardless of platform or admin mode", () => {
+        expect(shouldShowLauncher(launcherNote())).toBe(true);
+    });
+
+    it("hides a non-launcher note, warning rather than throwing", () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const note = buildNote({ id: "_lbNotALauncher", title: "Not a launcher", type: "text" });
+
+        expect(shouldShowLauncher(note)).toBe(false);
+        expect(warn).toHaveBeenCalled();
+        warn.mockRestore();
+    });
+
+    it("hides a desktopOnly launcher off the desktop, shows it on the desktop", () => {
+        const note = launcherNote({ desktopOnly: "" });
+
+        mockState.desktop = false;
+        expect(shouldShowLauncher(note)).toBe(false);
+
+        mockState.desktop = true;
+        expect(shouldShowLauncher(note)).toBe(true);
+    });
+
+    it("hides an adminOnly launcher (e.g. _lbSettings) outside admin mode, shows it in admin mode", () => {
+        const note = launcherNote({ adminOnly: "" });
+
+        mockState.admin = false;
+        expect(shouldShowLauncher(note)).toBe(false);
+
+        mockState.admin = true;
+        expect(shouldShowLauncher(note)).toBe(true);
     });
 });

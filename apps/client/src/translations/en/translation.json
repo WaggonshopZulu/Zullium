@@ -1,4 +1,7 @@
 {
+  "admin_mode": {
+    "admin_only": "This is only available in admin mode."
+  },
   "about": {
     "version_label": "Version:",
     "version": "{{appVersion}} (database: {{dbVersion}}, sync protocol: {{syncVersion}})",
@@ -1084,8 +1087,8 @@
     "show_deleted_notes": "Show Deleted Notes",
     "show_space_usage": "Show Space Usage",
     "advanced": "Advanced",
-    "advanced_disabled": "Off in this build",
-    "options_disabled": "Off in this build",
+    "advanced_disabled": "Admin mode only",
+    "options_disabled": "Admin mode only",
     "open_dev_tools": "Open Dev Tools",
     "open_sql_console": "Open SQL Console",
     "open_sql_console_history": "Open SQL Console History",

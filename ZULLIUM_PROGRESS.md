@@ -1,6 +1,6 @@
 # Zullium / Daily Brief Logbook — Progress Log
 
-Last updated: 2026-09-27 (session ending). Fork of TriliumNext/Trilium, repo lives at
+Last updated: 2026-09-28 (Task 8 done). Fork of TriliumNext/Trilium, repo lives at
 `$HOME/build/repo` on Andrew's linked Windows machine's Cowork VM disk (native clone —
 fast, survives across sessions). A slower FUSE-mounted mirror also exists at
 `$HOME/mnt/Zullium/repo` — that is the eventual sync target (Task #12), not the working copy.
@@ -27,17 +27,17 @@ for a decision, not acting on it unasked.
 6. Strip window chrome — **DONE** (2026-09-28; see below)
 7. Lock down launch bar — **DONE, plus a chunk of the icon-label pass** (2026-09-28; see below). The rest of the
    icon-label pass needs a decision — see below.
-8. Build admin-gated entry point (Option C) — NOT STARTED
+8. Build admin-gated entry point (Option C) — **DONE** (2026-09-28; see below)
 9. Wire in branding — NOT STARTED (assets at C:\Zullium\art). User's picks (2026-09-28): sidebar top = small crest
    beside the name; sidebar bottom = nothing; empty pane = faint crest. Still open: whether the four JPGs
    (House_Guards.jpg, 37_Crisp.jpg, ZuluRPT_6.jpg, ZuluOne_Crest.jpg) are used anywhere, and whether the crest goes in
    the About box.
-10. Configure backup destination — mostly pre-built, folded into Task 8. `apps/client/.../options/backup.tsx` already
+10. Configure backup destination — mostly pre-built. `apps/client/.../options/backup.tsx` already
     has a working "Select Location" folder picker (Electron only) writing to the `customDbBackupDir` option, with a
     reset-to-default button; `backup_provider.ts` resolves it each run rather than caching a drive letter, so a
     reassigned drive letter does not break it as long as the folder still exists. `_optionsBackup` is one of the two
-    settings pages Task 4 kept, admin-gated. Nothing left to build here except making that page reachable (Task 8);
-    once it is, point it at the external drive by hand.
+    settings pages Task 4 kept, admin-gated — now reachable through Task 8's admin mode. Nothing left to build here
+    except pointing it at the external drive by hand, once there's an admin shortcut to launch it from (see Task 8).
 11. Build and smoke-test — NOT STARTED
 12. Sync finished code back to C:\Zullium\repo — NOT STARTED
 13. Remove the AI Chat feature entirely — **DONE** (earlier session)
@@ -402,12 +402,77 @@ left on disk by an earlier interrupted run on this machine — not a code issue;
 confirmed on a clean rerun.) **Not verified: the actual rendered layout** — CSS and structure only, no live/visual
 check. The user should look at the built app once and say if anything reads wrong.
 
+## Task #8 — admin-gated entry point (2026-09-28)
+Built the blueprint's approved Option C: one command-line flag (`--admin`) gates a second, separate
+window into the app's main process, so Andrew reaches admin mode through a shortcut whose target has
+`--admin` appended — kept off the shared desktop, or password-protected at its location — while every
+ordinary launch or shared-desktop icon opens the same guard-only window it always has.
+
+- **Per-window, not per-process.** Electron's `requestSingleInstanceLock()` means only one process ever
+  really runs; a second launch just forwards its command line to the first via `second-instance` and that
+  first process decides what to do. Gating admin mode on the *process* would risk the single-instance lock
+  turning an admin launch into "the" window a guard's plain click later focuses. Instead, `--admin` always
+  opens a brand-new **extra** window carrying `?admin=1` in its URL, and `createMainWindow` — the one
+  window a plain launch or a plain relaunch's second-instance focus always reveals — can never carry that
+  marker; it has no `isAdmin` parameter at all. Checked both paths: first launch with `--admin`
+  (`onReady()` in `main.ts`, after the main window is created) and relaunching with `--admin` while the
+  app is already running (`second-instance`, ahead of the existing `--new-window` and focus-last-window
+  branches).
+- **The flag itself:** `apps/desktop/src/services/admin_mode.ts` (`wantsAdminMode(argv)` — checks for the
+  literal `--admin` in `process.argv` / the forwarded `commandLine`). `apps/desktop/src/services/window.ts`'s
+  `createExtraWindow` takes an `isAdmin` flag and appends `&admin=1` to the loaded URL when set.
+- **Client-side gate:** `apps/client/src/services/admin_mode.ts` reads the `admin=1` marker once from
+  `window.location.search` at module load (mirroring the existing `extraWindow=1` marker) and exposes
+  `isAdminMode()` plus `requireAdminMode(action)`, which runs `action` only in admin mode and otherwise
+  shows a toast ("This is only available in admin mode") and returns `undefined`.
+- **Two layers of gating, everywhere it matters** — a UI-level hide plus a command-level refusal, so no
+  future UI surface (menu, launcher, context menu, command palette) can reach a gated action unchecked:
+  - UI level: `global_menu.tsx`'s Advanced submenu and Options item are `disabled={!isAdminMode()}`
+    (replacing Task 7's unconditional disable and its "TODO(Task 8)" comment); Configure Launch Bar is
+    re-added to both the global menu and the launch bar's own right-click context menu
+    (`launcher_button_context_menu.ts`), each behind `isAdminMode()`.
+  - Command level: `root_command_executor.ts`'s six previously-flagged commands (SQL Console, Backend Log,
+    Hidden Subtree, Search History, SQL Console History, Configure Launch Bar) and `OptionsDialog.tsx`'s
+    `showOptions` handler are all wrapped in `requireAdminMode()`.
+- **Closed the `_lbSettings` gap Task 7 flagged** (the Settings launcher icon that bypassed the disabled
+  Options menu entry): `hidden_subtree_launcherbar.ts`'s `_lbSettings` definition gained an `adminOnly`
+  label, enforced like any other hidden-subtree attribute; `LauncherContainer.tsx` gained an exported
+  `shouldShowLauncher(note)` that drops an `adminOnly` launcher outside admin mode (alongside the existing
+  `desktopOnly` check), so the icon no longer renders in a guard's bar at all — belt-and-braces alongside
+  `showOptions` itself now refusing to open even if reached another way.
+- **Practical step still outside source control:** the actual second shortcut is a packaging/distribution
+  detail (Task 11), not something buildable here — Andrew appends `--admin` to a Windows shortcut's
+  target (`"...\Zullium.exe" --admin`) and keeps that shortcut off the shared desktop or protects its
+  folder.
+
+**Found, flagged, not fixed (out of scope for Task 8):** while grepping for every remaining path into the
+six gated commands, `showOptions` turned up 8 more call sites passing a `section` id for a settings page
+that no longer exists post-Task-1 audit — `_optionsSecurity` (`call_to_action_definitions.ts`),
+`_optionsMedia` (`ocr_text.tsx`), `_optionsOther` (`revisions.tsx`, `recent_changes.tsx`,
+`space_usage/context_menu.ts`), `_optionsPassword` (`password_not_set.tsx`), plus two dynamic-section
+callers in `PopupEditor.tsx`. These predate this task — Task 8's gate makes them harmless for a guard (a
+refusal toast instead of a broken/empty settings page) rather than making them worse, so nothing here
+regresses, but the dangling section ids themselves are still there and unrelated to admin mode. Worth a
+pass on its own before Task 9 or 11.
+
+**Verification:** typecheck clean (`pnpm typecheck` — no errors). New/updated tests: desktop
+`admin_mode.spec.ts` (new), `window.spec.ts` (`createExtraWindow` admin-URL case), `main.spec.ts` (admin
+paths on both first launch and second-instance, plus a no-extra-window-on-ordinary-launch case); client
+`admin_mode.spec.ts` (new), `root_command_executor.spec.ts` (new — all six gated commands, refused and
+admin-mode-permitted), `launcher_button_context_menu.spec.ts` (Configure Launch Bar admin-gated),
+`hidden_subtree_launcherbar.spec.ts` (`_lbSettings` carries `adminOnly`), `LauncherContainer.spec.tsx`
+(`shouldShowLauncher` — ordinary/non-launcher/desktopOnly/adminOnly cases). Full suites: client 5479/5479,
+server 5115/5163 (48 pre-existing skips, same as Task 7), standalone 4189/4221 (32 pre-existing skips,
+same as Task 7), desktop 509/511 + 1 skipped, all clean **except one pre-existing, unrelated failure**:
+`startup_metrics.spec.ts` fails on this Windows machine on a hardcoded POSIX path literal
+(`/tmp/trilium-data/...`) compared against Node's own `path.join`, which produces backslashes on Windows —
+confirmed reproducible in isolation and untouched by this task's files, not a regression.
+
 ## Recommended next step
-`_lbSettings` (the flagged still-clickable Settings launcher icon in the default visible bar) is still open — see
-above. Otherwise Task #8 (admin-gated entry point) is next — it also completes the "TODO(Task 8)" items above
-(Advanced menu, Options) by giving them a real gate instead of an
-unconditional disable.
+Task #8 is done (see above) — the `_lbSettings` gap is closed, and Advanced/Options are gated for real
+instead of unconditionally disabled. Not yet acted on: the 8 dangling `showOptions` section-id call sites
+flagged at the end of the Task 8 entry (harmless under the new gate, but still worth a cleanup pass).
 Task #9 (branding assets) has the user's placement picks (see task list above) but still needs: whether the four JPGs
 are used anywhere, and whether the crest goes in the About box (moot if the About dialog itself is cut per the Task 6
-finding above). Task #10 (backup) needs only the external drive's folder path, entered through the existing picker
-once Task 8's admin gate exists — no more code to write there.
+finding above). Task #10 (backup) needs only the external drive's folder path, entered through the existing picker —
+now reachable through Task 8's admin mode — no more code to write there.
