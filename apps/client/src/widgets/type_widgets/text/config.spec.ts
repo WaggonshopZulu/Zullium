@@ -592,32 +592,17 @@ describe("CK config - mention feed", () => {
 });
 
 describe("CK config - AI assistant", () => {
-    const PROVIDER = [{ id: "cfg-openai", provider: "openai", selectedModels: [{ id: "gpt-5" }] }];
-
-    // The two halves are settled together: without a transport the command can never be enabled,
-    // so the button would only ever be there to be greyed out.
-    it("offers the assistant only once the feature is on and a provider is configured", async () => {
-        const off = await buildConfig(baseOpts());
-        expect(off.aiAssistant?.stream).toBeUndefined();
-        expect(toolbarItems(off)).not.toContain("aiAssistant");
-
-        // The master switch off, but a provider still stored — what disabling it actually leaves.
-        optionsState.json["llmProviders"] = PROVIDER;
-        const noSwitch = await buildConfig(baseOpts());
-        expect(noSwitch.aiAssistant?.stream).toBeUndefined();
-        expect(toolbarItems(noSwitch)).not.toContain("aiAssistant");
-
+    it("is not offered, even with the feature switched on and a provider stored", async () => {
         optionsState.map["aiEnabled"] = "true";
-        const on = await buildConfig(baseOpts());
-        expect(on.aiAssistant?.stream).toBeDefined();
-        expect(toolbarItems(on)).toContain("aiAssistant");
+        optionsState.json["llmProviders"] = [{ id: "cfg-openai", provider: "openai", selectedModels: [{ id: "gpt-5" }] }];
+
+        const config = await buildConfig(baseOpts());
+        const toolbar = Array.isArray(config.toolbar) ? config.toolbar : (config.toolbar?.items ?? []);
+
+        expect((config as Record<string, unknown>).aiAssistant).toBeUndefined();
+        expect(toolbar).not.toContain("aiAssistant");
     });
 });
-
-/** The built toolbar's own items, whichever of the two shapes CKEditor accepts it took. */
-function toolbarItems(config: EditorConfig): unknown[] {
-    return Array.isArray(config.toolbar) ? config.toolbar : (config.toolbar?.items ?? []);
-}
 
 describe("CK config - disabled plugins", () => {
     it("passes the MathLive option to the math editor", async () => {
