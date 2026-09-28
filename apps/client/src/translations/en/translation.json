@@ -2754,7 +2754,12 @@
     "searching": "Searching...",
     "no-results": "No results found",
     "more-results": "... and {{number}} more results.",
-    "show-in-full-search": "Show in full search"
+    "show-in-full-search": "Show in full search",
+    "search-button": "Search",
+    "dates-title": "Entry dates",
+    "date-from": "From",
+    "date-to": "To",
+    "clear-dates": "Clear dates"
   },
   "note_tree": {
     "collapse-title": "Collapse note tree",

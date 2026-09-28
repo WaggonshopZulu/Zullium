@@ -16,7 +16,39 @@ const TPL = /*html*/`
   <style>
     .quick-search {
         padding: 10px 10px 10px 0px;
-        height: 50px;
+        min-height: 50px;
+    }
+
+    .quick-search .quick-search-dates {
+        flex: 0 0 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px 10px;
+        padding: 8px 0 0 8px;
+        font-size: 90%;
+    }
+
+    .quick-search .quick-search-dates label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0;
+    }
+
+    .quick-search .quick-search-dates input[type="date"] {
+        font: inherit;
+        min-width: 0;
+        padding: 1px 4px;
+        border: 1px solid var(--input-border-color, var(--dropdown-border-color));
+        border-radius: 4px;
+        background: var(--input-background-color, transparent);
+        color: inherit;
+    }
+
+    .quick-search .quick-search-dates button {
+        padding: 1px 6px;
+        border: 1px solid var(--dropdown-border-color) !important;
     }
 
     .quick-search button, .quick-search .search-string {
@@ -167,6 +199,7 @@ const TPL = /*html*/`
   <div class="input-group-prepend">
     <button class="btn btn-outline-secondary search-button" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="bx bx-search"></span>
+        <span class="search-button-label">${t("quick-search.search-button")}</span>
     </button>
     <div class="dropdown-menu tn-dropdown-list">
         <div class="quick-search-results"></div>
@@ -177,7 +210,31 @@ const TPL = /*html*/`
     </div>
   </div>
   <div class="form-control form-control-sm search-string ${SEARCH_FIELD_EDITOR_CLASS}"></div>
+  <div class="quick-search-dates">
+    <span>${t("quick-search.dates-title")}</span>
+    <label>${t("quick-search.date-from")} <input type="date" class="quick-search-date-from"></label>
+    <label>${t("quick-search.date-to")} <input type="date" class="quick-search-date-to"></label>
+    <button type="button" class="btn btn-sm quick-search-clear-dates hidden-ext">${t("quick-search.clear-dates")}</button>
+  </div>
 </div>`;
+
+/**
+ * The query the server runs for what was typed and the entry dates chosen. A day note carries its
+ * date in the `dateNote` label as `YYYY-MM-DD`, so a range is two comparisons on that label, and
+ * either end may be left empty. A range typed the wrong way round is read the right way round.
+ */
+export function buildQuickSearchQuery(text: string, from: string, to: string) {
+    if (from && to && from > to) {
+        [ from, to ] = [ to, from ];
+    }
+
+    const filters = [
+        from && `#dateNote >= "${from}"`,
+        to && `#dateNote <= "${to}"`
+    ].filter(Boolean);
+
+    return [ text.trim(), ...filters ].filter(Boolean).join(" ");
+}
 
 const INITIAL_DISPLAYED_NOTES = 15;
 const LOAD_MORE_BATCH_SIZE = 10;
@@ -211,6 +268,9 @@ export default class QuickSearchWidget extends BasicWidget {
     private $dropdownMenu!: JQuery<HTMLElement>;
     private $searchResults!: JQuery<HTMLElement>;
     private $footer!: JQuery<HTMLElement>;
+    private $dateFrom!: JQuery<HTMLInputElement>;
+    private $dateTo!: JQuery<HTMLInputElement>;
+    private $clearDates!: JQuery<HTMLElement>;
 
     // State for infinite scrolling
     private allSearchResults: Array<any> = [];
@@ -228,6 +288,9 @@ export default class QuickSearchWidget extends BasicWidget {
         this.$dropdownMenu = this.$widget.find(".dropdown-menu");
         this.$searchResults = this.$dropdownMenu.find(".quick-search-results");
         this.$footer = this.$dropdownMenu.find(".quick-search-footer");
+        this.$dateFrom = this.$widget.find<HTMLInputElement>(".quick-search-date-from");
+        this.$dateTo = this.$widget.find<HTMLInputElement>(".quick-search-date-to");
+        this.$clearDates = this.$widget.find(".quick-search-clear-dates");
 
         this.dropdown = Dropdown.getOrCreateInstance(this.$widget.find("[data-bs-toggle='dropdown']")[0], {
             reference: this.$searchField[0],
@@ -247,6 +310,24 @@ export default class QuickSearchWidget extends BasicWidget {
         });
 
         this.$widget.find(".input-group-prepend").on("shown.bs.dropdown", () => this.search());
+
+        this.$dateFrom.add(this.$dateTo).on("change", () => {
+            this.$clearDates.toggleClass("hidden-ext", !this.hasDateRange());
+            if (this.query) {
+                this.runSearch();
+            }
+        });
+
+        this.$clearDates.on("click", () => {
+            this.$dateFrom.val("");
+            this.$dateTo.val("");
+            this.$clearDates.addClass("hidden-ext");
+            if (this.query) {
+                this.runSearch();
+            } else {
+                this.dropdown.hide();
+            }
+        });
 
         // Add scroll event listener for infinite scrolling
         this.$searchResults.on("scroll", () => {
@@ -268,6 +349,15 @@ export default class QuickSearchWidget extends BasicWidget {
     /** The query as it stands in the field. */
     private get searchString() {
         return this.editor?.state.doc.toString() ?? "";
+    }
+
+    private hasDateRange() {
+        return !!(this.$dateFrom.val() || this.$dateTo.val());
+    }
+
+    /** What is searched: the typed query narrowed by the dates chosen, or nothing when both are empty. */
+    private get query() {
+        return buildQuickSearchQuery(this.searchString, String(this.$dateFrom.val() ?? ""), String(this.$dateTo.val() ?? ""));
     }
 
     /** Runs on Enter: opens the results, or refreshes them when they are already open. */
@@ -311,7 +401,7 @@ export default class QuickSearchWidget extends BasicWidget {
     }
 
     async search() {
-        const searchString = this.searchString.trim();
+        const searchString = this.query;
 
         if (!searchString) {
             this.dropdown.hide();
@@ -482,7 +572,7 @@ export default class QuickSearchWidget extends BasicWidget {
         this.dropdown.hide();
 
         await appContext.triggerCommand("searchNotes", {
-            searchString: this.searchString
+            searchString: this.query
         });
     }
 

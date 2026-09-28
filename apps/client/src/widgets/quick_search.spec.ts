@@ -4,7 +4,8 @@ import appContext from "../components/app_context.js";
 import froca from "../services/froca.js";
 import linkService from "../services/link.js";
 import server from "../services/server.js";
-import QuickSearchWidget from "./quick_search.js";
+import enTranslation from "../translations/en/translation.json";
+import QuickSearchWidget, { buildQuickSearchQuery } from "./quick_search.js";
 
 // The completions fetch attribute names and values through the server; nothing here opens the popup.
 vi.mock("./ribbon/search_completions", () => ({
@@ -65,6 +66,54 @@ describe("QuickSearchWidget", () => {
 
         widget.$widget.find(".show-in-full-search").trigger("click");
         expect(triggerCommand).toHaveBeenCalledWith("searchNotes", { searchString: "#book AND tolkien" });
+    });
+
+    it("narrows the query to the entry dates chosen, for the search and the full-search handoff", async () => {
+        const triggerCommand = vi.spyOn(appContext, "triggerCommand").mockResolvedValue(undefined);
+        const widget = renderWidget();
+        mockResults(1);
+
+        setSearchString(widget, "ladder");
+        widget.$widget.find(".quick-search-date-from").val("2026-09-01");
+        widget.$widget.find(".quick-search-date-to").val("2026-09-30");
+        await widget.search();
+
+        const expected = 'ladder #dateNote >= "2026-09-01" #dateNote <= "2026-09-30"';
+        expect(server.get).toHaveBeenCalledWith(`quick-search/${encodeURIComponent(expected)}`);
+
+        widget.$widget.find(".show-in-full-search").trigger("click");
+        expect(triggerCommand).toHaveBeenCalledWith("searchNotes", { searchString: expected });
+    });
+
+    it("searches on the dates alone, and Clear dates puts the plain query back", async () => {
+        const widget = renderWidget();
+        mockResults(1);
+        const $clear = widget.$widget.find(".quick-search-clear-dates");
+        expect($clear.hasClass("hidden-ext")).toBe(true);
+
+        widget.$widget.find(".quick-search-date-from").val("2026-09-20").trigger("change");
+        expect($clear.hasClass("hidden-ext")).toBe(false);
+        await widget.search();
+        setSearchString(widget, "");
+        await widget.search();
+        expect(server.get).toHaveBeenLastCalledWith(`quick-search/${encodeURIComponent('#dateNote >= "2026-09-20"')}`);
+
+        $clear.trigger("click");
+        expect(widget.$widget.find(".quick-search-date-from").val()).toBe("");
+        expect($clear.hasClass("hidden-ext")).toBe(true);
+    });
+
+    it("gives the search button and each date field a text label, in plain English", () => {
+        const widget = renderWidget();
+        const labels = [ ".search-button-label", ".quick-search-dates > span", ".quick-search-dates label", ".quick-search-clear-dates" ];
+
+        for (const selector of labels) {
+            expect(widget.$widget.find(selector).first().text().trim(), selector).not.toBe("");
+        }
+
+        const words = enTranslation["quick-search"];
+        expect([ words["search-button"], words["dates-title"], words["date-from"], words["date-to"], words["clear-dates"] ])
+            .toStrictEqual([ "Search", "Entry dates", "From", "To", "Clear dates" ]);
     });
 
     it("keeps the full search link pinned below the scrolling results as more load", async () => {
@@ -216,3 +265,16 @@ function mockResults(count: number) {
         error: ""
     } as never);
 }
+
+describe("buildQuickSearchQuery", () => {
+    it("joins the text and whichever ends of the range are set", () => {
+        expect(buildQuickSearchQuery(" ladder ", "", "")).toBe("ladder");
+        expect(buildQuickSearchQuery("", "2026-09-01", "")).toBe('#dateNote >= "2026-09-01"');
+        expect(buildQuickSearchQuery("", "", "2026-09-30")).toBe('#dateNote <= "2026-09-30"');
+        expect(buildQuickSearchQuery("", "", "")).toBe("");
+    });
+
+    it("reads a range typed the wrong way round the right way round", () => {
+        expect(buildQuickSearchQuery("", "2026-09-30", "2026-09-01")).toBe('#dateNote >= "2026-09-01" #dateNote <= "2026-09-30"');
+    });
+});
