@@ -57,19 +57,24 @@ const TPL = /*html*/`
         z-index: 100;
         position: absolute;
         bottom: 0;
+        inset-inline-end: 17px;
         display: flex;
         align-items: flex-end;
         justify-content: flex-end;
-        inset-inline-end: 17px;
+        gap: 1px;
         border-radius: 7px;
         border: 1px solid var(--main-border-color);
     }
 
     button.tree-floating-button {
+        display: flex;
+        align-items: center;
+        gap: 5px;
         margin: 1px;
-        font-size: 1.5em;
-        padding: 5px;
+        padding: 5px 9px 5px 7px;
         max-height: 34px;
+        font-size: 13px;
+        white-space: nowrap;
         color: var(--launcher-pane-text-color);
         background-color: var(--button-background-color);
         border-radius: var(--button-border-radius);
@@ -80,16 +85,8 @@ const TPL = /*html*/`
         border: 1px solid var(--button-border-color);
     }
 
-    .collapse-tree-button {
-        inset-inline-end: 100px;
-    }
-
-    .scroll-to-active-note-button {
-        inset-inline-end: 55px;
-    }
-
-    .tree-settings-button {
-        inset-inline-end: 10px;
+    button.tree-floating-button .tree-floating-button-icon {
+        font-size: 1.5em;
     }
 
     .tree-settings-popup {
@@ -111,16 +108,25 @@ const TPL = /*html*/`
     <div class="tree"></div>
 
     <div class="tree-actions">
-        <button class="tree-floating-button bx bx-layer-minus collapse-tree-button"
+        <button class="tree-floating-button collapse-tree-button"
                 title="${t("note_tree.collapse-title")}"
-                data-trigger-command="collapseTree"></button>
+                data-trigger-command="collapseTree">
+            <span class="tree-floating-button-icon bx bx-layer-minus"></span>
+            <span class="tree-floating-button-label">${t("note_tree.collapse-title")}</span>
+        </button>
 
-        <button class="tree-floating-button bx bx-crosshair scroll-to-active-note-button"
+        <button class="tree-floating-button scroll-to-active-note-button"
                 title="${t("note_tree.scroll-active-title")}"
-                data-trigger-command="scrollToActiveNote"></button>
+                data-trigger-command="scrollToActiveNote">
+            <span class="tree-floating-button-icon bx bx-crosshair"></span>
+            <span class="tree-floating-button-label">${t("note_tree.scroll-active-title")}</span>
+        </button>
 
-        <button class="tree-floating-button bx bxs-tree tree-settings-button"
-                title="${t("note_tree.tree-settings-title")}"></button>
+        <button class="tree-floating-button tree-settings-button"
+                title="${t("note_tree.tree-settings-title")}">
+            <span class="tree-floating-button-icon bx bxs-tree"></span>
+            <span class="tree-floating-button-label">${t("note_tree.tree-settings-title")}</span>
+        </button>
     </div>
 
 
@@ -525,7 +531,12 @@ export default class NoteTreeWidget extends NoteContextAwareWidget {
                 autoExpandMS: 600,
                 preventLazyParents: false,
                 dragStart: (node, data) => {
-                    if (node.data.noteId === "root" || utils.isLaunchBarConfig(node.data.noteId) || node.data.noteId.startsWith("_options")) {
+                    // A launcher itself, not just the launch-bar root/container notes: the guard
+                    // build gives it no way to reach this tree at all (see Task 7's removal of
+                    // "Configure Launch Bar"), but the drag lock stays as its own layer regardless
+                    // of whether that entry point stays gone.
+                    if (node.data.noteId === "root" || utils.isLaunchBarConfig(node.data.noteId)
+                        || node.data.noteType === "launcher" || node.data.noteId.startsWith("_options")) {
                         return false;
                     }
 

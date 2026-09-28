@@ -25,7 +25,8 @@ for a decision, not acting on it unasked.
 4. Build Shift Log / Reference sidebar navigation — **DONE** (2026-09-28, uncommitted; see below)
 5. Scope the toolbar/ribbon — **DONE** (2026-09-28; see below)
 6. Strip window chrome — **DONE** (2026-09-28; see below)
-7. Lock down launch bar — NOT STARTED
+7. Lock down launch bar — **DONE, plus a chunk of the icon-label pass** (2026-09-28; see below). The rest of the
+   icon-label pass needs a decision — see below.
 8. Build admin-gated entry point (Option C) — NOT STARTED
 9. Wire in branding — NOT STARTED (assets at C:\Zullium\art). User's picks (2026-09-28): sidebar top = small crest
    beside the name; sidebar bottom = nothing; empty pane = faint crest. Still open: whether the four JPGs
@@ -295,10 +296,80 @@ Phase 2 blueprint scope: bold, italic, underline; highlight color; font family a
   pre-existing) green, standalone 261/4219 (32 skipped, pre-existing) green, desktop 24/25 files green — only the
   flagged `startup_metrics.spec.ts` still fails, confirmed unrelated.
 
+## Task #7 — launch bar lockdown, plus findings from the sweep (2026-09-28)
+
+**Drag lock (code-level).** `note_tree.ts`'s `dragStart` blocked only the six named launch-bar container ids
+(`isLaunchBarConfig(noteId)`) — an individual launcher note (any note with `noteType === "launcher"`, wherever it
+sits in that subtree) was never covered. Extended the check to also block `noteType === "launcher"`. New `dragStart`
+describe block in `note_tree.spec.ts`.
+
+**No add/configure affordance (structural).** Removed every guard-facing path into the `_lbRoot` tree editor:
+- `launcher_button_context_menu.ts`: dropped "Configure launch bar" and "Remove from launch bar" from the launch
+  bar's own right-click menu (along with `removeFromLaunchBar`/`canRemoveFromLaunchBar`, now unused). Kept the
+  "Launch bar orientation" submenu — a display preference, not content-editing, and outside the blueprint's stated
+  concern. New `launcher_button_context_menu.spec.ts`.
+- `global_menu.tsx`: removed the "Configure Launchbar" item entirely (not disabled — the blueprint calls for no
+  affordance at all here, unlike Advanced/Options below).
+- `command_registry.ts`: removed the "Configure Launch Bar" and "Search History" command-palette entries (see the
+  bypass below).
+- The underlying capability — `_lbRoot`, `showLaunchBarSubtreeCommand`, `LauncherContextMenu`,
+  `showLaunchBarManagementContextMenu` (now dead, its only caller was the `left_pane_toggle` Task 4 deleted) — is
+  untouched, for Task 8's admin mode to wire a way back in.
+
+**A real gap in Task 6's Advanced-menu fix, found and closed: the command palette (Ctrl+Shift+J) bypassed it
+entirely.** Every `keyboard_actions.ts` entry auto-registers into the palette (`command_registry.ts`
+`registerKeyboardActions`) unless marked `ignoreFromCommandPalette`, independent of whether its menu item is
+disabled. `showSQLConsole` and `showBackendLog` are keyboard actions without that flag — a guard could press
+Ctrl+Shift+J, type "SQL", and reach the console directly, disabled menu or not. Added `ignoreFromCommandPalette: true`
+to both. (`showHiddenSubtree`/`showSearchHistory`/`showSQLConsoleHistory` are plain `MenuItem`s, not keyboard actions,
+so they were never auto-registered — but `showSearchHistory` **was** manually registered in `command_registry.ts`
+as `"show-search-history"`, a second, separate bypass; removed alongside `"show-launch-bar"`.) This closes the gap
+in Task 6's fix from the same command-palette angle Task 6 hadn't checked. `command_registry.spec.ts` updated to
+assert both stay unregistered.
+
+**Extended the same "disabled, not deleted" treatment to Options/Settings — user precedent applied, not a fresh ask.**
+While mapping the launch bar's default visible set, found `_lbSettings` → `showOptions` sitting in
+`desktopVisibleLaunchers` *and* `global_menu.tsx`'s own gear icon — both fully guard-reachable, leading to the
+Shortcuts and Backup pages Phase 1's audit already classified "Keep — admin-gated, not guard-facing." No task has
+built that gate yet. This is the same shape of gap as Task 6's Advanced menu, and the user's decision there ("turn it
+to simply non-clickable") generalizes directly, so applied it rather than reopening the question: `global_menu.tsx`'s
+"Options" `MenuItem` is now `disabled` with a "TODO(Task 8)" comment, same pattern as Advanced. **Flag, not yet
+touched: `_lbSettings` itself is still a live, clickable launcher icon in the default visible bar** (a launcher
+button, not a menu item — the `disabled` mechanism used for menu items doesn't apply to it) — pressing it still opens
+the same now-mostly-harmless-but-still-reachable Options dialog. Needs its own fix (most likely: give it the same
+`enforceDeleted` treatment as `_zenMode`/`_lbSidebarChat` below, or move it out of the default visible set) —
+deliberately left alone pending the user's read of this file, since it's adjacent to the still-open "should the
+default visible launcher set be curated" question below.
+
+**Two dead launchers, fixed (real bugs, not judgment calls).** `_zenMode` (`command: "toggleZenMode"`, a command
+Task 6 deleted) and `_lbSidebarChat` (`builtinWidget: "sidebarChat"`, never a case in `LauncherContainer.tsx`'s
+`initBuiltinWidget` switch — orphaned since Task 13 removed AI Chat) both pointed at nothing. Marked
+`enforceDeleted: true`, matching the existing `_lbLlmChat` pattern. `hidden_subtree_launcherbar.spec.ts` updated.
+
+**Icon labels — tree header done, the rest needs a decision (see the question in chat).** Labelled the tree's three
+floating buttons (Collapse, Scroll to active note, Tree settings) — `note_tree.ts`'s `.tree-actions` bar had room to
+grow, so this was a straightforward CSS change (flex `gap` instead of fixed `inset-inline-end` offsets per button,
+plus a text `<span>` next to each icon). **Not done, and each needs its own decision, not a silent default:**
+- The vertical launcher rail is a hard **53px** width, shared by the global menu button and every launch-bar icon —
+  they are literally the same design decision (same rail), not separable as originally planned.
+- Most other icon-only buttons across the app (title-row split-pane buttons, and roughly 40 more call sites) go
+  through the shared `ActionButton` component, whose `text` prop is currently tooltip-only. Fixing `ActionButton`
+  itself would touch all ~40 at once, but they sit in visibly different contexts (tab row, dropdown rows, toolbars,
+  dialogs) with no single width headroom to check — a blanket change risks breaking layouts I have not individually
+  reviewed. The tab row in particular (many small per-tab buttons in a repeating scrollable row) is a case where a
+  full visible-text label per instance may not even be the right shape of fix (a browser's own tab-close buttons face
+  the same problem) — worth the user's steer specifically, not just a width increase.
+
+**Also confirmed, no work needed:** the "should the default *visible* launcher set itself be curated for guards"
+question flagged after reading `hidden_subtree_launcherbar.ts` (Settings gear aside — above) mostly resolves itself:
+`_commandPalette` and `_lbBackendLog` are in `desktopAvailableLaunchers`, not the visible set, and with "Configure
+Launch Bar" now unreachable, a guard has no way to move them into the visible bar at all.
+
 ## Recommended next step
-Task #7: lock down the launch bar, together with the icon-label pass (global menu button, tree header buttons, tab
-row, title-row buttons, and the launch bar itself — the one that needs an actual layout change: 53px is too narrow for
-a label, so it needs widening or a horizontal layout).
+Two things need the user's input before continuing (see the question in chat): the launch bar's icon-label width
+decision, and what to do about `_lbSettings`. Once answered, Task #8 (admin-gated entry point) is next — it also
+completes the "TODO(Task 8)" items above (Advanced menu, Options) by giving them a real gate instead of an
+unconditional disable.
 Task #9 (branding assets) has the user's placement picks (see task list above) but still needs: whether the four JPGs
 are used anywhere, and whether the crest goes in the About box (moot if the About dialog itself is cut per the Task 6
 finding above). Task #10 (backup) needs only the external drive's folder path, entered through the existing picker

@@ -58,9 +58,22 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
             <FormDropdownDivider />
 
             <SwitchToOptions />
-            <MenuItem command="showLaunchBarSubtree" icon={`bx ${isMobile() ? "bx-mobile" : "bx-sidebar"}`} text={t("global_menu.configure_launchbar")} />
+            {/*
+              * "Configure Launch Bar" is gone, not disabled: the Phase 2 blueprint's Launch Bar
+              * Lockdown calls for no add/rearrange affordance to be guard-visible at all, not a
+              * greyed-out one (unlike Advanced/Options below, which Phase 1 classified as
+              * admin-gated features the guard build still keeps, just not reachable yet). The
+              * underlying capability (the `_lbRoot` tree, `showLaunchBarSubtree`) is untouched for
+              * Task 8's admin mode to wire a way back in.
+              */}
             <AdvancedMenu dropStart={!isVerticalLayout} />
-            <MenuItem command="showOptions" icon="bx bx-cog" text={t("global_menu.options")} />
+            {/*
+              * Disabled for the same reason as Advanced above: Phase 1's audit classified Shortcuts
+              * and Backup as "Keep — admin-gated, not guard-facing", but Task 8's admin gate doesn't
+              * exist yet. Same pattern as Advanced — TODO(Task 8): gate on admin mode instead.
+              */}
+            <MenuItem command="showOptions" icon="bx bx-cog" text={t("global_menu.options")}
+                disabled title={t("global_menu.options_disabled")} />
             <FormDropdownDivider />
 
             <KeyboardActionMenuItem command="showHelp" icon="bx bx-help-circle" text={t("global_menu.show_help")} />

@@ -81,21 +81,10 @@ export class CommandRegistry {
             }
         });
 
-        this.register({
-            id: "show-search-history",
-            name: t("command_palette.search_history_title"),
-            description: t("command_palette.search_history_description"),
-            icon: "bx bx-history",
-            handler: () => appContext.triggerCommand("showSearchHistory")
-        });
-
-        this.register({
-            id: "show-launch-bar",
-            name: t("command_palette.configure_launch_bar_title"),
-            description: t("command_palette.configure_launch_bar_description"),
-            icon: "bx bx-sidebar",
-            handler: () => appContext.triggerCommand("showLaunchBarSubtree")
-        });
+        // "Search History" and "Configure Launch Bar" are deliberately not registered here: both
+        // are disabled/removed from their menu (see global_menu.tsx's Advanced submenu and the
+        // launch bar's own context menu), and a palette entry would have reopened the same door
+        // through Ctrl+Shift+J.
 
         this.register({
             id: "pin-active-tab",

@@ -84,13 +84,9 @@ export default function buildLaunchBarConfig() {
             targetNoteId: "_backendLog",
             icon: "bx bx-detail"
         },
-        {
-            id: "_zenMode",
-            title: t("hidden-subtree.zen-mode"),
-            type: "launcher",
-            command: "toggleZenMode",
-            icon: "bx bxs-yin-yang"
-        },
+        // Zen mode was removed with the rest of the window chrome (Task 6) — it hid the sidebar,
+        // which this build never allows. The launcher pointed at a command that no longer exists.
+        { id: "_zenMode", title: "Zen mode", type: "launcher", enforceDeleted: true },
         {
             id: "_colorSchemeSwitcher",
             title: t("hidden-subtree.color-scheme-switcher-title"),
@@ -98,13 +94,9 @@ export default function buildLaunchBarConfig() {
             builtinWidget: "colorSchemeSwitcher",
             icon: "bx bx-adjust"
         },
-        {
-            id: "_lbSidebarChat",
-            title: t("hidden-subtree.sidebar-chat-title"),
-            type: "launcher",
-            builtinWidget: "sidebarChat",
-            icon: "bx bx-message-square-dots"
-        },
+        // Removed with the AI Chat feature (Task 13) — LauncherContainer.tsx never registered a
+        // "sidebarChat" builtin widget for this to resolve to.
+        { id: "_lbSidebarChat", title: "Sidebar chat", type: "launcher", enforceDeleted: true },
         { id: "_lbDeletedNotes", ...sharedLaunchers.deletedNotes }
     ];
 

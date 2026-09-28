@@ -99,11 +99,14 @@ describe("CommandRegistry default commands", () => {
                 "export-note",
                 "show-attachments",
                 "search-notes",
-                "search-in-subtree",
-                "show-search-history",
-                "show-launch-bar"
+                "search-in-subtree"
             ])
         );
+        // Deliberately not registered: both are disabled/removed from their menu (see
+        // global_menu.tsx's Advanced submenu and the launch bar's context menu), and a palette
+        // entry would have reopened the same door through Ctrl+Shift+J.
+        expect(ids).not.toContain("show-search-history");
+        expect(ids).not.toContain("show-launch-bar");
         // getAllCommands returns a name-sorted list.
         const names = registry.getAllCommands().map((c) => c.name);
         expect([...names].sort((a, b) => a.localeCompare(b))).toEqual(names);
@@ -127,11 +130,6 @@ describe("CommandRegistry default commands", () => {
         await registry.executeCommand("search-in-subtree");
         expect(triggerCommand).toHaveBeenCalledWith("searchInSubtree", { notePath: "root/abc" });
 
-        await registry.executeCommand("show-search-history");
-        expect(triggerCommand).toHaveBeenCalledWith("showSearchHistory");
-
-        await registry.executeCommand("show-launch-bar");
-        expect(triggerCommand).toHaveBeenCalledWith("showLaunchBarSubtree");
     });
 
     it("export-note and search-in-subtree skip triggering when there is no active note path", async () => {

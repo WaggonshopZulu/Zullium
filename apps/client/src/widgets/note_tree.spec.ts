@@ -185,3 +185,50 @@ describe("files dropped on the tree", () => {
         expect(uploadFiles).toHaveBeenCalledWith("notes", "target", [file], expect.objectContaining({ format: "auto" }));
     });
 });
+
+describe("dragStart", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    /** The dnd5 dragStart handler the widget registers, with nothing live behind the tree. */
+    async function getDragStart() {
+        const widget = new NoteTreeWidget();
+        let treeOptions: Fancytree.FancytreeOptions | undefined;
+        vi.spyOn(widget, "prepareRootNode").mockReturnValue({ key: "root" } as never);
+        vi.spyOn($.fn, "fancytree").mockImplementation(function (this: JQuery, opts: unknown) {
+            treeOptions = opts as Fancytree.FancytreeOptions;
+            return this;
+        } as never);
+        vi.spyOn($.ui.fancytree, "getTree").mockReturnValue({} as never);
+
+        widget.doRender();
+        await new Promise((resolve) => setTimeout(resolve));
+        widget.initFancyTree();
+
+        return (treeOptions?.dnd5 as { dragStart(node: unknown, data: unknown): boolean }).dragStart;
+    }
+
+    it("refuses to start dragging a launcher note, wherever it sits in the launch-bar subtree", async () => {
+        const dragStart = await getDragStart();
+
+        // Neither a launcher already in the visible bar nor one still sitting in the available
+        // list — a launcher is a launcher regardless of its parent, unlike the six named
+        // container ids isLaunchBarConfig() checks.
+        for (const noteId of [ "_lbNewNote", "_someCustomLauncher" ]) {
+            expect(dragStart({ data: { noteId, noteType: "launcher" } }, { dataTransfer: new DataTransfer() })).toBe(false);
+        }
+    });
+
+    it("still refuses root, the launch-bar containers and Options, and still allows an ordinary note", async () => {
+        const dragStart = await getDragStart();
+
+        for (const noteId of [ "root", "_lbRoot", "_lbVisibleLaunchers", "_optionsBackup" ]) {
+            expect(dragStart({ data: { noteId, noteType: "text" } }, { dataTransfer: new DataTransfer() }), noteId).toBe(false);
+        }
+
+        vi.spyOn(NoteTreeWidget.prototype, "getSelectedOrActiveNodes").mockReturnValue([]);
+        const dataTransfer = new DataTransfer();
+        expect(dragStart({ data: { noteId: "ordinaryNote", noteType: "text" } }, { dataTransfer })).toBe(true);
+    });
+});

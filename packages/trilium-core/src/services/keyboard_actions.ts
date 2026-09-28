@@ -512,10 +512,13 @@ function getDefaultKeyboardActions() {
             friendlyName: t("keyboard_action_names.show-sql-console"),
             actionName: "showSQLConsole",
             iconClass: "bx bx-data",
-            // No default shortcut: the menu entry that reaches this is disabled in this build
-            // (global_menu.tsx's Advanced submenu, flagged in ZULLIUM_PROGRESS.md), and a live
-            // shortcut would be a way round that.
+            // No default shortcut, and kept off the command palette: the menu entry that reaches
+            // this is disabled in this build (global_menu.tsx's Advanced submenu, flagged in
+            // ZULLIUM_PROGRESS.md). Every keyboard action registers itself into the command
+            // palette by default (see command_registry.ts), so a live shortcut or a palette entry
+            // would each be a way round the disabled menu on their own.
             defaultShortcuts: [],
+            ignoreFromCommandPalette: true,
             description: t("keyboard_actions.show-sql-console"),
             scope: "window"
         },
@@ -524,6 +527,8 @@ function getDefaultKeyboardActions() {
             actionName: "showBackendLog",
             iconClass: "bx bx-detail",
             defaultShortcuts: [],
+            // See showSQLConsole above: kept off the command palette for the same reason.
+            ignoreFromCommandPalette: true,
             description: t("keyboard_actions.show-backend-log"),
             scope: "window"
         },
