@@ -246,19 +246,33 @@ Phase 2 blueprint scope: bold, italic, underline; highlight color; font family a
 - **Icon labels (standing rule):** not done this task. Deferred to Task 7 together with the launch bar rework, since
   the launch bar's 53px column is the one that actually needs a layout change to fit labels, and doing the global menu
   button / tree header buttons / tab row / title-row buttons separately first would mean touching the same files twice.
-- **Two things found during this sweep, flagged, NOT acted on — need a decision:**
-  1. **`global_menu.tsx`'s Advanced submenu** (Hidden Subtree, Search History, Backend Log, **SQL Console** — raw SQL
-     against `document.db`, arguably a bigger risk than the scripting engine Task 2 already removed — SQL Console
-     History, Reload Frontend) is fully guard-visible today, with **no admin gate at all**. Task 1's audit covered the
-     Settings dialog and named services only; it never looked at this menu, so these were never weighed against "no
-     guard needs it." `showSQLConsole` even has its own default shortcut (Alt+O). Options: cut some/all of it now (Task
-     2-style), or fold it behind the Task 8 admin gate alongside Backup/Shortcuts. **Left in place, untouched, pending
-     the user's call.**
-  2. **The About dialog** (`about.tsx`) is heavily Trilium-branded: "Trilium Notes" heading, `triliumnotes.org` link,
-     `github.com/TriliumNext/Trilium` links (GitHub + license + contributors), donate link. Reachable from the still
-     ungated global menu. The blueprint's "no Trilium/TriliumNext text" line sits under Title Bar specifically; whether
-     it also means the About dialog is a real design call (keep for AGPL attribution vs. rewrite vs. remove the menu
-     entry) rather than something to rewrite unilaterally. **Left in place, untouched, pending the user's call.**
+- **The two flagged findings above, resolved 2026-09-28 on the user's instructions:**
+  1. **Advanced submenu (Hidden Subtree, Search History, Backend Log, SQL Console, SQL Console History, Reload
+     Frontend) — disabled, not deleted.** User's call: "turn it to simply non-clickable" rather than a Task 2-style
+     code removal, since Task 8 will need this menu again for admin mode. `FormDropdownSubmenu`
+     (`widgets/react/FormList.tsx`) gained a `disabled` prop: when set, the submenu never opens (click handler no-ops)
+     **and its children are never mounted at all** — not a CSS grey-out, so nothing inside is reachable by click,
+     hover-open (the desktop CSS opens submenus on `:hover`) or Tab. `global_menu.tsx`'s `AdvancedMenu` now passes
+     `disabled` unconditionally, with a "TODO(Task 8)" comment to gate it on admin mode instead once that exists,
+     and a tooltip ("Off in this build"). Closed the one thing a disabled *menu* alone wouldn't stop: `showSQLConsole`'s
+     own default keyboard shortcut (Alt+O) is removed at the source in `keyboard_actions.ts`, so the menu being
+     unclickable isn't undermined by a live shortcut. New tests in `FormList.spec.tsx` cover both states.
+  2. **About dialog — rebranded, not removed.** User's call: rebrand it. Rewrote `about.tsx`/`.css`: heading is
+     `APP_NAME`; dropped the Trilium Notes heading, the `triliumnotes.org` link, the GitHub links (repo, commit,
+     contributors), the contributor list and its hover-history tooltips, the channel badge (nightly/standalone — not
+     meaningful for one fixed build), and the donate button/styling, along with the `contributors.json` import and the
+     now-unused CSS behind all of it. Kept: version/DB/sync-protocol info, build date and revision, the data directory
+     (still useful for support), and one footer link — AGPL-3.0, repointed from Trilium's own docs site to the
+     canonical `gnu.org` license text, plus a plain attribution line ("Based on TriliumNext Notes, licensed under
+     AGPL-3.0."), which is what AGPL's notice-preservation actually asks for, without carrying Trilium's own community
+     branding. Global menu's "About Trilium Notes" label is now "About Daily Brief Logbook". `en-GB` catalog updated
+     to match (and given the "licence" spelling it was missing). New `about.spec.tsx` covers the branding and the
+     kept/dropped content. (Reachability of the menu item itself is unaffected — it opens fine, unlike Advanced above,
+     since there was never a risk in the dialog itself, only in its wording.)
+  - **Testing note for whoever touches this dialog again:** its `<Trans i18nKey=.../>` needs `react-i18next` mocked
+    in a unit test (`vi.mock("react-i18next", () => ({ Trans: ... }))`) — without it, Preact throws "Invalid hook
+    call" *inside* `Modal`'s render once `show` flips true, which Preact swallows without failing the test, so the
+    dialog just silently renders empty. `about.spec.tsx` has the working mock to copy.
 - Tests: `main.spec.ts`'s `getDemoArchive` assertion was still expecting a `Buffer` from the pre-Task-4 desktop code —
   a leftover from Task 4, caught and fixed here (now asserts `null`). `window.spec.ts`'s menu-template test rewritten
   for the Edit-only menu. New case in `tab_manager.spec.ts` for the title. `preload.spec.ts` / `window.spec.ts` had

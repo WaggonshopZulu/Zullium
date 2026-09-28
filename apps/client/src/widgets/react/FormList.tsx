@@ -254,21 +254,36 @@ export function FormDropdownDivider() {
     />;
 }
 
-export function FormDropdownSubmenu({ icon, title, children, dropStart, onDropdownToggleClicked }: {
+export function FormDropdownSubmenu({ icon, title, children, dropStart, onDropdownToggleClicked, disabled, disabledTooltip }: {
     icon: string,
     title: ComponentChildren,
     children: ComponentChildren,
     onDropdownToggleClicked?: () => void,
-    dropStart?: boolean
+    dropStart?: boolean,
+    /**
+     * When true, the submenu never opens and its `children` are never mounted — not a CSS-only
+     * grey-out, so nothing inside can be reached by any path (click, hover-open, keyboard).
+     */
+    disabled?: boolean,
+    /** Shown as the row's `title` attribute when `disabled`, explaining why. */
+    disabledTooltip?: string
 }) {
     const [ openOnMobile, setOpenOnMobile ] = useState(false);
 
     return (
-        <li className={clsx("dropdown-item dropdown-submenu", { "submenu-open": openOnMobile, "dropstart": dropStart })}>
+        <li
+            className={clsx("dropdown-item dropdown-submenu", { "submenu-open": openOnMobile, "dropstart": dropStart, "disabled": disabled })}
+            aria-disabled={disabled}
+            title={disabled ? disabledTooltip : undefined}
+        >
             <span
                 className="dropdown-toggle"
                 onClick={(e) => {
                     e.stopPropagation();
+
+                    if (disabled) {
+                        return;
+                    }
 
                     if (isMobile()) {
                         setOpenOnMobile(!openOnMobile);
@@ -283,7 +298,7 @@ export function FormDropdownSubmenu({ icon, title, children, dropStart, onDropdo
             </span>
 
             <ul className={`dropdown-menu ${openOnMobile ? "show" : ""}`}>
-                {children}
+                {!disabled && children}
             </ul>
         </li>
     );

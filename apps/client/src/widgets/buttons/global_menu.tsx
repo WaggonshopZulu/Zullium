@@ -73,9 +73,20 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
     );
 }
 
+/**
+ * Disabled rather than removed: SQL Console, Backend Log and Hidden Subtree are real power-
+ * user/data risk (Task 1's audit never looked at this menu, only Settings), with no admin
+ * gate to sit behind yet. `disabled` unmounts the children entirely (see FormDropdownSubmenu),
+ * so nothing here is reachable by click, hover-open or Tab. The matching keyboard shortcut for
+ * SQL Console (Alt+O) is removed at its source in keyboard_actions.ts, so disabling the menu
+ * isn't a door left open round the back.
+ * TODO(Task 8): once the admin-gated entry point exists, gate this on admin mode instead of
+ * disabling unconditionally.
+ */
 function AdvancedMenu({ dropStart }: { dropStart: boolean }) {
     return (
-        <FormDropdownSubmenu icon="bx bx-chip" title={t("global_menu.advanced")} dropStart={dropStart}>
+        <FormDropdownSubmenu icon="bx bx-chip" title={t("global_menu.advanced")} dropStart={dropStart}
+            disabled disabledTooltip={t("global_menu.advanced_disabled")}>
             <MenuItem command="showHiddenSubtree" icon="bx bx-hide" text={t("global_menu.show_hidden_subtree")} />
             <MenuItem command="showSearchHistory" icon="bx bx-search-alt" text={t("global_menu.open_search_history")} />
             <FormDropdownDivider />

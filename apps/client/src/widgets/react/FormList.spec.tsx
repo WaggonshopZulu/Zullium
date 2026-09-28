@@ -8,7 +8,7 @@ vi.mock("bootstrap", () => ({
     Tooltip: class { static getInstance() { return null; } }
 }));
 
-import FormList, { FormListItem } from "./FormList";
+import FormList, { FormDropdownSubmenu, FormListItem } from "./FormList";
 
 describe("FormList keyboard activation", () => {
     it.each([ "Enter", " " ])("activates the focused item on %j like a click", (key) => {
@@ -53,6 +53,41 @@ describe("FormList keyboard activation", () => {
 
         expect(onSelect).not.toHaveBeenCalled();
         expect(event.defaultPrevented).toBe(false);
+    });
+});
+
+describe("FormDropdownSubmenu disabled", () => {
+    it("never mounts its children, so nothing inside can be clicked, tabbed to or opened by hover", () => {
+        const onToggle = vi.fn();
+        const container = mount(
+            <FormDropdownSubmenu icon="bx bx-chip" title="Advanced" disabled disabledTooltip="Off in this build" onDropdownToggleClicked={onToggle}>
+                <FormListItem value="sql">SQL Console</FormListItem>
+            </FormDropdownSubmenu>
+        );
+
+        expect(container.querySelector(".dropdown-submenu")?.className).toContain("disabled");
+        expect(container.querySelector("[aria-disabled]")?.getAttribute("aria-disabled")).toBe("true");
+        expect(container.textContent).not.toContain("SQL Console");
+
+        container.querySelector<HTMLElement>(".dropdown-toggle")?.click();
+        expect(onToggle).not.toHaveBeenCalled();
+    });
+
+    it("shows the given tooltip, and mounts its children as normal when not disabled", () => {
+        const disabled = mount(
+            <FormDropdownSubmenu icon="bx bx-chip" title="Advanced" disabled disabledTooltip="Off in this build">
+                <FormListItem value="sql">SQL Console</FormListItem>
+            </FormDropdownSubmenu>
+        );
+        expect(disabled.querySelector(".dropdown-submenu")?.getAttribute("title")).toBe("Off in this build");
+
+        const enabled = mount(
+            <FormDropdownSubmenu icon="bx bx-chip" title="Advanced">
+                <FormListItem value="sql">SQL Console</FormListItem>
+            </FormDropdownSubmenu>
+        );
+        expect(enabled.textContent).toContain("SQL Console");
+        expect(enabled.querySelector(".dropdown-submenu")?.className).not.toContain("disabled");
     });
 });
 

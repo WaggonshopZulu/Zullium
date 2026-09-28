@@ -512,7 +512,10 @@ function getDefaultKeyboardActions() {
             friendlyName: t("keyboard_action_names.show-sql-console"),
             actionName: "showSQLConsole",
             iconClass: "bx bx-data",
-            defaultShortcuts: ["Alt+O"],
+            // No default shortcut: the menu entry that reaches this is disabled in this build
+            // (global_menu.tsx's Advanced submenu, flagged in ZULLIUM_PROGRESS.md), and a live
+            // shortcut would be a way round that.
+            defaultShortcuts: [],
             description: t("keyboard_actions.show-sql-console"),
             scope: "window"
         },
