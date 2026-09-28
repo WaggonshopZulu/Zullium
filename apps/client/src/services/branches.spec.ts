@@ -1,3 +1,4 @@
+import { REFERENCE_NOTE_ID, SHIFT_LOG_NOTE_ID } from "@triliumnext/commons";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // branches.ts registers two ws.subscribeToMessages callbacks at import time. branches.ts is loaded
@@ -97,6 +98,16 @@ describe("moveBeforeBranch", () => {
         server.put = vi.fn(async () => ({ success: false, message: "nope" })) as typeof server.put;
         await branches.moveBeforeBranch(["a1"], "before1");
         expect(toastService.showError).toHaveBeenCalledWith("nope");
+    });
+
+    it("never moves the Shift Log or Reference branches", async () => {
+        const target = makeBranch("target1", buildNote({ title: "Target" }).noteId);
+        makeBranch("shiftLogBranch", SHIFT_LOG_NOTE_ID);
+        makeBranch("referenceBranch", REFERENCE_NOTE_ID);
+
+        await branches.moveBeforeBranch(["shiftLogBranch", "referenceBranch"], target.branchId);
+
+        expect(server.put).not.toHaveBeenCalled();
     });
 
     it("returns early when before-branch is missing", async () => {

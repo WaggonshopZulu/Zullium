@@ -665,8 +665,23 @@ export class AppContext extends Component {
         reportSplashPhase("notes");
         await froca.initializedPromise;
 
-        this.tabManager.loadTabs();
+        void this.tabManager.loadTabs().then(() => this.openTodayNoteOnStartup());
+    }
 
+    /**
+     * Opens today's day note when the app starts, which creates it if this is the day's first entry.
+     * A window opened at a specific note, such as a link from another window, is left where it is.
+     */
+    private async openTodayNoteOnStartup() {
+        if (!this.isMainWindow || linkService.parseNavigationStateFromUrl(window.location.href).notePath) {
+            return;
+        }
+
+        try {
+            await this.triggerCommand("openTodayNote");
+        } catch (e) {
+            console.warn("Unable to open today's note at startup.", e);
+        }
     }
 
     initComponents() {

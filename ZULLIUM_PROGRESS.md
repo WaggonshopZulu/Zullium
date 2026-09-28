@@ -22,7 +22,7 @@ for a decision, not acting on it unasked.
 1. Strip Settings/Options module — **DONE** (earlier session)
 2. Remove scripting engine, relation map, attribute editor — **DONE** (this session)
 3. Remove update-checker network call — **DONE** (2026-09-28, uncommitted; see below)
-4. Build Shift Log / Reference sidebar navigation — NOT STARTED
+4. Build Shift Log / Reference sidebar navigation — **DONE** (2026-09-28, uncommitted; see below)
 5. Scope the toolbar/ribbon — NOT STARTED
 6. Strip window chrome — NOT STARTED
 7. Lock down launch bar — NOT STARTED
@@ -131,7 +131,41 @@ Recovered from the VM disk into `C:\Zulliumecoveredepo`, committed as `cce19ec
 - Verified: `pnpm typecheck` clean; `utils.spec.ts` 113/113. Dependencies installed with `pnpm install --frozen-lockfile`.
 - Environment: run pnpm 12.6.0 (`npm i -g pnpm`); `core.fileMode=false` set locally on this copy (NTFS lost exec bits).
 
+## Task #4 — Shift Log / Reference sidebar (2026-09-28)
+Built from the Phase 2 blueprint text. **Mock-up differences, decided in favour of the written blueprint:** the mock-up
+shows one root ("Cluny Security") with the year tree and Reference beneath it, and days oldest-first; the blueprint says
+two top-level branches, newest first. Built as two top-level branches, newest first, keeping the mock-up's
+year > month > day nesting.
+- `packages/commons/src/lib/guard_structure.ts`: `SHIFT_LOG_NOTE_ID` (`shiftLogRoot`), `REFERENCE_NOTE_ID`
+  (`referenceRoot`), `GUARD_ROOT_NOTE_IDS`.
+- `packages/trilium-core/src/services/guard_structure.ts`: `ensureGuardStructure()` creates both notes under `root`
+  (Shift Log first) and restores their labels. Called at the end of `checkHiddenSubtree`, which already runs on first
+  start, every start and on change, in server, desktop and standalone. Shift Log carries `#calendarRoot`, `#sorted`
+  and an inheritable `#sortDirection=desc`; the year, month and day titles (`2026`, `09 - September`, `27 - Sunday`)
+  start with a number, so title order reversed is newest first at every level. Reference carries `#sorted`.
+  A changed title or position is left alone.
+- `bbranch.ts` `deleteBranch` refuses the two branches; client `branches.ts` `filterRootNote` also keeps them out of
+  move/cut/clone/delete.
+- Left pane cannot be hidden: `LeftPaneContainer` is always shown; `left_pane_toggle` replaced by a headless
+  `LeftPaneResizer` (the resizer, minimum width 150 px, was only ever set up from the toggle); removed the
+  `hideLeftPane` / `showLeftPane` / `toggleLeftPane` / `toggleZenMode` command handlers, the zen menu item, the desktop
+  zen close button and the F9 default. Zen mode hid the whole interface including the sidebar.
+- App opens today's day note on start (`app_context.openTodayNoteOnStartup`), which creates it on the first launch of a
+  day. Skipped in secondary windows and when the URL names a note.
+- New installs no longer import the upstream demo notes (`getDemoArchive` returns null in desktop and server).
+- Tests: new `guard_structure.spec.ts` (4), new case in `branches.spec.ts`. Server and standalone runners green;
+  typecheck clean.
+- Full-suite sweep after Task 4 found two more Task 13 leftovers, fixed: `config.spec.ts` now asserts the AI assistant
+  is absent; `loadSkillSheet` in `apps/server/src/core_assets.ts` (LLM skill sheets, no callers) removed with its spec.
+  Client suite otherwise showed 2 load-only flakes (`login.spec`, `image_compression_dialog.spec`, pass alone).
+  Full standalone suite not re-run after Task 4.
+- **Not done / for later tasks:** the mobile layout still references the removed zen command (out of scope, Windows-first);
+  the launch bar still lists a zen-mode launcher (Task 7); a session left open past midnight does not roll over to the
+  new day's note until restart; title format is `27 - Sunday` rather than the mock-up's `Sun · Sept 27` (a title
+  pattern that does not lead with the number would need `#sorted=dateNote` on each level, which the day-note service
+  does not set); Shift Log / Reference remain renamable; standalone still imports the demo notes.
+
 ## Recommended next step
-Task #4: Shift Log / Reference sidebar navigation.
+Task #5: scope the toolbar/ribbon (Phase 2: bold/italic/underline, highlight, font colour, font family + size, search, image insert).
 Tasks #9 (branding assets) and #10 (backup drive path) need one more concrete detail
 from Andrew before they can start (see task list above).

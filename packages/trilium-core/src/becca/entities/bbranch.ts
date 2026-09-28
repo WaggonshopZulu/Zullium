@@ -1,6 +1,6 @@
 
 
-import type { BranchRow } from "@triliumnext/commons";
+import { type BranchRow, GUARD_ROOT_NOTE_IDS } from "@triliumnext/commons";
 
 import dateUtils from "../../services/utils/date";
 import { getLog } from "../../services/log.js";
@@ -152,6 +152,10 @@ class BBranch extends AbstractBeccaEntity<BBranch> {
 
         if ((this.noteId === "root" || this.noteId === getHoistedNoteId()) && !this.isWeak) {
             throw new Error("Can't delete root or hoisted branch/note");
+        }
+
+        if (GUARD_ROOT_NOTE_IDS.includes(this.noteId) && !this.isWeak) {
+            throw new Error("Can't delete the Shift Log or Reference branch");
         }
 
         this.markAsDeleted(deleteId);

@@ -10,7 +10,6 @@ import { recoverInterruptedRestore } from "@triliumnext/server/src/services/data
 import dataDirs from "@triliumnext/server/src/services/data_dir.js";
 import port from "@triliumnext/server/src/services/port.js";
 import { consumeSetupMarker, setupPlatform } from "@triliumnext/server/src/services/setup_marker.js";
-import { RESOURCE_DIR } from "@triliumnext/server/src/services/resource_dir.js";
 import WebSocketMessagingProvider from "@triliumnext/server/src/services/ws_messaging_provider.js";
 import BetterSqlite3Provider from "@triliumnext/server/src/sql_provider.js";
 import NodejsZipProvider from "@triliumnext/server/src/zip_provider.js";
@@ -18,7 +17,6 @@ import { app, BrowserWindow,globalShortcut } from "electron";
 import electronDebug from "electron-debug";
 import electronDl from "electron-dl";
 import type { Application } from "express";
-import fs from "fs";
 import { t } from "i18next";
 import path, { join, resolve } from "path";
 
@@ -267,10 +265,8 @@ export async function main() {
         schema: loadCoreSchema(),
         platform: new DesktopPlatformProvider(),
         translations: (await import("@triliumnext/server/src/services/i18n.js")).initializeTranslations,
-        // demo.zip is a server-owned asset; src/assets is copied to dist/assets
-        // by the build script, so the same RESOURCE_DIR-relative path works in
-        // both source and bundled-production modes.
-        getDemoArchive: async () => fs.readFileSync(path.join(RESOURCE_DIR, "db", "demo.zip")),
+        // A new database starts with the Shift Log and Reference branches only, no demo notes.
+        getDemoArchive: async () => null,
         inAppHelp: new NodejsInAppHelpProvider(),
         log: new ServerLogService(),
         // Only the desktop lets the user pick where backups go; the server uses TRILIUM_BACKUP_DIR.

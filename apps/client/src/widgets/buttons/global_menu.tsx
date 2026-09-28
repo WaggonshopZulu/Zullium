@@ -55,7 +55,6 @@ export default function GlobalMenu({ isHorizontalLayout }: { isHorizontalLayout:
 
             <ZoomControls parentComponent={parentComponent} />
             <ToggleWindowOnTop />
-            <KeyboardActionMenuItem command="toggleZenMode" icon="bx bxs-yin-yang" text={t("global_menu.toggle-zen-mode")} />
             <FormDropdownDivider />
 
             <SwitchToOptions />

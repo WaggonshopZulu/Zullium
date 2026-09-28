@@ -6,10 +6,9 @@ import ApiLog from "../widgets/api_log.jsx";
 import ClosePaneButton from "../widgets/buttons/close_pane_button.js";
 import CreatePaneButton from "../widgets/buttons/create_pane_button.js";
 import GlobalMenu from "../widgets/buttons/global_menu.jsx";
-import LeftPaneToggle from "../widgets/buttons/left_pane_toggle.js";
+import LeftPaneResizer from "../widgets/buttons/left_pane_resizer.js";
 import MovePaneButton from "../widgets/buttons/move_pane_button.js";
 import RightPaneToggle from "../widgets/buttons/right_pane_toggle.jsx";
-import CloseZenModeButton from "../widgets/close_zen_button.jsx";
 import NoteList from "../widgets/collections/NoteList.jsx";
 import ContentHeader from "../widgets/containers/content_header.js";
 import FlexContainer from "../widgets/containers/flex_container.js";
@@ -78,7 +77,6 @@ export default class DesktopLayout {
                 new FlexContainer("row")
                     .class("tab-row-container")
                     .child(new FlexContainer("row").id("tab-row-left-spacer"))
-                    .optChild(launcherPaneIsHorizontal, <LeftPaneToggle isHorizontalLayout={true} />)
                     .child(<TabHistoryNavigationButtons />)
                     .child(new TabRowWidget().class("full-width"))
                     .optChild(isNewLayout, <RightPaneToggle />)
@@ -171,7 +169,6 @@ export default class DesktopLayout {
                     )
             )
             .optChild(launcherPaneIsHorizontal && isNewLayout, <StatusBar />)
-            .child(<CloseZenModeButton />)
 
             // Desktop-specific dialogs.
             .child(<PasswordNoteSetDialog />);
@@ -188,14 +185,15 @@ export default class DesktopLayout {
                 .css("height", "53px")
                 .class("horizontal")
                 .child(<LauncherContainer isHorizontalLayout={true} />)
-                .child(<GlobalMenu isHorizontalLayout={true} />);
+                .child(<GlobalMenu isHorizontalLayout={true} />)
+                .child(<LeftPaneResizer />);
         } else {
             launcherPane = new FlexContainer("column")
                 .css("width", "53px")
                 .class("vertical")
                 .child(<GlobalMenu isHorizontalLayout={false} />)
                 .child(<LauncherContainer isHorizontalLayout={false} />)
-                .child(<LeftPaneToggle isHorizontalLayout={false} />);
+                .child(<LeftPaneResizer />);
         }
 
         launcherPane.id("launcher-pane");

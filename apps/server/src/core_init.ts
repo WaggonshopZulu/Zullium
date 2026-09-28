@@ -16,7 +16,6 @@ import ServerLogService from "./log_provider.js";
 import ServerPlatformProvider from "./platform_provider.js";
 import dataDirs from "./services/data_dir.js";
 import NodeRequestProvider from "./services/request.js";
-import { RESOURCE_DIR } from "./services/resource_dir.js";
 import { consumeSetupMarker, setupPlatform } from "./services/setup_marker.js";
 import WebSocketMessagingProvider from "./services/ws_messaging_provider.js";
 import BetterSqlite3Provider from "./sql_provider.js";
@@ -84,10 +83,8 @@ export async function initializeServerCore() {
         platform: new ServerPlatformProvider(),
         log: logService,
         translations: (await import("./services/i18n.js")).initializeTranslationsWithParams,
-        // demo.zip is a server-owned asset; src/assets is copied to dist/assets
-        // by the build script, so the same RESOURCE_DIR-relative path works in
-        // both source and bundled-production modes.
-        getDemoArchive: async () => fs.readFileSync(path.join(RESOURCE_DIR, "db", "demo.zip")),
+        // A new database starts with the Shift Log and Reference branches only, no demo notes.
+        getDemoArchive: async () => null,
         inAppHelp: new NodejsInAppHelpProvider(),
         backup: new ServerBackupService(options),
         image: (await import("./services/image_provider.js")).serverImageProvider,

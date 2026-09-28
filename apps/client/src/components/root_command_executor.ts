@@ -85,18 +85,6 @@ export default class RootCommandExecutor extends Component {
         protectedSessionService.leaveProtectedSession();
     }
 
-    hideLeftPaneCommand() {
-        appContext.triggerEvent("setLeftPaneVisibility", { leftPaneVisible: false });
-    }
-
-    showLeftPaneCommand() {
-        appContext.triggerEvent("setLeftPaneVisibility", { leftPaneVisible: true });
-    }
-
-    toggleLeftPaneCommand() {
-        appContext.triggerEvent("setLeftPaneVisibility", { leftPaneVisible: null });
-    }
-
     async showBackendLogCommand() {
         await appContext.tabManager.openTabWithNoteWithHoisting("_backendLog", { activate: true });
     }
@@ -190,13 +178,6 @@ export default class RootCommandExecutor extends Component {
         if (!utils.isElectron() || options.is("disableTray")) return;
 
         window.electronApi?.window.toggleAllWindows();
-    }
-
-    toggleZenModeCommand() {
-        const $body = $("body");
-        $body.toggleClass("zen");
-        const isEnabled = $body.hasClass("zen");
-        appContext.triggerEvent("zenModeChanged", { isEnabled });
     }
 
     async toggleRibbonTabNoteMapCommand(data: CommandListenerData<"toggleRibbonTabNoteMap">) {

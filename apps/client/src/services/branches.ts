@@ -1,4 +1,4 @@
-import type { ProgressPhase } from "@triliumnext/commons";
+import { GUARD_ROOT_NOTE_IDS, type ProgressPhase } from "@triliumnext/commons";
 
 import appContext from "../components/app_context.js";
 import type FBranch from "../entities/fbranch.js";
@@ -256,7 +256,7 @@ function filterRootNote(branchIds: string[]) {
             return false;
         }
 
-        return branch.noteId !== "root" && branch.noteId !== hoistedNoteId;
+        return branch.noteId !== "root" && branch.noteId !== hoistedNoteId && !GUARD_ROOT_NOTE_IDS.includes(branch.noteId);
     });
 }
 

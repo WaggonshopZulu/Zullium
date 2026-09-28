@@ -336,7 +336,7 @@ function getDefaultKeyboardActions() {
             actionName: "toggleZenMode",
             friendlyName: t("keyboard_action_names.toggle-zen-mode"),
             iconClass: "bx bxs-yin-yang",
-            defaultShortcuts: ["F9"],
+            defaultShortcuts: [],
             description: t("keyboard_actions.toggle-zen-mode"),
             scope: "window"
         },
