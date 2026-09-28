@@ -29,12 +29,14 @@ for a decision, not acting on it unasked.
    icon-label pass needs a decision — see below.
 8. Build admin-gated entry point (Option C) — **DONE** (2026-09-28; see below)
 9. Wire in branding — **DONE** (2026-09-28; see below).
-10. Configure backup destination — mostly pre-built. `apps/client/.../options/backup.tsx` already
+10. Configure backup destination — mostly pre-built, **deliberately deferred by the user** (2026-09-28):
+    decided only once the app is deliverable and installed on its dedicated workstation, not before —
+    the external drive's folder path isn't known until then. `apps/client/.../options/backup.tsx` already
     has a working "Select Location" folder picker (Electron only) writing to the `customDbBackupDir` option, with a
     reset-to-default button; `backup_provider.ts` resolves it each run rather than caching a drive letter, so a
     reassigned drive letter does not break it as long as the folder still exists. `_optionsBackup` is one of the two
-    settings pages Task 4 kept, admin-gated — now reachable through Task 8's admin mode. Nothing left to build here
-    except pointing it at the external drive by hand, once there's an admin shortcut to launch it from (see Task 8).
+    settings pages Task 4 kept, admin-gated — now reachable through Task 8's admin mode. No more code to write here;
+    this is a hands-on step for the workstation itself, not a development task.
 11. Build and smoke-test — NOT STARTED
 12. Sync finished code back to C:\Zullium\repo — NOT STARTED
 13. Remove the AI Chat feature entirely — **DONE** (earlier session)
@@ -530,5 +532,6 @@ Task #8 and Task #9 are both done (see above). Two flagged, not-yet-acted-on fin
 the 8 dangling `showOptions` section-id call sites (Task 8, harmless under the admin gate but still worth
 a cleanup pass), and the setup/login/unlock screens plus the setup window's own icon still showing
 Trilium's original logo (Task 9, a real visible gap outside the three placements that were actually
-asked for). Task #10 (backup) needs only the external drive's folder path, entered through the existing
-picker — now reachable through Task 8's admin mode — no more code to write there.
+asked for). Task #10 (backup) is deliberately on hold until the app is installed on its dedicated
+workstation — no code left to write there regardless. That leaves Task #11 (build and smoke-test) as
+the next actual development task, once the user wants it.
