@@ -1,6 +1,6 @@
 import "./setup_unlock.css";
 
-import logo from "./assets/icon-color.svg?url";
+import logo from "./assets/brand-crest.png";
 import { t } from "./services/i18n";
 import { setSetupAuthToken } from "./services/setup_auth";
 import CredentialsForm, { type Credentials } from "./widgets/react/CredentialsForm";

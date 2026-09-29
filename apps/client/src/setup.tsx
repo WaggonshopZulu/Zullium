@@ -6,7 +6,7 @@ import { render } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 
-import logo from "./assets/icon-color.svg?url";
+import logo from "./assets/brand-crest.png";
 import { getCurrentLanguage, initLocale, t } from "./services/i18n";
 import server from "./services/server";
 import { isElectron, isMobileApp } from "./services/utils";

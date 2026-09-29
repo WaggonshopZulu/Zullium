@@ -306,13 +306,17 @@ function buildHiddenSubtreeDefinition(helpSubtree: HiddenSubtreeItem[]): HiddenS
                 type: "book",
                 icon: "bx-cog",
                 enforceChildOrder: true,
-                // Guard build: every settings page except Shortcuts and Backup was cut outright
-                // (Phase 1 audit, approved 2026-09-27). Both survivors are admin-only -- reached
-                // through the separate admin-mode launch shortcut, never through a guard-visible
-                // Settings menu (Phase 2 blueprint).
+                // Guard build: every settings page except Shortcuts, Backup and Revisions was cut
+                // outright (Phase 1 audit, approved 2026-09-27). All three survivors are
+                // admin-only -- reached through the separate admin-mode launch shortcut, never
+                // through a guard-visible Settings menu (Phase 2 blueprint). Revisions is a
+                // restored, trimmed-down page (just the snapshot interval/limit card) -- three
+                // dialogs elsewhere link to it and had nowhere to go once the full "Other" settings
+                // page it used to live on was cut (see options/other.tsx).
                 children: [
                     { id: "_optionsShortcuts", title: t("hidden-subtree.shortcuts-title"), type: "contentWidget", icon: "bxs-keyboard" },
-                    { id: "_optionsBackup", title: t("hidden-subtree.backup-title"), type: "contentWidget", icon: "bx-data" }
+                    { id: "_optionsBackup", title: t("hidden-subtree.backup-title"), type: "contentWidget", icon: "bx-data" },
+                    { id: "_optionsOther", title: t("hidden-subtree.revisions-title"), type: "contentWidget", icon: "bx-history" }
                 ]
             },
             {

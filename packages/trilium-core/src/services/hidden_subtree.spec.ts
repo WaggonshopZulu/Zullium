@@ -34,8 +34,8 @@ function materialiseDeprecatedNote(noteId: string) {
     );
 }
 
-/** The settings pages the guard build keeps, both reached only through admin mode. */
-const ADMIN_SETTINGS_PAGES = [ "_optionsShortcuts", "_optionsBackup" ];
+/** The settings pages the guard build keeps, all reached only through admin mode. */
+const ADMIN_SETTINGS_PAGES = [ "_optionsShortcuts", "_optionsBackup", "_optionsOther" ];
 
 function checkHiddenSubtree(force = false) {
     return getContext().init(() => hiddenSubtreeService.checkHiddenSubtree(force));

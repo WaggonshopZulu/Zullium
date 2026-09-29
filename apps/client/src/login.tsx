@@ -4,7 +4,7 @@ import "./login.css";
 import { LOCALE_IDS } from "@triliumnext/commons";
 import { render } from "preact";
 
-import logo from "./assets/icon-color.svg?url";
+import logo from "./assets/brand-crest.png";
 import { initLocale, t } from "./services/i18n";
 import Button from "./widgets/react/Button";
 import CredentialsForm, { type Credentials } from "./widgets/react/CredentialsForm";
