@@ -182,12 +182,6 @@ export async function buildTreeContextMenuItems(ctx: TreeContextMenuContext): Pr
 
         { kind: "separator" },
 
-        { title: t("tree-context-menu.protect-subtree"), command: "protectSubtree", uiIcon: "bx bx-check-shield", enabled: noSelectedNotes },
-
-        { title: t("tree-context-menu.unprotect-subtree"), command: "unprotectSubtree", uiIcon: "bx bx-shield", enabled: noSelectedNotes },
-
-        { kind: "separator" },
-
         {
             title: t("tree-context-menu.advanced"),
             uiIcon: "bx bxs-wrench",

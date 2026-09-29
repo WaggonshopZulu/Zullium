@@ -388,23 +388,10 @@
     "templates": "Templates",
     "builtin_templates": "Built-in Templates"
   },
-  "password_not_set": {
-    "title": "Password is not set",
-    "body1": "Protected notes are encrypted using a user password, but password has not been set yet.",
-    "body2": "To be able to protect notes, click the button below to open the Options dialog and set your password.",
-    "go_to_password_options": "Go to Password options"
-  },
   "prompt": {
     "title": "Prompt",
     "ok": "OK",
     "defaultTitle": "Prompt"
-  },
-  "protected_session_password": {
-    "modal_title": "Protected session",
-    "help_title": "Help on Protected notes",
-    "close_label": "Close",
-    "form_label": "To proceed with requested action you need to start protected session by entering password:",
-    "start_button": "Start protected session"
   },
   "recent_changes": {
     "title": "Recent changes",
@@ -1137,7 +1124,6 @@
     "note_source": "Note source",
     "note_attachments": "Note attachments",
     "note_attributes": "Note attributes",
-    "view_ocr_text": "View OCR text",
     "open_note_externally": "Open note externally",
     "open_note_externally_title": "File will be open in an external application and watched for changes. You'll then be able to upload the modified version back to Trilium.",
     "open_note_custom": "Open note custom",
@@ -1168,10 +1154,6 @@
   },
   "onclick_button": {
     "no_click_handler": "Button widget '{{componentId}}' has no defined click handler"
-  },
-  "protected_session_status": {
-    "active": "Protected session is active. Click to leave protected session.",
-    "inactive": "Click to enter protected session"
   },
   "revisions_button": {
     "note_revisions": "Note Revisions"
@@ -1953,21 +1935,7 @@
     "max_image_dimensions_description": "Images exceeding this size will be resized automatically.",
     "max_image_dimensions_unit": "pixels",
     "jpeg_quality": "JPEG quality",
-    "jpeg_quality_description": "Recommended range is 50–85. Lower values reduce file size, higher values preserve detail.",
-    "ocr_section_title": "Text Extraction (OCR)",
-    "ocr_related_content_languages": "Content languages (used for text extraction)",
-    "ocr_auto_process": "Auto-process new files",
-    "ocr_auto_process_description": "Automatically extract text from newly uploaded or pasted files.",
-    "ocr_min_confidence": "Minimum confidence",
-    "ocr_confidence_description": "Only extract text above this confidence threshold. Lower values include more text but may be less accurate.",
-    "batch_ocr_title": "Process Existing Files",
-    "batch_ocr_description": "Extract text from all existing images, PDFs, and Office documents in your notes. This may take some time depending on the number of files.",
-    "batch_ocr_start": "Start Batch Processing",
-    "batch_ocr_starting": "Starting batch processing...",
-    "batch_ocr_progress": "Processing {{processed}} of {{total}} files...",
-    "batch_ocr_completed": "Batch processing completed! Processed {{processed}} files.",
-    "batch_ocr_completed_with_failures": "Batch processing completed. Processed {{processed}} files, but {{failed}} could not be read (see logs for details).",
-    "batch_ocr_error": "Error during batch processing: {{error}}"
+    "jpeg_quality_description": "Recommended range is 50–85. Lower values reduce file size, higher values preserve detail."
   },
   "attachment_erasure_timeout": {
     "attachment_erasure_timeout": "Unused Attachments",
@@ -2243,33 +2211,6 @@
       "confirm_sql_console_warning": "The SQL console can read your sync credentials and password hash, and change or delete any note."
     }
   },
-  "password": {
-    "heading": "Password",
-    "alert_message": "Please take care to remember your new password. Password is used for logging into the web interface and to encrypt protected notes. If you forget your password, then all your protected notes are forever lost.",
-    "reset_link": "Click here to reset it.",
-    "old_password": "Old password",
-    "new_password": "New password",
-    "new_password_confirmation": "New password confirmation",
-    "change_password": "Change password",
-    "change_password_description": "Update your current password",
-    "change_password_button": "Update password",
-    "reset_password": "Reset password",
-    "reset_password_description": "Permanently lose access to protected notes",
-    "reset_password_button": "Reset now",
-    "cancel": "Cancel",
-    "protected_session_timeout": "Protected Session",
-    "protected_session_timeout_description": "Time of inactivity before the session is cleared from browser memory. See",
-    "wiki": "wiki",
-    "for_more_info": "for more info.",
-    "protected_session_timeout_label": "Auto-close session after",
-    "reset_confirmation": "By resetting the password you will forever lose access to all your existing protected notes. Do you really want to reset the password?",
-    "reset_success_message": "Password has been reset. Please set new password",
-    "change_password_heading": "Change Password",
-    "set_password_heading": "Set Password",
-    "set_password": "Set Password",
-    "password_mismatch": "New passwords are not the same.",
-    "password_changed_success": "Password changed successfully."
-  },
   "multi_factor_authentication": {
     "authentication_title": "Authentication",
     "signin_method": "Sign-in with",
@@ -2488,8 +2429,6 @@
     "recent-changes-in-subtree": "Recent changes in subtree",
     "convert-to-attachment": "Convert to attachment",
     "copy-note-path-to-clipboard": "Copy note path to clipboard",
-    "protect-subtree": "Protect subtree",
-    "unprotect-subtree": "Unprotect subtree",
     "copy-clone": "Copy / clone",
     "clone-to": "Clone to...",
     "cut": "Cut",
@@ -2562,12 +2501,6 @@
   },
   "sortable_card": {
     "reorder": "Drag to reorder"
-  },
-  "protect_note": {
-    "toggle-on": "Protect the note",
-    "toggle-off": "Unprotect the note",
-    "toggle-on-hint": "Note is not protected, click to make it protected",
-    "toggle-off-hint": "Note is protected, click to make it unprotected"
   },
   "llm_chat": {
     "placeholder": "Type a message...",
@@ -2672,7 +2605,6 @@
     "search_icons_count_one": "({{count}} icon)",
     "search_icons_count_other": "({{count}} icons)",
     "attachment_size": "({{size}})",
-    "attachment_ocr": "Text recognized from the file",
     "skills": {
       "search_syntax": "Search syntax",
       "backend_scripting": "Backend scripting",
@@ -3667,23 +3599,6 @@
     "hours_one": "{{count}} hour",
     "hours_other": "{{count}} hours"
   },
-  "ocr": {
-    "extracted_text": "Extracted Text (OCR)",
-    "extracted_text_title": "Extracted Text (OCR)",
-    "loading_text": "Loading OCR text...",
-    "no_text_available": "No OCR text available",
-    "no_text_explanation": "This note has not been processed for OCR text extraction or no text was found.",
-    "failed_to_load": "Failed to load OCR text",
-    "process_now": "Process OCR",
-    "processing": "Processing...",
-    "processing_started": "OCR processing has been started. Please wait a moment and refresh.",
-    "processing_complete": "OCR processing complete.",
-    "processing_failed": "Failed to start OCR processing",
-    "text_filtered_low_confidence": "OCR detected text with {{confidence}}% confidence, but it was discarded because your minimum threshold is {{threshold}}%.",
-    "image_based_pdf_not_supported": "This PDF appears to be image-based (scanned). Text extraction from image-based PDFs is not yet supported.",
-    "open_media_settings": "Open Settings",
-    "view_extracted_text": "View extracted text (OCR)"
-  },
   "command_palette": {
     "tree-action-name": "Tree: {{name}}",
     "export_note_title": "Export Note",
@@ -3707,7 +3622,8 @@
     "open_externally": "Open externally",
     "mermaid_diagram_error": "Mermaid diagram failed to render: {{error}}",
     "office_rendering": "Rendering preview…",
-    "office_render_error": "This document could not be rendered as a preview. You can still download it or open it externally."
+    "office_render_error": "This document could not be rendered as a preview. You can still download it or open it externally.",
+    "protected_content_unavailable": "This note is protected and cannot be shown."
   },
   "modal": {
     "close": "Close",
@@ -3729,9 +3645,6 @@
     "new_layout_title": "New layout",
     "new_layout_message": "We’ve introduced a modernized layout for Trilium. The ribbon has been removed and seamlessly integrated into the main interface, with a new status bar and expandable sections (such as promoted attributes) taking over key functions.\n\nThe new layout is enabled by default, and can be temporarily disabled via Options → Appearance.",
     "new_layout_button": "More info",
-    "scripting_disabled_title": "Backend scripting has been disabled",
-    "scripting_disabled_message": "Backend scripting is now disabled by default for security. Your notes contain backend scripts (notes with a #run label) that will no longer execute automatically.\n\nIf you rely on these scripts, you can re-enable backend scripting in the security settings.",
-    "scripting_disabled_button": "Open security settings",
     "dismiss": "Dismiss"
   },
   "contextual_help": {

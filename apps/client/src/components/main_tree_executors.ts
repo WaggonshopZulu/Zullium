@@ -9,7 +9,6 @@ import clipboard from "../services/clipboard.js";
 import froca from "../services/froca.js";
 import hoistedNoteService from "../services/hoisted_note.js";
 import noteCreateService from "../services/note_create.js";
-import protectedSessionService from "../services/protected_session.js";
 import protectedSessionHolder from "../services/protected_session_holder.js";
 import treeService from "../services/tree.js";
 import appContext, { type CommandListenerData, type EventData } from "./app_context.js";
@@ -151,18 +150,6 @@ export default class MainTreeExecutors extends Component {
         const targetNoteId = noteId ?? node?.data.noteId;
         if (!targetNoteId) return;
         this.triggerCommand("showImportDialog", { noteId: targetNoteId });
-    }
-
-    protectSubtreeCommand({ node, noteId }: CommandListenerData<"protectSubtree">) {
-        const targetNoteId = noteId ?? node?.data.noteId;
-        if (!targetNoteId) return;
-        protectedSessionService.protectNote(targetNoteId, true, true);
-    }
-
-    unprotectSubtreeCommand({ node, noteId }: CommandListenerData<"unprotectSubtree">) {
-        const targetNoteId = noteId ?? node?.data.noteId;
-        if (!targetNoteId) return;
-        protectedSessionService.protectNote(targetNoteId, false, true);
     }
 
     async duplicateSubtreeCommand({ selectedOrActiveBranchIds }: CommandListenerData<"duplicateSubtree">) {

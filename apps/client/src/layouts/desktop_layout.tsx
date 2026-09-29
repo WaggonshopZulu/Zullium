@@ -17,7 +17,6 @@ import RightPaneContainer from "../widgets/containers/right_pane_container.js";
 import RootContainer from "../widgets/containers/root_container.js";
 import ScrollingContainer from "../widgets/containers/scrolling_container.js";
 import SplitNoteContainer from "../widgets/containers/split_note_container.js";
-import PasswordNoteSetDialog from "../widgets/dialogs/password_not_set.js";
 import UploadAttachmentsDialog from "../widgets/dialogs/upload_attachments.js";
 import FindWidget from "../widgets/find.js";
 import FloatingButtons from "../widgets/FloatingButtons.jsx";
@@ -170,10 +169,7 @@ export default class DesktopLayout {
                             .optChild(!launcherPaneIsHorizontal && isNewLayout, <StatusBar />)
                     )
             )
-            .optChild(launcherPaneIsHorizontal && isNewLayout, <StatusBar />)
-
-            // Desktop-specific dialogs.
-            .child(<PasswordNoteSetDialog />);
+            .optChild(launcherPaneIsHorizontal && isNewLayout, <StatusBar />);
 
         applyModals(rootContainer);
         return rootContainer;

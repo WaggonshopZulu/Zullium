@@ -313,9 +313,6 @@
     "images-title": "Media",
     "spellcheck-title": "Spellcheck",
     "desktop-title": "Desktop",
-    "security-title": "Security",
-    "password-title": "Password & Auth",
-    "multi-factor-authentication-title": "MFA",
     "etapi-title": "ETAPI",
     "backup-title": "Backup",
     "database-title": "Database",
@@ -328,7 +325,8 @@
     "localization": "Language & Region",
     "inbox-title": "Inbox",
     "tab-switcher-title": "Tab Switcher",
-    "sidebar-chat-title": "AI Chat"
+    "sidebar-chat-title": "AI Chat",
+    "revisions-title": "Revisions"
   },
   "notes": {
     "new-note": "New note",

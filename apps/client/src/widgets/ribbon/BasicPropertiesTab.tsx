@@ -12,7 +12,6 @@ import { getAvailableLocales, getLocaleById, t } from "../../services/i18n";
 import { resolveContentLanguage } from "../../utils/formatters";
 import mime_types from "../../services/mime_types";
 import { isCurrentNoteType, NOTE_TYPES, selectableNoteTypes } from "../../services/note_types";
-import protected_session from "../../services/protected_session";
 import server from "../../services/server";
 import sync from "../../services/sync";
 import toast from "../../services/toast";
@@ -32,7 +31,6 @@ export default function BasicPropertiesTab({ note }: TabContext) {
     return (
         <div className="basic-properties-widget">
             <NoteTypeWidget note={note} />
-            <ProtectedNoteSwitch note={note} />
             <EditabilitySelect note={note} />
             <BookmarkSwitch note={note} />
             <SharedSwitch note={note} />
@@ -183,21 +181,6 @@ export function NoteTypeOptionsModal({ modalShown, setModalShown }: { modalShown
         >
             <CodeMimeTypesList />
         </Modal>
-    );
-}
-
-function ProtectedNoteSwitch({ note }: { note?: FNote | null }) {
-    const isProtected = useNoteProperty(note, "isProtected");
-
-    return (
-        <div className="protected-note-switch-container">
-            <FormToggle
-                switchOnName={t("protect_note.toggle-on")} switchOnTooltip={t("protect_note.toggle-on-hint")}
-                switchOffName={t("protect_note.toggle-off")} switchOffTooltip={t("protect_note.toggle-off-hint")}
-                currentValue={!!isProtected}
-                onChange={(shouldProtect) => note && protected_session.protectNote(note.noteId, shouldProtect, false)}
-            />
-        </div>
     );
 }
 

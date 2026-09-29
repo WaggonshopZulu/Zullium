@@ -527,11 +527,229 @@ the actual rendered result** — image generation and CSS sizing only, no live/v
 app. The user should look at the sidebar header, the empty pane, the About dialog, and the packaged
 `.ico` once built, and say if any of the sizing or placement reads wrong.
 
+## Tidying the two flagged findings (2026-09-28)
+Both items flagged at the end of Tasks 8 and 9 are resolved.
+
+**The 8 dangling `showOptions` section references (Task 8's finding):** turned out to be three
+different things once traced individually, not one bug repeated eight times:
+- `help.tsx`'s `_optionsShortcuts` and `PopupEditor.tsx`'s two calls were never actually broken —
+  `_optionsShortcuts` still exists, and `PopupEditor.tsx` forwards whatever real note ID the user
+  clicked rather than a hardcoded one. Nothing to fix there; the original count of 8 was
+  over-counted.
+- `call_to_action_definitions.ts`'s `scripting_disabled` call-to-action (`_optionsSecurity`) was
+  genuinely dead: it offered to re-enable backend scripting, a feature Task 2 removed outright, so
+  the offer was never actionable regardless of the missing settings page. Deleted the whole
+  call-to-action, and its now-unused `call_to_action.scripting_disabled_*` English strings (checked
+  with the `working-with-translations` skill's `callers` first — zero references left).
+- `revisions.tsx`, `recent_changes.tsx` and `space_usage/context_menu.ts` (`_optionsOther`) all
+  pointed at one still-relevant, non-security-sensitive card — the revision snapshot interval/limit
+  settings — that used to live on a much larger "Other" settings page (search, erasure timeouts,
+  HTML import tags, share, network) Task 1 cut in full. Restored **only that one card**, as a new
+  trimmed `apps/client/src/widgets/type_widgets/options/other.tsx` (recovered from git history at
+  the commit that deleted it, then cut down), registered the same way Shortcuts and Backup are:
+  `_optionsOther` in `hidden_subtree.ts`'s `_options` children, admin-gated identically, mapped in
+  `ContentWidget.tsx`. All three call sites now work with no changes of their own. Added
+  `hidden-subtree.revisions-title` to the server catalogue for its page title.
+- `ocr_text.tsx`'s `_optionsMedia` (OCR confidence threshold) and `password_not_set.tsx`'s
+  `_optionsPassword` (the master password) are **not fixed** — both raise a real product question
+  (is OCR still wanted as a feature at all; how is the master password meant to be set once initial
+  setup is behind you, since protected-session notes are still very much a live feature) that isn't
+  this pass's call to make silently. Flagged below for the user's decision.
+
+**The setup/login/unlock screens and the Electron setup window still showing Trilium's logo (Task
+9's finding):** `setup.tsx`, `login.tsx` and `setup_unlock.tsx` (which renders from inside
+`setup.tsx`, sharing its `setup.css`) now import `assets/brand-crest.png` instead of the original
+`icon-color.svg`. Since the crest is portrait, not square, `.illustration-logo`'s CSS in `setup.css`
+changed from a fixed square box to a height-driven one (`object-fit: contain`), so it isn't
+squashed; `login.css`'s own `--size: 162px` override still applies unchanged. The Electron setup
+window's own icon (`window.ts`'s `getIcon()`, which reads `apps/client/src/assets/icon.png` at
+its production path) now shows the crest too — replaced with the same square icon composition
+already generated for Task 9's `.ico`/PNG set, for one consistent square-icon identity across every
+surface that needs one (Windows taskbar, this setup window, and, incidentally, the standalone PWA
+manifest and Nix packaging, both of which read the same file).
+- `apps/client/src/assets/icon.svg` (Trilium's original mark, unreferenced since Task 9's About
+  dialog change) was deleted outright rather than left as an orphan, since this pass was already
+  touching this exact area.
+- **Stopped short of `icon-color.svg` deliberately:** still referenced by the macOS DMG icon
+  generator, the Share theme (a shared/published note's own favicon and logo), a demo note, and the
+  website — none of which this task was asked to touch, and most of which don't apply to a
+  single-workstation Windows build anyway. Left entirely alone; flagged here rather than followed
+  further.
+
+**Verification:** typecheck clean throughout. New/updated tests: `other.tsx`'s own restored spec
+(3 tests, adapted from the original upstream test for the trimmed page), `hidden_subtree.spec.ts`
+updated to expect three admin settings pages instead of two (26 tests under the server runner, 14
+under standalone, all passing). Full client suite: 5482/5483 — the one failure
+(`mermaid.spec.ts`, a diagram linter test wholly unrelated to this pass) passed cleanly in
+isolation, confirming it's a pre-existing flake, not a regression. Server: 5115/5163 (48
+pre-existing skips, same as prior sessions). Standalone: 4189/4221 (32 pre-existing skips, same as
+prior sessions). Both clean.
+
+**Left for the user to decide, not fixed:**
+1. **OCR** (`ocr_text.tsx`'s dead "Open Media Settings" button, `_optionsMedia`): is OCR meant to
+   stay in this build at all? If yes, its confidence-threshold and auto-process settings need a
+   restored page the same way Revisions got one; if the whole feature should go, that's a Task
+   2-style removal instead, not a settings-page restoration.
+2. **Password** (`password_not_set.tsx`'s dead "Go to password options" button, `_optionsPassword`):
+   protected-session (per-note password protection) is still a fully live feature — the launch bar's
+   status widget, the encryption backend, all of it. But the settings PAGE for setting the master
+   password was fully deleted in Task 1, not just unregistered, and no other in-app path to set or
+   change it was found. Someone who skips setting a password during initial setup currently has no
+   way back in through the UI at all. This is a bigger question than the Revisions fix: does this
+   6-person deployment need per-note password protection, and if so, how should the master password
+   be set or changed after initial setup?
+
+## OCR (Optical Character Recognition) removed entirely (2026-09-28)
+Follow-up to the two flagged findings above: the user asked whether OCR meant Optical Character
+Recognition and, once confirmed, said to remove it entirely — a Task 2-style full removal, not a
+settings-page restoration like the Revisions fix.
+
+**What OCR was:** a server-side engine (Tesseract, via `tesseract.js`) that auto-extracted text from
+uploaded images, files and scanned PDFs, storing it on the blob's `textRepresentation` column so it
+travelled with sync and fed into full-text search automatically, plus a client dialog for viewing/
+triggering extraction and a settings page for the confidence threshold and auto-process toggle.
+
+**Removed outright:** the whole `apps/server/src/services/ocr/` engine (Tesseract recognizer, PDF
+renderer, per-format processors); both API route files (`apps/server/src/routes/api/ocr.ts` and
+`packages/trilium-core/src/routes/api/ocr.ts`) and their registrations; the auto-processing hooks
+(`apps/server/src/services/handlers.ts`, entirely OCR-only, deleted outright; `image.ts` reverted to
+a plain re-export of the core image service, its OCR-scheduling wrapper removed); the `ocrAutoProcessImages`/
+`ocrMinConfidence` options (defaults, route whitelist, shared type interface) and the unrelated
+`ocrEnabled`/`ocrLanguage` fields that turned out to already be dead type declarations; the search
+integration (`OCRContentExpression`, folded automatically into every content search — no operator
+syntax involved — removed from both search-expression branches in `parse.ts`); the client dialog
+(`ocr_text.tsx`), its command/dialog registrations (`app_context.ts`, `root_command_executor.ts`,
+`layout_commons.tsx`), its ribbon menu entry (`NoteActions.tsx`), its attachment-list entry
+(`Attachment.tsx`), its inline "Extracted Text" section in note/attachment previews
+(`content_renderer.ts`'s `addOCRTextIfAvailable` and both call sites), its CSS, and every OCR
+translation key (`ocr.*`, `images.ocr_*`, `images.batch_ocr_*`, `note_actions.view_ocr_text`) —
+confirmed zero callers first via the `working-with-translations` skill. Also removed, once confirmed
+dead: the Tesseract-language-code mapping in `packages/commons/src/lib/i18n.ts`
+(`getTesseractCode()`), the `tesseract.js` build step in both `apps/server/scripts/build.ts` and
+`apps/desktop/scripts/build.ts` plus the now-unused `buildTesseractWorker()` helper in
+`scripts/build-utils.ts`, and the `tesseract.js` entry in `apps/server/package.json` (still installed
+transitively — `officeparser` itself depends on it for its own, unrelated scanned-PDF handling, so
+nothing breaks; only our own now-nonexistent direct import is gone). Also found and fixed in passing,
+unrelated to OCR: a stale `llm_chat.attachment_ocr` translation key left over from Task 13's AI Chat
+removal.
+
+**Deliberately kept — the blob's `textRepresentation` mechanism itself:** the SQL column, its
+encrypt/decrypt/hashing logic in `blob.ts`, and the carry-across-(un)protection logic in `notes.ts`
+are generic blob infrastructure that predates and outlives OCR as a *writer* of it — removing it would
+mean a schema/migration decision and touching the sync-protocol content-hash formula, well beyond a
+feature removal. It simply has no writer anymore and reads back empty for all new content, exactly
+like Task 2's "leave a note's own type enum as unreachable dead code" precedent. The two read-only API
+routes built on top of it (`getNoteOCRText`/`getAttachmentOCRText`) *were* removed, since their only
+client consumers were the OCR UI just deleted. Also kept, for the same reason: the `showTextRepresentation`
+boolean prop threaded through several collection-view components (Dashboard, ListOrGridView, NoteList) —
+its only real effect was gating the now-deleted OCR fetch in `content_renderer.ts`; removing the prop
+itself from every one of those files for zero behavioral gain wasn't worth the churn or the risk, so it
+now sits inert. Also kept: `officeparser` and its `OFFICE_MIME_TYPES`/`office_preview.ts`/
+`office_renderer.ts` (the inline office-document HTML preview is a separate, unrelated feature that
+happens to share a library with OCR) — only its comment mentioning OCR was updated.
+
+**A real regression caught before it shipped:** `apps/standalone/src/office_preview.spec.ts` (the
+office-preview feature's own test, nothing to do with OCR) read its DOCX/XLSX fixtures from
+`apps/server/src/services/ocr/processors/samples/` — a directory shared between the OCR tests and this
+one, deleted along with the rest of `ocr/`. Attempting to relocate just the two still-needed fixtures
+uncovered a separate, pre-existing fragility: this spec's `readFixture()` resolves its path via
+`new URL(relative, import.meta.url)`, and under this exact standalone Vitest/Vite environment that
+resolution silently produces a wrong, truncated path for some relative-path shapes and not others (confirmed
+with plain Node — the same expression resolves correctly there). Rather than debug that pre-existing
+quirk, restored the whole `samples/` directory verbatim at its original path (now holding only shared
+test fixtures, no OCR code) and left the spec's own path expression untouched.
+
+**Not fixed, `ZULLIUM_PROGRESS.md`'s own precedent applied:** the `docs/User Guide` page
+"Text Extraction (OCR)" was left in place, matching how Task 2 left the Scripting and Relation Map user
+guide pages after removing those features — this fork has consistently deferred user-guide cleanup for
+removed features rather than doing it feature-by-feature.
+
+**Verification:** `pnpm typecheck` clean. Full suites: client 5476/5476 (3 failures seen under full
+parallel load — `login.spec.tsx`, `print.spec.tsx`, `content_renderer.spec.ts` — none touch OCR logic
+directly and all three passed cleanly re-run in isolation, confirming cross-test flakiness under this
+machine's parallel runner, not a regression), server 4961/5009 (48 pre-existing skips), standalone
+4170/4203 (32 pre-existing skips; one full-suite timeout in `office_preview.spec.ts` likewise passed
+cleanly in isolation), commons 830/830. New/updated tests: none added (this is a removal, not a
+feature), but `office_preview.spec.ts`, `data_dir.spec.ts`, `content_renderer.spec.ts`,
+`Attachment.spec.tsx`, and the `i18n.spec.ts` catalogue-integrity check were all re-run and confirmed
+green after the edits. Left uncommitted: `pnpm-lock.yaml` may still list `tesseract.js` as a direct
+dependency of `apps/server` rather than purely transitive — worth a `pnpm install` pass before the
+next full build, though nothing is broken by skipping it.
+
+## Protected session (per-note password protection) removed from the UI (2026-09-28)
+Follow-up to the still-open password question above. Given the scope check (160 files touch
+`isProtected`, 94 touch protected-session logic, 38 use `isContentAvailable` — a first-class property
+on notes/attachments/branches/revisions, woven into encryption, sync and search), the user chose a
+**UI-only removal**: every interactive way to protect a note or start/end a protected session is now
+gone, but the encryption, sync and search plumbing underneath is untouched. This is a materially
+smaller, lower-risk change than a true architectural removal, and it also makes the two
+already-dead-end dialogs found earlier (`password_not_set.tsx`, and the master-password gap it
+exposed) moot — there is no longer any UI path that could reach them.
+
+**Removed:** the tree context menu's "Protect subtree" / "Unprotect subtree" items and their command
+handlers (`tree_context_menu.ts`, `main_tree_executors.ts`); the ribbon's two separate "Protected"
+toggles, one in the note-properties tab and one in the note-actions dropdown
+(`BasicPropertiesTab.tsx`, `NoteActions.tsx`); the launch bar's protected-session status widget
+(`ProtectedSessionStatusWidget.tsx`, deleted outright) and its default-visible launcher entry
+(`_lbProtectedSession` in `hidden_subtree_launcherbar.ts`, marked `enforceDeleted: true`, mirroring
+the `_lbLlmChat`/`_lbSidebarChat` precedent from Tasks 2 and 13); the inline "Enter protected session"
+button shown when viewing a locked note (`content_renderer.ts`, replaced with a plain, non-actionable
+message — a locked note is now simply unreadable, with nothing that looks clickable but does nothing);
+and both password dialogs (`password_not_set.tsx`, `protected_session_password.tsx`, and their
+registrations), since their only trigger (`enterProtectedSession()`) is now unreachable from any UI
+surface. Checked the command palette specifically (Task 7/8's own established bypass risk) — none of
+protect/unprotect/enter/leave were ever registered as keyboard actions, so there was no separate
+back door to close.
+
+**Deliberately kept, as genuinely generic or defensive code, not UI surface:** `protected_session.ts`
+(still reacts correctly to a `protectedSessionLogin`/`Logout` message or a protect/unprotect task's
+progress toasts, should either ever arrive from a synced peer, ETAPI, or any other non-UI source this
+client doesn't control) and `protected_session_holder.ts` (tracks session state, read defensively by
+`isContentAvailable()`-style checks throughout the UI so an already-protected note — from synced data,
+an import, or a database that pre-dates this change — still displays correctly as unavailable rather
+than crashing); the `enterProtectedSession`/`leaveProtectedSession`/`showPasswordNotSet`/
+`showProtectedSessionPasswordDialog`/`closeProtectedSessionPasswordDialog` command types in
+`app_context.ts` (still legitimately triggered by the kept service code, now simply unlistened-to
+events); `root_command_executor.ts`'s `enterProtectedSessionCommand`/`leaveProtectedSessionCommand`
+handlers (unreachable, harmless, matching the established "leave as dead code" pattern rather than
+chasing every last unreachable handler); and the `protectedSession` entry in the generic
+`builtinWidget` type union (`packages/commons`) — a type-level enum value, not a UI entry point.
+
+**A real consequence, stated plainly:** any note that is already protected at the time this ships —
+synced from elsewhere, imported, or left over in a stale/seeded database — becomes permanently
+unreadable through this UI, since there is no longer any way to authenticate a protected session at
+all. For a fresh single-workstation deployment with no existing protected notes, this is exactly the
+intended outcome; it's called out here in case a future sync or import ever surfaces one.
+
+**Found and fixed in passing, unrelated to protected sessions specifically:** the entire client
+`password` translation section (25 keys) and three `hidden-subtree.*-title` server-catalogue keys
+(`security-title`, `password-title`, `multi-factor-authentication-title`) turned out to be leftover
+orphans from Task 1's settings-page removal, never cleaned up until this pass surfaced them via the
+`working-with-translations` skill's `unused` check. Removed all of them after confirming zero callers
+each. Left `login.*`/`set_password.*` (the setup wizard's own initial password flow) and
+`password.incorrect` entirely alone — these are a different, still-very-much-live surface, and the
+scanner's "unused" flag on them is a known limitation (dynamic key construction), not a real finding.
+
+**Verification:** `pnpm typecheck` clean. Test updates: `hidden_subtree_launcherbar.spec.ts` (adds
+`_lbProtectedSession` to the enforceDeleted assertions, drops its now-nonexistent `builtinWidget`
+assertion — 14/14 under both server and standalone runners); `content_renderer.spec.ts` (rewrote the
+one test exercising the old button to assert its absence and a plain message instead — 54/54). Full
+suites: client 5476/5476; server 4928/5009 (48 pre-existing skips) plus every failure in one
+whole-file suite (`backup_provider.spec.ts`, a pre-existing Windows file-lock EPERM in its own
+`afterAll` cleanup, unrelated to anything touched here) and one sync-protocol timeout, both confirmed
+passing cleanly in isolation; standalone 4169/4203 (32 pre-existing skips) plus two more full-suite-only
+timeouts (`backup-stream.spec.ts`, `files.spec.ts`'s RTF office-preview test), likewise confirmed
+passing in isolation. None of the four failing files touch protected-session code at all — all
+resource-contention flakiness under full parallel load on this machine, consistent with the same
+pattern seen repeatedly earlier in this session (Task 7/8's `mermaid.spec.ts`, `setup_marker.spec.ts`).
+
 ## Recommended next step
-Task #8 and Task #9 are both done (see above). Two flagged, not-yet-acted-on findings sit behind them:
-the 8 dangling `showOptions` section-id call sites (Task 8, harmless under the admin gate but still worth
-a cleanup pass), and the setup/login/unlock screens plus the setup window's own icon still showing
-Trilium's original logo (Task 9, a real visible gap outside the three placements that were actually
-asked for). Task #10 (backup) is deliberately on hold until the app is installed on its dedicated
-workstation — no code left to write there regardless. That leaves Task #11 (build and smoke-test) as
-the next actual development task, once the user wants it.
+Task #8 and Task #9 are both done, and every finding flagged along the way is resolved: the
+`showOptions` section references (mostly not actually broken; the one real gap restored as a trimmed
+Revisions settings page), the Trilium-branded setup/login/unlock screens and setup-window icon
+(rebranded), OCR (removed entirely), and protected-session/password protection (removed from the UI
+entirely, encryption/sync/search plumbing left intact — see above).
+
+Task #10 (backup) is deliberately on hold until the app is installed on its dedicated workstation — no
+code left to write there regardless. That leaves Task #11 (build and smoke-test) as the next actual
+development task, once the user wants it.

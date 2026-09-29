@@ -169,8 +169,8 @@ export default function buildLaunchBarConfig() {
         {
             id: "_lbProtectedSession",
             title: t("hidden-subtree.protected-session-title"),
-            type: "launcher", builtinWidget: "protectedSession",
-            icon: "bx bx bx-shield-quarter"
+            type: "launcher",
+            enforceDeleted: true
         },
         {
             id: "_lbSyncStatus",

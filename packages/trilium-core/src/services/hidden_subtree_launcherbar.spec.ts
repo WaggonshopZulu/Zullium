@@ -109,9 +109,11 @@ describe("buildLaunchBarConfig", () => {
         const config = buildLaunchBarConfig();
 
         // Zen mode went with the rest of the window chrome (Task 6); sidebar chat went with the
-        // AI Chat feature (Task 13). Neither launcher resolves to anything any more.
+        // AI Chat feature (Task 13); protected session went with removing password protection
+        // from the UI entirely. None of these launchers resolves to anything any more.
         expect(byId(config.desktopAvailableLaunchers, "_zenMode").enforceDeleted).toBe(true);
         expect(byId(config.desktopAvailableLaunchers, "_lbSidebarChat").enforceDeleted).toBe(true);
+        expect(byId(config.desktopVisibleLaunchers, "_lbProtectedSession").enforceDeleted).toBe(true);
     });
 
     it("wires builtin-widget launchers to their widgets", () => {
@@ -122,7 +124,6 @@ describe("buildLaunchBarConfig", () => {
         expect(byId(config.desktopVisibleLaunchers, "_lbToday").builtinWidget).toBe("todayInJournal");
         expect(byId(config.desktopVisibleLaunchers, "_lbSyncStatus").builtinWidget).toBe("syncStatus");
         expect(byId(config.desktopVisibleLaunchers, "_lbQuickSearch").builtinWidget).toBe("quickSearch");
-        expect(byId(config.desktopVisibleLaunchers, "_lbProtectedSession").builtinWidget).toBe("protectedSession");
         expect(byId(config.desktopAvailableLaunchers, "_lbBackInHistory").builtinWidget).toBe("backInHistoryButton");
         expect(byId(config.desktopAvailableLaunchers, "_lbForwardInHistory").builtinWidget).toBe("forwardInHistoryButton");
     });

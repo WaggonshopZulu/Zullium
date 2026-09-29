@@ -13,7 +13,6 @@ import ColorSchemeSwitcher from "./ColorSchemeSwitcher";
 import HistoryNavigationButton from "./HistoryNavigation";
 import { LaunchBarContext } from "./launch_bar_widgets";
 import { CommandButton, NoteLauncher, QuickSearchLauncherWidget, TodayLauncher } from "./LauncherDefinitions";
-import ProtectedSessionStatusWidget from "./ProtectedSessionStatusWidget";
 import SpacerWidget from "./SpacerWidget";
 import SyncStatus from "./SyncStatus";
 
@@ -97,8 +96,6 @@ function initBuiltinWidget(note: FNote, isHorizontalLayout: boolean) {
             return <SpacerWidget launcherNote={note} baseSize={baseSize} growthFactor={growthFactor} />;
         case "bookmarks":
             return <BookmarkButtons launcherNote={note} />;
-        case "protectedSession":
-            return <ProtectedSessionStatusWidget launcherNote={note} />;
         case "syncStatus":
             return <SyncStatus launcherNote={note} />;
         case "backInHistoryButton":
