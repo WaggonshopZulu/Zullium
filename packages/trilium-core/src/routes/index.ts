@@ -35,7 +35,6 @@ import databaseInfoRoute from "./api/database_info";
 import passwordApiRoute from "./api/password";
 import loginApiRoute from "./api/login";
 import fontsRoute from "./api/fonts";
-import ocrRoute from "./api/ocr";
 import linkEmbedRoute from "./api/link_embed";
 import spreadsheetRoute from "./api/spreadsheet";
 
@@ -342,10 +341,6 @@ export function buildSharedApiRoutes({ route, asyncRoute, asyncRouteWithoutTrans
     route(PUT, "/api/notes/:noteId/file", [checkApiAuthOrElectron, uploadMiddlewareWithErrorHandling, csrfMiddleware], filesRoute.updateFile, apiResultHandler);
     route(PUT, "/api/attachments/:attachmentId/file", [checkApiAuthOrElectron, uploadMiddlewareWithErrorHandling, csrfMiddleware], filesRoute.updateAttachment, apiResultHandler);
 
-    // Reading the OCR text only. Extracting it needs the engine, which stays in the server — but the
-    // text is stored on the blob and syncs with it, so every client can show what was extracted.
-    apiRoute(GET, "/api/ocr/notes/:noteId/text", ocrRoute.getNoteOCRText);
-    apiRoute(GET, "/api/ocr/attachments/:attachmentId/text", ocrRoute.getAttachmentOCRText);
     //#endregion
 
     //#region Password and protected session

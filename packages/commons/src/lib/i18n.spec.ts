@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getEnglishName, getTesseractCode, isDisplayableLocale, LOCALES } from "./i18n.js";
-
-describe("getTesseractCode", () => {
-    it("returns the Tesseract code for a mapped locale", () => {
-        expect(getTesseractCode("en")).toBe("eng");
-        expect(getTesseractCode("de")).toBe("deu");
-    });
-
-    it("returns null for a found locale without a tesseractCode", () => {
-        expect(getTesseractCode("en_rtl")).toBe(null);
-    });
-
-    it("returns null for an unknown locale", () => {
-        expect(getTesseractCode("nonexistent-locale")).toBe(null);
-    });
-});
+import { getEnglishName, isDisplayableLocale, LOCALES } from "./i18n.js";
 
 describe("LOCALES", () => {
     it("is a non-empty array sorted by name", () => {

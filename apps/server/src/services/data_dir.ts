@@ -47,8 +47,7 @@ export function getDataDirs(TRILIUM_DATA_DIR: string) {
         LOG_DIR: process.env.TRILIUM_LOG_DIR || pathJoin(TRILIUM_DATA_DIR, "log"),
         TMP_DIR: process.env.TRILIUM_TMP_DIR || pathJoin(TRILIUM_DATA_DIR, "tmp"),
         ANONYMIZED_DB_DIR: process.env.TRILIUM_ANONYMIZED_DB_DIR || pathJoin(TRILIUM_DATA_DIR, "anonymized-db"),
-        CONFIG_INI_PATH: process.env.TRILIUM_CONFIG_INI_PATH || pathJoin(TRILIUM_DATA_DIR, "config.ini"),
-        OCR_CACHE_DIR: process.env.TRILIUM_OCR_CACHE_DIR || pathJoin(TRILIUM_DATA_DIR, "ocr-cache")
+        CONFIG_INI_PATH: process.env.TRILIUM_CONFIG_INI_PATH || pathJoin(TRILIUM_DATA_DIR, "config.ini")
     } as const;
 
     createDirIfNotExisting(dataDirs.TMP_DIR);

@@ -535,7 +535,8 @@ describe("checkImageAttachments", () => {
             // "Copy reference to clipboard" on a link preview's favicon puts a bare <img> on the
             // clipboard. Carried into another note that way it is a picture someone placed, not a
             // preview's any more — and keeping the role would leave it deduplicated by title against
-            // that note's own previews, denied OCR and compression, and filed under "System".
+            // that note's own previews, denied the compression a picture is offered, and filed under
+            // "System".
             const source = buildNote({
                 title: "Source",
                 attachments: [{ id: "foreignFavicon", title: "example.com.ico", role: "favicon", mime: "image/x-icon" }]

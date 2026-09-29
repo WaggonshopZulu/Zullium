@@ -145,23 +145,6 @@ export default class BuildHelper {
         writeFileSync(join(this.outDir, "meta.json"), JSON.stringify(result.metafile));
     }
 
-    /**
-     * Bundles the Tesseract.js OCR worker into the bundle root and copies the engine builds beside
-     * it, where their loaders read them from, one per CPU feature level.
-     *
-     * Only the full engine builds are copied, not the `-lstm` ones. The Node worker's `getCore()`
-     * compares its `lstmOnly` boolean against OEM numbers, so it never selects an `-lstm` build.
-     *
-     * @param entryPoint the path of `tesseract_worker.ts`, relative to the project.
-     */
-    async buildTesseractWorker(entryPoint: string) {
-        await this.buildBackend([ entryPoint ]);
-        for (const variant of [ "", "-simd", "-relaxedsimd" ]) {
-            const file = `tesseract-core${variant}.wasm`;
-            this.copy(`/node_modules/tesseract.js-core/${file}`, file);
-        }
-    }
-
     buildFrontend() {
         this.triggerBuildAndCopyTo("apps/client", "public/");
 

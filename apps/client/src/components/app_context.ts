@@ -202,8 +202,6 @@ export type CommandMappings = {
     insertChildNote: ContextMenuCommandData;
     delete: ContextMenuCommandData;
     editNoteTitle: {};
-    protectSubtree: ContextMenuCommandData;
-    unprotectSubtree: ContextMenuCommandData;
     openBulkActionsDialog:
     | ContextMenuCommandData
     | {
@@ -358,11 +356,6 @@ export type CommandMappings = {
     ninthTab: CommandData;
     lastTab: CommandData;
     showNoteSource: CommandData;
-    showNoteOCRText: CommandData;
-    showOcrTextDialog: CommandData & {
-        textUrl: string;
-        processUrl: string;
-    };
     showSQLConsole: CommandData;
     showBackendLog: CommandData;
     showSpaceUsage: CommandData;

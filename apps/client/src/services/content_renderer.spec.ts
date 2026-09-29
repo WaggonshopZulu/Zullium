@@ -30,9 +30,6 @@ vi.mock("./syntax_highlight.js", () => ({
 const setupContextMenu = vi.fn((..._args: any[]) => {});
 vi.mock("../menus/image_context_menu.js", () => ({ default: { setupContextMenu: (...a: any[]) => setupContextMenu(...a) } }));
 
-const enterProtectedSession = vi.fn((..._args: any[]) => {});
-vi.mock("./protected_session.js", () => ({ default: { enterProtectedSession: (...a: any[]) => enterProtectedSession(...a) } }));
-
 const isProtectedSessionAvailable = vi.fn(() => false);
 const touchProtectedSession = vi.fn((..._args: any[]) => {});
 vi.mock("./protected_session_holder.js", () => ({
@@ -242,37 +239,6 @@ describe("getRenderedContent image rendering", () => {
         expect($renderedContent.find("img").attr("src")).toContain(`api/attachments/${att.attachmentId}/image/`);
     });
 
-    it("appends OCR text for FNote images when showTextRepresentation and OCR succeeds", async () => {
-        const note = buildNote({ title: "OcrPic", type: "spreadsheet" });
-        server.get = vi.fn(async () => ({ success: true, hasOcr: true, text: "hello-ocr" })) as typeof server.get;
-        const { $renderedContent } = await getRenderedContent(note, { showTextRepresentation: true });
-        expect(server.get).toHaveBeenCalledWith(`ocr/notes/${note.noteId}/text`);
-        expect($renderedContent.find(".ocr-content").text()).toBe("hello-ocr");
-    });
-
-    it("omits OCR section when the OCR response is unsuccessful", async () => {
-        const note = buildNote({ title: "OcrNo", type: "image" });
-        server.get = vi.fn(async () => ({ success: false, hasOcr: false, text: "" })) as typeof server.get;
-        const { $renderedContent } = await getRenderedContent(note, { showTextRepresentation: true });
-        expect($renderedContent.find(".ocr-content").length).toBe(0);
-    });
-
-    it("swallows OCR fetch errors", async () => {
-        const note = buildNote({ title: "OcrErr", type: "image" });
-        const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
-        server.get = vi.fn(async () => { throw new Error("boom"); }) as typeof server.get;
-        const { $renderedContent } = await getRenderedContent(note, { showTextRepresentation: true });
-        expect($renderedContent.find(".ocr-content").length).toBe(0);
-        expect(debugSpy).toHaveBeenCalled();
-        debugSpy.mockRestore();
-    });
-
-    it("does not fetch OCR for attachments even with showTextRepresentation", async () => {
-        const att = buildAttachment({ role: "image" });
-        server.get = vi.fn(async () => ({ success: true, hasOcr: true, text: "x" })) as typeof server.get;
-        await getRenderedContent(att, { showTextRepresentation: true });
-        expect(server.get).not.toHaveBeenCalledWith(expect.stringContaining("ocr/"));
-    });
 });
 
 describe("getRenderedContent file rendering", () => {
@@ -376,13 +342,6 @@ describe("getRenderedContent file rendering", () => {
         expect($renderedContent.find(".file-footer").length).toBe(0);
     });
 
-    it("appends OCR text inside the file content when requested", async () => {
-        const note = buildNote({ title: "FileOcr", type: "file" });
-        note.mime = "audio/mpeg";
-        server.get = vi.fn(async () => ({ success: true, hasOcr: true, text: "ocr-file" })) as typeof server.get;
-        const { $renderedContent } = await getRenderedContent(note, { showTextRepresentation: true });
-        expect($renderedContent.find(".ocr-content").text()).toBe("ocr-file");
-    });
 });
 
 describe("getRenderedContent office rendering", () => {
@@ -484,16 +443,16 @@ describe("getRenderedContent render / doc / protectedSession / mermaid", () => {
         expect($renderedContent.html()).toContain("doc");
     });
 
-    it("renders the protected-session prompt with a working enter button", async () => {
+    it("renders a plain message for locked protected content, with no way back in from the UI", async () => {
         const note = buildNote({ title: "S", type: "text" });
         note.isProtected = true;
         isProtectedSessionAvailable.mockReturnValue(false);
         const { type, $renderedContent } = await getRenderedContent(note);
         expect(type).toBe("protectedSession");
-        const $btn = $renderedContent.find("button");
-        expect($btn.length).toBe(1);
-        $btn.trigger("click");
-        expect(enterProtectedSession).toHaveBeenCalledOnce();
+        // No interactive way to enter a protected session any more, unlike the button this used
+        // to render.
+        expect($renderedContent.find("button").length).toBe(0);
+        expect($renderedContent.children().length).toBeGreaterThan(0);
     });
 
     it("renders a mermaid diagram and post-processes the svg", async () => {

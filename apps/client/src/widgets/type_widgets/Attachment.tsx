@@ -211,13 +211,9 @@ function AttachmentInfo({ attachment, isFullDetail, ownerNote, noteContext, view
     // without this nothing here re-renders and the viewer/player would keep showing what it first loaded.
     const [ modified, setModified ] = useState(attachment.utcDateModified);
     // "importSource" attachments (e.g. OneNote debug source) behave like ordinary files for
-    // preview, OCR and link-copying purposes.
+    // preview and link-copying purposes.
     const isFileLike = attachment.role === "file" || attachment.role === "importSource";
     const isPicture = isImageAttachmentRole(attachment.role);
-    // A link preview's pictures are deliberately left out: the server already sized both, and both
-    // belong to a preview rather than to the note, so reading text out of them — or offering to
-    // recompress them further down — is noise in every attachment list that holds a preview.
-    const supportsOcr = attachment.role === "image" || isFileLike;
 
     // Opened in full detail, an image gets the interactive zoom/pan viewer and audio/video the full media
     // player — both mounted here rather than through the content renderer, which has no tab context to hand
@@ -300,10 +296,6 @@ function AttachmentInfo({ attachment, isFullDetail, ownerNote, noteContext, view
                     <AttachmentActions
                         attachment={attachment}
                         copyAttachmentReferenceToClipboard={copyAttachmentReferenceToClipboard}
-                        onShowOcr={supportsOcr ? () => appContext.triggerCommand("showOcrTextDialog", {
-                            textUrl: `ocr/attachments/${attachment.attachmentId}/text`,
-                            processUrl: `ocr/process-attachment/${attachment.attachmentId}`
-                        }) : undefined}
                     />
                     <AttachmentIcon attachment={attachment} />
                     <h4 className="attachment-title">
@@ -418,7 +410,7 @@ function DeletionBadge({ utcDateScheduledForErasureSince }: { utcDateScheduledFo
     );
 }
 
-function AttachmentActions({ attachment, copyAttachmentReferenceToClipboard, onShowOcr }: { attachment: FAttachment, copyAttachmentReferenceToClipboard: () => void, onShowOcr?: () => void }) {
+function AttachmentActions({ attachment, copyAttachmentReferenceToClipboard }: { attachment: FAttachment, copyAttachmentReferenceToClipboard: () => void }) {
     const isElectron = utils.isElectron();
     const fileUploadRef = useRef<HTMLInputElement>(null);
 
@@ -458,12 +450,6 @@ function AttachmentActions({ attachment, copyAttachmentReferenceToClipboard, onS
                     icon="bx bx-copy"
                     onClick={copyAttachmentReferenceToClipboard}
                 >{t("attachments_actions.copy_link_to_clipboard")}</FormListItem>
-                {onShowOcr && (
-                    <FormListItem
-                        icon="bx bx-text"
-                        onClick={onShowOcr}
-                    >{t("ocr.view_extracted_text")}</FormListItem>
-                )}
                 <FormDropdownDivider />
 
                 <FormListItem

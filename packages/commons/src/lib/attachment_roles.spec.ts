@@ -85,8 +85,8 @@ describe("copiedAs", () => {
     it("hands a copy to whoever made it: a picture the app fetched becomes one the reader placed", () => {
         // The point of the column. A link preview's pictures are the app's while they belong to the
         // preview; carried into a note by hand they are a picture like any other, and keeping the
-        // role would leave them deduplicated by title against that note's own previews, denied OCR
-        // and compression, and filed under the half of the list nobody opens.
+        // role would leave them deduplicated by title against that note's own previews, denied the
+        // compression offered to a picture, and filed under the half of the list nobody opens.
         expect(ATTACHMENT_ROLES.favicon.copiedAs).toBe("image");
         expect(ATTACHMENT_ROLES.coverImage.copiedAs).toBe("image");
     });

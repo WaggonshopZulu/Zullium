@@ -1,6 +1,6 @@
 import "./content_renderer.css";
 
-import { isImageAttachmentRole, isOfficeMimeType, normalizeMimeTypeForCKEditor, type TextRepresentationResponse } from "@triliumnext/commons";
+import { isImageAttachmentRole, isOfficeMimeType, normalizeMimeTypeForCKEditor } from "@triliumnext/commons";
 import DOMPurify from "dompurify";
 import { h, type JSX, render } from "preact";
 
@@ -15,10 +15,8 @@ import { getMermaidConfig, postprocessMermaidSvg } from "./mermaid.js";
 import { renderOfficeToHtml } from "./office_renderer.js";
 import openService from "./open.js";
 import { waitForPendingRenders } from "./pending_renders.js";
-import protectedSessionService from "./protected_session.js";
 import protectedSessionHolder from "./protected_session_holder.js";
 import renderService from "./render.js";
-import server from "./server.js";
 import { applySingleBlockSyntaxHighlight } from "./syntax_highlight.js";
 import { getErrorMessage } from "./utils.js";
 
@@ -124,9 +122,7 @@ export async function getRenderedContent(this: {} | { ctx: string }, entity: FNo
         const $content = await renderDoc(entity);
         $renderedContent.html($content.html());
     } else if (!options.tooltip && type === "protectedSession") {
-        const $button = $(`<button class="btn btn-sm"><span class="tn-icon bx bx-log-in"></span> Enter protected session</button>`).on("click", protectedSessionService.enterProtectedSession);
-
-        $renderedContent.append($("<div>").append("<div>This note is protected and to access it you need to enter password.</div>").append("<br/>").append($button));
+        $renderedContent.append($("<div>").text(t("content_renderer.protected_content_unavailable")));
     } else if (type === "webView" && options.interactive && !options.tooltip && entity instanceof FNote && entity.hasLabel("webViewSrc")) {
         await renderWebView(entity, $renderedContent);
     } else if (entity instanceof FNote) {
@@ -259,7 +255,7 @@ async function renderImage(entity: FNote | FAttachment, $renderedContent: JQuery
         .css("display", "flex")
         .css("align-items", "center")
         .css("justify-content", "center")
-        .css("flex-direction", "column");   // OCR text is displayed below the image.
+        .css("flex-direction", "column");
 
     const $img = $("<img>")
         .attr("src", url || "")
@@ -269,32 +265,6 @@ async function renderImage(entity: FNote | FAttachment, $renderedContent: JQuery
     $renderedContent.append($img);
 
     imageContextMenuService.setupContextMenu($img);
-
-    if (entity instanceof FNote && options.showTextRepresentation) {
-        await addOCRTextIfAvailable(entity, $renderedContent);
-    }
-}
-
-async function addOCRTextIfAvailable(note: FNote, $content: JQuery<HTMLElement>) {
-    try {
-        const data = await server.get<TextRepresentationResponse>(`ocr/notes/${note.noteId}/text`);
-        if (data.success && data.hasOcr && data.text) {
-            const $ocrSection = $(`
-                <div class="ocr-text-section">
-                    <div class="ocr-header">
-                        <span class="tn-icon bx bx-text"></span> ${t("ocr.extracted_text")}
-                    </div>
-                    <div class="ocr-content"></div>
-                </div>
-            `);
-
-            $ocrSection.find('.ocr-content').text(data.text);
-            $content.append($ocrSection);
-        }
-    } catch (error) {
-        // Silently fail if OCR API is not available
-        console.debug('Failed to fetch OCR text:', error);
-    }
 }
 
 async function renderFile(entity: FNote | FAttachment, type: string, $renderedContent: JQuery<HTMLElement>, options: RenderOptions = {}) {
@@ -328,10 +298,6 @@ async function renderFile(entity: FNote | FAttachment, type: string, $renderedCo
             mediaOwnsFileActions = showsFileActions(environment);
             await renderMedia(entity, environment, $content);
         }
-    }
-
-    if (entity instanceof FNote && options.showTextRepresentation) {
-        await addOCRTextIfAvailable(entity, $content);
     }
 
     if (!mediaOwnsFileActions) {

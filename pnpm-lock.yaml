@@ -821,9 +821,6 @@ importers:
       supertest:
         specifier: 7.3.0
         version: 7.3.0(supports-color@10.2.2)
-      tesseract.js:
-        specifier: 7.0.0
-        version: 7.0.0(encoding@0.1.13)
       time2fa:
         specifier: 1.4.2
         version: 1.4.2

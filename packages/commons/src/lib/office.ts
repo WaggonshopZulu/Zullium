@@ -1,6 +1,6 @@
 /**
- * Office document formats that officeparser can process — used both for OCR text
- * extraction (server) and for the inline HTML preview of file notes/attachments.
+ * Office document formats that officeparser can process for the inline HTML preview of file
+ * notes/attachments.
  */
 export const OFFICE_MIME_TYPES = new Set([
     // Office Open XML

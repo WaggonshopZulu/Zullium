@@ -21,7 +21,6 @@ import type { TokenData, TokenStructure } from "./types.js";
 import type Expression from "../expressions/expression.js";
 import IsHiddenExp from "../expressions/is_hidden.js";
 import NotExp from "../expressions/not.js";
-import OCRContentExpression from "../expressions/ocr_content.js";
 import OrExp from "../expressions/or.js";
 import { removeDiacritic } from "../../utils/index.js";
 
@@ -52,8 +51,6 @@ function getFulltext(_tokens: TokenData[], searchContext: SearchContext, leading
                 new NoteContentFulltextExp("=", { tokens, flatText: true })
             ];
 
-            exactMatchExpressions.push(new OCRContentExpression(tokens));
-
             return new OrExp(exactMatchExpressions);
         }
 
@@ -61,8 +58,7 @@ function getFulltext(_tokens: TokenData[], searchContext: SearchContext, leading
             new NoteFlatTextExp(tokens),
             // fuzzyFallback lets progressive phase 2 fuzzy-match body content (e.g.
             // "combinef" finding "combined"); only this default plain-query path sets it.
-            new NoteContentFulltextExp(operator, { tokens, flatText: true, fuzzyFallback: true }),
-            new OCRContentExpression(tokens)
+            new NoteContentFulltextExp(operator, { tokens, flatText: true, fuzzyFallback: true })
         ];
 
         return new OrExp(searchExpressions);

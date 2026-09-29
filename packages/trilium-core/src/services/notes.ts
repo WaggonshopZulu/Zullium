@@ -598,8 +598,8 @@ export function checkImageAttachments(note: BNote, content: string) {
         // refers to it. Still a link preview's picture here — the whole preview having been pasted —
         // and it stays the preview's. Reached any other way it is a picture or a file someone placed,
         // and carrying the app's role over would leave the copy deduplicated against this note's own
-        // previews, denied the OCR and compression a picture is offered, and filed out of sight. A
-        // role we know nothing about is left alone: there is nothing better to say about it.
+        // previews, denied the compression a picture is offered, and filed out of sight. A role we
+        // know nothing about is left alone: there is nothing better to say about it.
         const copiedRole = previewPictureIds.has(unknownAttachment.attachmentId ?? "")
             ? unknownAttachment.role
             : attachmentRoleTraits(unknownAttachment.role)?.copiedAs ?? unknownAttachment.role;

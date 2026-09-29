@@ -13,7 +13,6 @@ import branches from "../../services/branches";
 import dialog from "../../services/dialog";
 import { isExperimentalFeatureEnabled } from "../../services/experimental_features";
 import { t } from "../../services/i18n";
-import protected_session from "../../services/protected_session";
 import server from "../../services/server";
 import toast from "../../services/toast";
 import { isElectron as getIsElectron, isMac as getIsMac, isMobile as getIsMobile } from "../../services/utils";
@@ -203,7 +202,6 @@ export function NoteContextMenu({ note, noteContext, itemsAtStart, itemsNearNote
                     <CommandItem icon="bx bx-collapse-alt" text={t("compress-images")}
                         disabled={isInOptionsOrHelp || !isContentAvailable}
                         command={() => void showImageCompressionDialog({ type: "note", noteId: note.noteId })} />
-                    <CommandItem command="showNoteOCRText" icon="bx bx-text" disabled={!["image", "file"].includes(noteType) || !isContentAvailable} text={t("note_actions.view_ocr_text")} />
                     {(syncServerHost && isElectron) &&
                         <CommandItem command="openNoteOnServer" icon="bx bx-world" disabled={!syncServerHost} text={t("note_actions.open_note_on_server")} />
                     }
@@ -252,7 +250,6 @@ function NoteBasicProperties({ note, focus }: {
     const [ isShared, switchShareState ] = useShareState(note);
     const [ isTemplate, setIsTemplate ] = useNoteLabelBoolean(note, "template");
     const [ isFullContentWidth, setIsFullContentWidth ] = useNoteLabelBoolean(note, "fullContentWidth");
-    const isProtected = useNoteProperty(note, "isProtected");
 
     useEffect(() => {
         if (focus.current === "basic-properties") {
@@ -268,11 +265,6 @@ function NoteBasicProperties({ note, focus }: {
             helpPage="R9pX4DGra2Vt"
             disabled={["root", "_share", "_hidden"].includes(note?.noteId ?? "") || note?.noteId.startsWith("_options")}
             itemRef={itemToFocusRef}
-        />
-        <FormListToggleableItem
-            icon="bx bx-lock-alt"
-            title={t("protect_note.toggle-on")}
-            currentValue={!!isProtected} onChange={shouldProtect => protected_session.protectNote(note.noteId, shouldProtect, false)}
         />
         <FormListToggleableItem
             icon="bx bx-bookmark"

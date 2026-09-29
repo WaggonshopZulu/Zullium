@@ -159,10 +159,7 @@ const ALLOWED_OPTIONS = new Set<OptionNames>([
     "aiEnabled",
     "llmProviders",
     "aiAssistantModel",
-    "mcpEnabled",
-    // OCR options
-    "ocrAutoProcessImages",
-    "ocrMinConfidence"
+    "mcpEnabled"
 ]);
 
 // Options that contain secrets (API keys, tokens, etc.).

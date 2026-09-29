@@ -23,7 +23,6 @@ import filesRoute from "./api/files.js";
 // API routes
 import loginApiRoute from "./api/login.js";
 import metricsRoute from "./api/metrics.js";
-import ocrRoute from "./api/ocr.js";
 import onenoteImportRoute from "./api/onenote_import.js";
 import recoveryCodes from './api/recovery_codes.js';
 import senderRoute from "./api/sender.js";
@@ -186,12 +185,6 @@ function register(app: express.Application) {
     etapiSpecRoute.register(router);
     etapiBackupRoute.register(router);
     etapiMetricsRoute.register(router);
-
-    // OCR API
-    asyncApiRoute(PST, "/api/ocr/process-note/:noteId", ocrRoute.processNoteOCR);
-    asyncApiRoute(PST, "/api/ocr/process-attachment/:attachmentId", ocrRoute.processAttachmentOCR);
-    asyncApiRoute(PST, "/api/ocr/batch-process", ocrRoute.batchProcessOCR);
-    asyncApiRoute(GET, "/api/ocr/batch-progress", ocrRoute.getBatchProgress);
 
     app.use("", router);
 }

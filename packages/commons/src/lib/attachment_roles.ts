@@ -47,8 +47,8 @@ export interface AttachmentRoleTraits {
      * pictures a link preview fetched are the app's while they belong to that preview, but pasted
      * into a note as a picture they are one the reader placed, and nothing about them is the app's to
      * manage any more. Keeping the role would leave the copy deduplicated by title against that
-     * note's own previews, denied the OCR and compression offered to a picture, and filed under the
-     * half of the attachment list nobody opens.
+     * note's own previews, denied the compression offered to a picture, and filed under the half of
+     * the attachment list nobody opens.
      *
      * Always one of the two roles that mean "someone put this here" — handing a copy to another of
      * the app's roles would only move the problem. A picture stays a picture: see the spec.

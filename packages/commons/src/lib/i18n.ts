@@ -101,13 +101,6 @@ export type LOCALE_IDS = typeof UNSORTED_LOCALES[number]["id"];
 export type DISPLAYABLE_LOCALE_IDS = Exclude<typeof UNSORTED_LOCALES[number], { contentOnly: true }>["id"];
 
 /**
- * Returns the Tesseract OCR language code for the given locale ID, or `null` if not mapped.
- */
-export function getTesseractCode(localeId: string): string | null {
-    return LOCALES.find((l) => l.id === localeId)?.tesseractCode ?? null;
-}
-
-/**
  * Returns `true` if the given locale ID corresponds to a known locale that can be used as the
  * application's display language (i.e. it exists and is not content-only).
  */
