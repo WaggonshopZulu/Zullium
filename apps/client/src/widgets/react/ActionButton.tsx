@@ -66,7 +66,10 @@ export default function ActionButton({ text, icon, className, triggerCommand, ti
     // which would drop the current hover. The title is resolved lazily (a function) so Bootstrap
     // always reads the latest value from titleRef rather than one captured when the config was memoized.
     const tooltipConfig = useMemo<Partial<Tooltip.Options>>(() => ({
-        title: hasTitle ? () => titleRef.current ?? "" : undefined,
+        // Omitted rather than set to undefined when there's nothing to add: Bootstrap's own type
+        // check on `title` rejects undefined outright, where an absent key falls through to
+        // whatever native `title` attribute the element carries instead.
+        ...(hasTitle ? { title: () => titleRef.current ?? "" } : {}),
         placement: titlePosition ?? "bottom",
         fallbackPlacements: [ titlePosition ?? "bottom" ],
         customClass: tooltipClass ?? "",

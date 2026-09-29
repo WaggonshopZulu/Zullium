@@ -77,4 +77,5 @@ describe("ActionButton", () => {
         expect(tooltipText).toContain("O");
         expect(tooltipText).not.toContain("New note");
     });
+
 });

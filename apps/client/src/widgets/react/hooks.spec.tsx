@@ -161,6 +161,28 @@ describe("useStaticTooltip", () => {
         expect(document.querySelector(".tooltip")).toBeNull();
     });
 
+    function NativeTitleFallbackHarness() {
+        const ref = useRef<HTMLSpanElement>(null);
+        // A caller with nothing of its own to add to a tooltip passes an explicit `title:
+        // undefined` here — matching the exact shape that crashed on a packaged-app boot: a
+        // labeled, no-shortcut ActionButton whose element also happened to carry a native `title`
+        // attribute. Bootstrap's own type check on its Tooltip options rejects `undefined`
+        // outright, where an *absent* key falls through correctly to the element's attribute.
+        useStaticTooltip(ref, { title: undefined, animation: false });
+        return <span ref={ref} title="native fallback" />;
+    }
+
+    it("falls through to the element's own title attribute rather than crashing on an explicit title: undefined (boot smoke test)", async () => {
+        await act(async () => render(<NativeTitleFallbackHarness />, container));
+
+        const trigger = container.querySelector("span");
+        expect(trigger).not.toBeNull();
+        act(() => {
+            if (trigger) Tooltip.getInstance(trigger)?.show();
+        });
+        expect(document.querySelector(".tooltip")?.textContent).toContain("native fallback");
+    });
+
     it("puts the tooltip away on a press, which would otherwise leave it standing over what the press opened", async () => {
         await act(async () => render(<TooltipHarness generation={1} />, container));
 

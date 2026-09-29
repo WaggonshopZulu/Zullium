@@ -1218,10 +1218,20 @@ export function useStaticTooltip(elRef: RefObject<Element>, config?: Partial<Too
         // Capture element now, since elRef.current may be null during cleanup.
         const element = elRef.current;
 
+        // A caller with nothing of its own to add can still land here through the element's own
+        // title attribute (just above) while its config carries an explicit `title: undefined`
+        // rather than omitting the key. Bootstrap's own type check on Tooltip options rejects
+        // undefined outright, where an absent key correctly falls through to the attribute — so
+        // that key is dropped from a copy rather than passed through as-is.
+        const safeConfig = { ...config };
+        if (safeConfig.title === undefined) {
+            delete safeConfig.title;
+        }
+
         // Dispose any existing tooltip before creating a new one
         Tooltip.getInstance(element)?.dispose();
 
-        const tooltip = new Tooltip(element, config);
+        const tooltip = new Tooltip(element, safeConfig);
         element.addEventListener("show.bs.tooltip", () => {
             // Hide all the other tooltips.
             for (const otherTooltip of tooltips) {

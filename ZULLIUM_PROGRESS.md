@@ -37,7 +37,7 @@ for a decision, not acting on it unasked.
     reassigned drive letter does not break it as long as the folder still exists. `_optionsBackup` is one of the two
     settings pages Task 4 kept, admin-gated — now reachable through Task 8's admin mode. No more code to write here;
     this is a hands-on step for the workstation itself, not a development task.
-11. Build and smoke-test — NOT STARTED
+11. Build and smoke-test — **DONE** (2026-09-28; see below)
 12. Sync finished code back to C:\Zullium\repo — NOT STARTED
 13. Remove the AI Chat feature entirely — **DONE** (earlier session)
 
@@ -743,13 +743,60 @@ passing in isolation. None of the four failing files touch protected-session cod
 resource-contention flakiness under full parallel load on this machine, consistent with the same
 pattern seen repeatedly earlier in this session (Task 7/8's `mermaid.spec.ts`, `setup_marker.spec.ts`).
 
-## Recommended next step
-Task #8 and Task #9 are both done, and every finding flagged along the way is resolved: the
-`showOptions` section references (mostly not actually broken; the one real gap restored as a trimmed
-Revisions settings page), the Trilium-branded setup/login/unlock screens and setup-window icon
-(rebranded), OCR (removed entirely), and protected-session/password protection (removed from the UI
-entirely, encryption/sync/search plumbing left intact — see above).
+## Task #11 — build and smoke-test (2026-09-28)
+Ran the real production pipeline end to end: `pnpm desktop:build` (bundles client, server and desktop
+together — client's own build is triggered from inside it, no separate step needed), then
+`electron-forge:package` to produce a runnable, unpacked Windows build (`apps/desktop/dist/out/Daily
+Brief Logbook-win32-x64/trilium.exe` — the packaged folder itself is correctly branded "Daily Brief
+Logbook"; the `.exe` filename stays `trilium.exe`, an internal binary name distinct from the app's
+displayed name/window title, not something this pass touched). Both steps succeeded cleanly (exit code
+0); the only build output was pre-existing bundler chunk-size/dynamic-import advisories, unrelated to
+anything this fork changed.
 
-Task #10 (backup) is deliberately on hold until the app is installed on its dedicated workstation — no
-code left to write there regardless. That leaves Task #11 (build and smoke-test) as the next actual
-development task, once the user wants it.
+**Boot smoke-test:** launched the packaged `.exe` directly and read its own log output (this is a build
+verification, not a UI walkthrough — per this repo's own testing convention, the user's own visual pass
+is still the one that matters for how anything actually looks or reads). The first boot confirmed real,
+substantive things working end to end: the hidden-subtree sweep correctly cleaned up every
+`enforceDeleted` launcher from this session's work (`_zenMode`, `_lbSidebarChat`, `_lbProtectedSession`
+all logged as found-and-deleted on this exact fixture database, which had never run the current
+definition before); the Shift Log and Reference sidebar roots were created; the server started, the
+tree loaded, and the database's own consistency check passed with zero errors.
+
+**One real bug found and fixed, not something to hand back to the user:** the first boot logged a
+JS error — a Bootstrap tooltip constructor throwing `TOOLTIP: Option "title" provided type "undefined"
+but expected type "(string|element|function)"`. Traced to Task 7's icon-label work:
+`ActionButton.tsx`'s tooltip config set `title: hasTitle ? () => titleRef.current ?? "" : undefined`
+— an explicit `title: undefined` for a labeled button with no keyboard shortcut, meant to signal "no
+tooltip needed." `useStaticTooltip`'s own fallback design (`config?.title || element.getAttribute
+("title")`) is built to let a plain native `title` HTML attribute serve as the tooltip when a caller has
+nothing else to add — but when that fallback fires, it still passed the *whole config object* through to
+`new Tooltip(element, config)`, `title: undefined` and all, and Bootstrap's own type check rejects
+`undefined` outright, where an *absent* key would have correctly fallen through to its own default.
+Fixed at both levels: `ActionButton.tsx` now omits the `title` key entirely rather than setting it to
+`undefined`, and `useStaticTooltip` itself now strips an explicit `title: undefined` from a config copy
+before constructing the tooltip, so any other current or future caller making the same mistake fails
+safe instead of crashing. Added a regression test to `hooks.spec.tsx` reproducing the exact shape
+(a native `title` attribute plus an explicit `title: undefined` config) — confirmed it fails without the
+fix and passes with it, per this repo's own "see the spec fail before it passes" convention.
+
+Rebuilt, re-packaged and re-booted after the fix: same clean boot, no JS errors this time, a real note
+loaded, CKEditor reached its ready state, and the consistency check again passed with zero errors.
+
+**Verification:** `pnpm typecheck` clean. New test: `hooks.spec.tsx`'s `useStaticTooltip` suite
+("falls through to the element's own title attribute rather than crashing on an explicit
+title: undefined"). Full client suite re-run after the fix: 5477/5477 (the widely-shared `hooks.tsx`
+justified a full re-run beyond the narrow one). Not re-run: server/standalone/commons — this task's
+only source change was to a client-only hook and its one caller, with no server or shared-package
+touch point.
+
+## Recommended next step
+Every task with code left to write is done. Task #8 and Task #9's findings are all resolved (the
+`showOptions` section references, the Trilium-branded setup/login/unlock screens, OCR, and
+protected-session/password protection — see above), and Task #11 confirmed the whole thing actually
+builds, packages and boots clean, catching and fixing one real tooltip bug along the way.
+
+Task #10 (backup) is the only item left, and it is deliberately on hold until the app is installed on
+its dedicated workstation — no code left to write there, just the external drive's folder path entered
+through the existing picker once that machine is set up. Task #12 (sync finished code back to
+C:\Zullium\repo) is the only other NOT STARTED item on the original list, and may be moot now that the
+work lives on GitHub instead.
