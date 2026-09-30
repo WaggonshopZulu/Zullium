@@ -5,7 +5,7 @@ import becca from "../becca/becca.js";
 import BAttribute from "../becca/entities/battribute.js";
 import BBranch from "../becca/entities/bbranch.js";
 import BNote from "../becca/entities/bnote.js";
-import { ensureGuardStructure } from "./guard_structure.js";
+import { ensureGuardStructure, ensureShiftLogDates } from "./guard_structure.js";
 import buildLaunchBarConfig from "./hidden_subtree_launcherbar.js";
 import buildHiddenSubtreeTemplates from "./hidden_subtree_templates.js";
 import { cleanUpHelp, getHelpHiddenSubtreeData } from "./in_app_help.js";
@@ -354,6 +354,7 @@ function checkHiddenSubtree(force = false, extraOpts: CheckHiddenExtraOpts = {})
         checkHiddenSubtreeRecursively("root", hiddenSubtreeDefinition, extraOpts);
 
         ensureGuardStructure();
+        ensureShiftLogDates();
 
         // Seed the default task states only the first time the container is created,
         // so that later user deletions stick instead of being recreated on startup.

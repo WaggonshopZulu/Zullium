@@ -1,10 +1,11 @@
-import { GUARD_ROOT_NOTE_IDS, REFERENCE_NOTE_ID, SHIFT_LOG_NOTE_ID } from "@triliumnext/commons";
+import { dayjs, GUARD_ROOT_NOTE_IDS, REFERENCE_NOTE_ID, SHIFT_LOG_NOTE_ID } from "@triliumnext/commons";
 import { describe, expect, it } from "vitest";
 
 import becca from "../becca/becca.js";
+import attributeService from "./attributes.js";
 import { getContext } from "./context.js";
 import dateNotesService from "./date_notes.js";
-import { ensureGuardStructure } from "./guard_structure.js";
+import { ensureGuardStructure, ensureShiftLogDates } from "./guard_structure.js";
 import treeService from "./tree.js";
 
 function ensure() {
@@ -24,7 +25,7 @@ describe("guard structure", () => {
         ensure();
         ensure();
 
-        for (const [ noteId, title ] of [ [ SHIFT_LOG_NOTE_ID, "Shift Log" ], [ REFERENCE_NOTE_ID, "Reference" ] ]) {
+        for (const [ noteId, title ] of [ [ SHIFT_LOG_NOTE_ID, "Daily Shift Log" ], [ REFERENCE_NOTE_ID, "Reference" ] ]) {
             const note = becca.notes[noteId];
             expect(note?.title).toBe(title);
             const parents = note.getParentBranches().filter((branch) => !branch.isDeleted);
@@ -55,7 +56,7 @@ describe("guard structure", () => {
         expect(shiftLog.title).toBe("Renamed");
 
         getContext().init(() => {
-            shiftLog.title = "Shift Log";
+            shiftLog.title = "Daily Shift Log";
             shiftLog.save();
         });
     });
@@ -81,7 +82,7 @@ describe("guard structure", () => {
 
         const yearNote = becca.notes[SHIFT_LOG_NOTE_ID].getChildNotes().find((note) => note.title === "2026");
         expect(yearNote, "the year note sits under Shift Log").toBeDefined();
-        const monthNote = yearNote?.getChildNotes().find((note) => note.title.endsWith("September"));
+        const monthNote = yearNote?.getChildNotes().find((note) => note.title.includes("September"));
 
         getContext().init(() => {
             for (const note of [ becca.notes[SHIFT_LOG_NOTE_ID], yearNote, monthNote ]) {
@@ -91,7 +92,31 @@ describe("guard structure", () => {
             }
         });
 
-        expect(childTitles(yearNote?.noteId ?? "")).toEqual([ "10 - October", "09 - September" ]);
-        expect(childTitles(monthNote?.noteId ?? "")).toEqual([ "28 - Monday", "27 - Sunday", "26 - Saturday" ]);
+        expect(childTitles(yearNote?.noteId ?? "")).toEqual([ "October 2026", "September 2026" ]);
+        expect(childTitles(monthNote?.noteId ?? "")).toEqual([
+            "Monday, September 28, 2026",
+            "Sunday, September 27, 2026",
+            "Saturday, September 26, 2026"
+        ]);
+    });
+
+    it("pre-creates blank day notes through the horizon, and does nothing once it is reached", () => {
+        ensure();
+        const dateOf = (d: string) => attributeService.getNoteWithLabel("dateNote", d);
+        // A near horizon keeps the test cheap; the startup default is the end of next year.
+        const horizon = dayjs().add(2, "day");
+        const beyond = horizon.add(1, "day");
+
+        getContext().init(() => ensureShiftLogDates(horizon));
+
+        expect(dateOf(dayjs().format("YYYY-MM-DD")), "today's page exists").not.toBeNull();
+        expect(dateOf(horizon.format("YYYY-MM-DD")), "the horizon's page exists").not.toBeNull();
+        expect(dateOf(beyond.format("YYYY-MM-DD")), "nothing past the horizon").toBeNull();
+
+        const countDayNotes = () => Object.values(becca.notes).filter((note) => note.hasOwnedLabel("dateNote")).length;
+        const before = countDayNotes();
+        // The horizon's page now exists, so a second pass is a no-op and adds no duplicates.
+        getContext().init(() => ensureShiftLogDates(horizon));
+        expect(countDayNotes()).toBe(before);
     });
 });

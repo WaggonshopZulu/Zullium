@@ -71,7 +71,7 @@ function getJournalNoteTitle(
         quarter: rootNote.getOwnedLabelValue("quarterPattern") || t("quarterNumber"),
         month: rootNote.getOwnedLabelValue("monthPattern") || "{month} {year}",
         week: rootNote.getOwnedLabelValue("weekPattern") || t("weekdayNumber"),
-        day: rootNote.getOwnedLabelValue("datePattern") || "{dateNumberPadded} - {weekDay}"
+        day: rootNote.getOwnedLabelValue("datePattern") || "{weekDay}, {month} {dateNumberPadded}, {year}"
     };
 
     const pattern = patterns[timeUnit];
@@ -172,7 +172,7 @@ function getRootCalendarNote(): BNote {
         getSql().transactional(() => {
             rootNote = noteService.createNewNote({
                 parentNoteId: "root",
-                title: "Calendar",
+                title: "Daily Shift Log",
                 target: "into",
                 isProtected: false,
                 type: "text",
@@ -180,7 +180,9 @@ function getRootCalendarNote(): BNote {
             }).note;
 
             attributeService.createLabel(rootNote.noteId, CALENDAR_ROOT_LABEL);
-            attributeService.createLabel(rootNote.noteId, "sorted");
+            // Sort the years by their `yearNote` value; see the month and day notes for why the
+            // calendar sorts by these ISO labels rather than by title.
+            attributeService.createLabel(rootNote.noteId, "sorted", YEAR_LABEL);
         });
     }
 
@@ -204,7 +206,9 @@ function getYearNote(dateStr: string, _rootNote: BNote | null = null): BNote {
         yearNote = createNote(rootNote, yearStr);
 
         attributeService.createLabel(yearNote.noteId, YEAR_LABEL, yearStr);
-        attributeService.createLabel(yearNote.noteId, "sorted");
+        // Sort the months by their ISO `monthNote` value ("2026-09"), not their title — the title is
+        // now "September 2026", which a title sort would order alphabetically.
+        attributeService.createLabel(yearNote.noteId, "sorted", MONTH_LABEL);
 
         const yearTemplateAttr = rootNote.getOwnedAttribute("relation", "yearTemplate");
 
@@ -291,7 +295,9 @@ function getMonthNote(dateStr: string, _rootNote: BNote | null = null): BNote {
         monthNote = createNote(monthParentNote, noteTitle);
 
         attributeService.createLabel(monthNote.noteId, MONTH_LABEL, monthStr);
-        attributeService.createLabel(monthNote.noteId, "sorted");
+        // Sort the days by their ISO `dateNote` value ("2026-09-01"), not their title — the title is
+        // now "Tuesday, September 01, 2026", which a title sort would order by weekday name.
+        attributeService.createLabel(monthNote.noteId, "sorted", DATE_LABEL);
 
         const monthTemplateAttr = rootNote.getOwnedAttribute("relation", "monthTemplate");
 

@@ -1,8 +1,12 @@
-import { REFERENCE_NOTE_ID, SHIFT_LOG_NOTE_ID } from "@triliumnext/commons";
+import { dayjs, Dayjs, REFERENCE_NOTE_ID, SHIFT_LOG_NOTE_ID } from "@triliumnext/commons";
 
 import becca from "../becca/becca.js";
 import type BNote from "../becca/entities/bnote.js";
+import attributeService from "./attributes.js";
+import dateNotesService from "./date_notes.js";
 import noteService from "./notes.js";
+
+const DATE_LABEL = "dateNote";
 
 interface GuardRootDefinition {
     noteId: string;
@@ -15,15 +19,17 @@ interface GuardRootDefinition {
 const GUARD_ROOTS: GuardRootDefinition[] = [
     {
         noteId: SHIFT_LOG_NOTE_ID,
-        title: "Shift Log",
+        title: "Daily Shift Log",
         notePosition: 10,
-        // `calendarRoot` makes the day-note service build its year, month and day notes here. Their
-        // titles start with the number (`2026`, `09 - September`, `27 - Sunday`), so ordering them
-        // by title and reversing it puts the newest entry first at every level.
+        // `calendarRoot` makes the day-note service build its year, month and day notes here. Each
+        // level sorts its children by their ISO date label (`yearNote` "2026", `monthNote` "2026-09",
+        // `dateNote` "2026-09-01") rather than by title, so the human-readable titles ("September
+        // 2026", "Tuesday, September 01, 2026") don't disturb chronological order; `sortDirection=desc`
+        // is inheritable, putting the newest entry first at every level.
         labels: [
             { name: "iconClass", value: "bx bx-calendar" },
             { name: "calendarRoot" },
-            { name: "sorted" },
+            { name: "sorted", value: "yearNote" },
             { name: "sortDirection", value: "desc", inheritable: true }
         ]
     },
@@ -46,6 +52,26 @@ export function ensureGuardStructure() {
         for (const label of definition.labels) {
             enforceLabel(note, label);
         }
+    }
+}
+
+/**
+ * Keeps a rolling window of blank day notes waiting under the Daily Shift Log, so an officer finds
+ * the page for any upcoming date already there — including far enough ahead to write a headline in
+ * advance (a birthday, the day's roster). Fills from the start of the current month through the end
+ * of next year. It runs at every startup but only creates anything while that horizon has not been
+ * reached: the day note for the last day of next year already existing means the window is built, so
+ * the steady-state cost is a single lookup. `getDayNote` is idempotent, so the yearly extension only
+ * adds the newly-in-range dates. Assumes {@link ensureGuardStructure} has run, since the day notes
+ * hang off the Daily Shift Log it creates.
+ */
+export function ensureShiftLogDates(targetEnd: Dayjs = dayjs().add(1, "year").endOf("year")) {
+    if (attributeService.getNoteWithLabel(DATE_LABEL, targetEnd.format("YYYY-MM-DD"))) {
+        return;
+    }
+
+    for (let date = dayjs().startOf("month"); !date.isAfter(targetEnd, "day"); date = date.add(1, "day")) {
+        dateNotesService.getDayNote(date.format("YYYY-MM-DD"));
     }
 }
 
