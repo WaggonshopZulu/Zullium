@@ -67,18 +67,18 @@ describe("Hidden Subtree", () => {
         });
 
         it("enforces renames of launcher notes", () => {
-            const jumpToNote = becca.getNote("_lbJumpTo");
-            expect(jumpToNote).toBeDefined();
-            jumpToNote!.title = "Renamed";
+            const calendarNote = becca.getNote("_lbCalendar");
+            expect(calendarNote).toBeDefined();
+            calendarNote!.title = "Renamed";
 
             cls.init(() => {
-                jumpToNote!.save();
+                calendarNote!.save();
                 hiddenSubtreeService.checkHiddenSubtree(true);
             });
 
-            const updatedJumpToNote = becca.getNote("_lbJumpTo");
-            expect(updatedJumpToNote).toBeDefined();
-            expect(updatedJumpToNote?.title).not.toBe("Renamed");
+            const updatedCalendarNote = becca.getNote("_lbCalendar");
+            expect(updatedCalendarNote).toBeDefined();
+            expect(updatedCalendarNote?.title).not.toBe("Renamed");
         });
 
         it("enforces renames of templates", () => {

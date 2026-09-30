@@ -12,7 +12,6 @@ import attributes from "../services/attributes";
 import froca from "../services/froca";
 import { t } from "../services/i18n";
 import { copyImageReferenceToClipboard } from "../services/image";
-import { getHelpUrlForNote } from "../services/in_app_help";
 import LoadResults from "../services/load_results";
 import { sanitizeNoteContentHtml } from "../services/sanitize_content";
 import server from "../services/server";
@@ -64,7 +63,6 @@ export const DESKTOP_FLOATING_BUTTONS: FloatingButtonsList = [
     CopyImageReferenceButton,
     ExportImageButtons,
     ExportSpreadsheetButton,
-    InAppHelpButton,
     Backlinks
 ];
 
@@ -72,7 +70,6 @@ export const DESKTOP_FLOATING_BUTTONS: FloatingButtonsList = [
  * Floating buttons that should be hidden in popup editor (Quick edit).
  */
 export const POPUP_HIDDEN_FLOATING_BUTTONS: FloatingButtonsList = [
-    InAppHelpButton,
     ToggleReadOnlyButton
 ];
 
@@ -315,19 +312,6 @@ function ExportSpreadsheetButton({ note, triggerEvent, isDefaultViewMode }: Floa
                 onClick={() => triggerEvent("exportCsv")}
             />
         </>
-    );
-}
-
-function InAppHelpButton({ note }: FloatingButtonContext) {
-    const helpUrl = getHelpUrlForNote(note);
-    const isEnabled = note.type !== "book" && !!helpUrl;
-
-    return isEnabled && (
-        <FloatingButton
-            icon="bx bx-help-circle"
-            text={t("help-button.title")}
-            onClick={() => helpUrl && openInAppHelpFromUrl(helpUrl)}
-        />
     );
 }
 

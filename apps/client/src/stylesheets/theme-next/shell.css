@@ -303,6 +303,30 @@ body.layout-horizontal > .horizontal {
     line-height: 1.15;
 }
 
+/* Horizontal: a launcher is its icon followed by its label on one line, as wide as it needs to be,
+   rather than a fixed square that the label spills out of or wraps beneath. */
+#launcher-pane.horizontal .launcher-button,
+#launcher-pane.horizontal .right-dropdown-widget,
+#launcher-pane.horizontal .global-menu,
+#launcher-pane.horizontal .global-menu button {
+    width: auto !important;
+}
+
+/* `.component` applies size containment, which sizes an auto-width box to zero and leaves the
+   menu's label running off the right edge of the window. */
+#launcher-pane.horizontal .global-menu {
+    contain: none;
+}
+
+#launcher-pane.horizontal .launcher-button,
+#launcher-pane.horizontal .global-menu button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-inline: 10px !important;
+    white-space: nowrap;
+}
+
 #launcher-pane .launcher-button {
     padding: 0 !important;
     border-radius: 8px;
@@ -615,43 +639,6 @@ div.quick-search:focus-within {
     /* Prevent changes to background and outline when the state of the input group changes */
     background: transparent;
     outline: none;
-}
-
-/* Vertical layout: the quick search lives in the narrow left pane and carries the date-range
-   filter (.quick-search-dates). As a single-row input group it squeezed the text field to nothing
-   and spilled the date form out under the launcher rail. Wrap it into a tidy stack instead — the
-   search field and button on one row, the date filter contained on the row below — and give the
-   brand header above it room to breathe. */
-body.layout-vertical .sidebar-brand-header {
-    margin-bottom: 8px;
-}
-
-body.layout-vertical #left-pane div.quick-search {
-    flex-wrap: wrap;
-    overflow: hidden;
-}
-
-body.layout-vertical #left-pane div.quick-search .search-string {
-    flex: 1 1 auto;
-    min-width: 0;
-    width: auto;
-}
-
-body.layout-vertical #left-pane div.quick-search .quick-search-dates {
-    flex: 0 0 100%;
-    gap: 4px 8px;
-    overflow: hidden;
-}
-
-body.layout-vertical #left-pane div.quick-search .quick-search-dates label {
-    flex: 1 1 120px;
-    min-width: 0;
-}
-
-body.layout-vertical #left-pane div.quick-search .quick-search-dates input[type="date"] {
-    flex: 1 1 auto;
-    min-width: 0;
-    width: 100%;
 }
 
 div.quick-search::before {

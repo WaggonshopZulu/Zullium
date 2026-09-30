@@ -97,9 +97,6 @@ describe("buildLaunchBarConfig", () => {
         const config = buildLaunchBarConfig();
 
         expect(byId(config.desktopVisibleLaunchers, "_lbNewNote").command).toBe("createNoteIntoInbox");
-        expect(byId(config.desktopVisibleLaunchers, "_lbSearch").command).toBe("searchNotes");
-        expect(byId(config.desktopVisibleLaunchers, "_lbJumpTo").command).toBe("jumpToNote");
-        expect(byId(config.desktopVisibleLaunchers, "_lbRecentChanges").command).toBe("showRecentChanges");
         expect(byId(config.desktopAvailableLaunchers, "_lbDeletedNotes").command).toBe("showDeletedNotes");
         expect(byId(config.desktopVisibleLaunchers, "_lbSettings").command).toBe("showOptions");
         expect(byId(config.desktopAvailableLaunchers, "_commandPalette").command).toBe("commandPalette");
@@ -116,6 +113,18 @@ describe("buildLaunchBarConfig", () => {
         expect(byId(config.desktopVisibleLaunchers, "_lbProtectedSession").enforceDeleted).toBe(true);
     });
 
+    it("drops the rail entries the shift-log layout does not use", () => {
+        const { desktopVisibleLaunchers } = buildLaunchBarConfig();
+
+        for (const id of [ "_lbSearch", "_lbJumpTo", "_lbNoteMap", "_lbRecentChanges", "_lbQuickSearch" ]) {
+            expect(byId(desktopVisibleLaunchers, id).enforceDeleted, id).toBe(true);
+        }
+        // What the rail keeps: New, Today and Calendar.
+        for (const id of [ "_lbNewNote", "_lbToday", "_lbCalendar" ]) {
+            expect(byId(desktopVisibleLaunchers, id).enforceDeleted, id).toBeUndefined();
+        }
+    });
+
     it("wires builtin-widget launchers to their widgets", () => {
         const config = buildLaunchBarConfig();
 
@@ -123,7 +132,6 @@ describe("buildLaunchBarConfig", () => {
         expect(byId(config.desktopVisibleLaunchers, "_lbBookmarks").builtinWidget).toBe("bookmarks");
         expect(byId(config.desktopVisibleLaunchers, "_lbToday").builtinWidget).toBe("todayInJournal");
         expect(byId(config.desktopVisibleLaunchers, "_lbSyncStatus").builtinWidget).toBe("syncStatus");
-        expect(byId(config.desktopVisibleLaunchers, "_lbQuickSearch").builtinWidget).toBe("quickSearch");
         expect(byId(config.desktopAvailableLaunchers, "_lbBackInHistory").builtinWidget).toBe("backInHistoryButton");
         expect(byId(config.desktopAvailableLaunchers, "_lbForwardInHistory").builtinWidget).toBe("forwardInHistoryButton");
     });
@@ -132,7 +140,6 @@ describe("buildLaunchBarConfig", () => {
         const config = buildLaunchBarConfig();
 
         expect(byId(config.desktopAvailableLaunchers, "_lbBackendLog").targetNoteId).toBe("_backendLog");
-        expect(byId(config.desktopVisibleLaunchers, "_lbNoteMap").targetNoteId).toBe("_globalNoteMap");
     });
 
     it("configures both spacers with distinct sizing", () => {
@@ -165,11 +172,6 @@ describe("buildLaunchBarConfig", () => {
             .toBe("launchbar_history_navigation");
         expect(labelValue(byId(config.desktopAvailableLaunchers, "_lbForwardInHistory"), "docName"))
             .toBe("launchbar_history_navigation");
-        expect(labelValue(byId(config.desktopVisibleLaunchers, "_lbQuickSearch"), "docName"))
-            .toBe("launchbar_quick_search");
-
-        const jumpTo = byId(config.desktopVisibleLaunchers, "_lbJumpTo");
-        expect(jumpTo.attributes?.some((a) => a.type === "label" && a.name === "desktopOnly")).toBe(true);
     });
 
     it("marks _lbSettings adminOnly, so a guard's window never shows it (Task 8)", () => {

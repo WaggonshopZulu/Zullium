@@ -8,9 +8,7 @@ import { t } from "../../services/i18n";
 import { checkFullHeight, getExtendedWidgetType } from "../NoteDetail";
 import { PromotedAttributesContent, usePromotedAttributeData } from "../PromotedAttributes";
 import Collapsible, { ExternallyControlledCollapsible } from "../react/Collapsible";
-import { useNoteContext, useNoteLabel, useNoteProperty, useTriliumEvent, useTriliumOptionBool } from "../react/hooks";
-import { NewNoteLink } from "../react/NoteLink";
-import { useEditedNotes } from "../ribbon/EditedNotesTab";
+import { useNoteContext, useNoteProperty, useTriliumEvent } from "../react/hooks";
 import SearchDefinitionTab from "../ribbon/SearchDefinitionTab";
 
 export default function NoteTitleActions() {
@@ -21,7 +19,6 @@ export default function NoteTitleActions() {
         <div className="title-actions">
             <PromotedAttributes note={note} componentId={componentId} noteContext={noteContext} />
             {noteType === "search" && <SearchProperties note={note} ntxId={ntxId} />}
-            <EditedNotes />
         </div>
     );
 }
@@ -66,36 +63,3 @@ function PromotedAttributes({ note, componentId, noteContext }: {
         </ExternallyControlledCollapsible>
     ));
 }
-
-//#region Edited Notes
-function EditedNotes() {
-    const { note } = useNoteContext();
-    const [ dateNote ] = useNoteLabel(note, "dateNote");
-    const [ editedNotesOpenInRibbon ] = useTriliumOptionBool("editedNotesOpenInRibbon");
-
-    return (note && dateNote &&
-        <Collapsible
-            className="edited-notes"
-            title={t("note_title.edited_notes")}
-            initiallyExpanded={editedNotesOpenInRibbon}
-        >
-            <EditedNotesContent note={note} />
-        </Collapsible>
-    );
-}
-
-function EditedNotesContent({ note }: { note: FNote }) {
-    const editedNotes = useEditedNotes(note);
-
-    return (editedNotes !== undefined &&
-        (editedNotes.length > 0 ? editedNotes?.map(editedNote => (
-            <NewNoteLink
-                className="badge"
-                notePath={editedNote.noteId}
-                showNoteIcon
-            />
-        )) : (
-            <div className="no-edited-notes-found">{t("edited_notes.no_edited_notes_found")}</div>
-        )));
-}
-//#endregion

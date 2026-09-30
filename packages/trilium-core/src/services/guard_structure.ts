@@ -30,7 +30,8 @@ const GUARD_ROOTS: GuardRootDefinition[] = [
             { name: "iconClass", value: "bx bx-calendar" },
             { name: "calendarRoot" },
             { name: "sorted", value: "yearNote" },
-            { name: "sortDirection", value: "desc", inheritable: true }
+            { name: "sortDirection", value: "desc", inheritable: true },
+            { name: "hideChildrenOverview", inheritable: true }
         ]
     },
     {

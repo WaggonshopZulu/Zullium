@@ -195,7 +195,7 @@ const defaultOptions: DefaultOption[] = [
     { name: "leftPaneWidth", value: "25", isSynced: false },
     { name: "leftPaneVisible", value: "true", isSynced: false },
     { name: "rightPaneWidth", value: "25", isSynced: false },
-    { name: "rightPaneVisible", value: "true", isSynced: false },
+    { name: "rightPaneVisible", value: "false", isSynced: false },
     { name: "rightPaneCollapsedItems", value: "[]", isSynced: false },
     { name: "rightPaneSelectedTab", value: "outline", isSynced: false },
     // Synced, unlike the rest of the pane's state: which map to read connections as is a preference
@@ -332,7 +332,7 @@ const defaultOptions: DefaultOption[] = [
     { name: "includeNoteDefaultBoxSize", value: "medium", isSynced: true },
 
     // HTML import configuration
-    { name: "layoutOrientation", value: "vertical", isSynced: false },
+    { name: "layoutOrientation", value: "horizontal", isSynced: false },
     { name: "backgroundEffects", value: "true", isSynced: false },
     {
         name: "allowedHtmlTags",

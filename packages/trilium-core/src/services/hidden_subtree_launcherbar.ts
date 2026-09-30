@@ -105,24 +105,9 @@ export default function buildLaunchBarConfig() {
             id: "_lbNewNote",
             ...sharedLaunchers.newNote
         },
-        {
-            id: "_lbSearch",
-            ...sharedLaunchers.searchNotes
-        },
-        {
-            id: "_lbJumpTo",
-            title: t("hidden-subtree.jump-to-note-title"),
-            type: "launcher",
-            command: "jumpToNote",
-            icon: "bx bx-send",
-            attributes: [{ type: "label", name: "desktopOnly" }]
-        },
-        {   id: "_lbNoteMap",
-            title: t("hidden-subtree.note-map-title"),
-            type: "launcher",
-            targetNoteId: "_globalNoteMap",
-            icon: "bx bxs-network-chart"
-        },
+        { id: "_lbSearch", title: "Search Notes", type: "launcher", enforceDeleted: true },
+        { id: "_lbJumpTo", title: "Jump to", type: "launcher", enforceDeleted: true },
+        { id: "_lbNoteMap", title: "Note Map", type: "launcher", enforceDeleted: true },
         {
             id: "_lbLlmChat",
             title: t("hidden-subtree.llm-chat-title"),
@@ -133,10 +118,7 @@ export default function buildLaunchBarConfig() {
             id: "_lbCalendar",
             ...sharedLaunchers.calendar
         },
-        {
-            id: "_lbRecentChanges",
-            ...sharedLaunchers.recentChanges
-        },
+        { id: "_lbRecentChanges", title: "Recent Changes", type: "launcher", enforceDeleted: true },
         {
             id: "_lbSpacer1",
             title: t("hidden-subtree.spacer-title"),
@@ -158,14 +140,7 @@ export default function buildLaunchBarConfig() {
             baseSize: "0",
             growthFactor: "1"
         },
-        {
-            id: "_lbQuickSearch",
-            title: t("hidden-subtree.quick-search-title"),
-            type: "launcher",
-            builtinWidget: "quickSearch",
-            icon: "bx bx-rectangle",
-            attributes: [{ type: "label", name: "docName", value: "launchbar_quick_search" }]
-        },
+        { id: "_lbQuickSearch", title: "Quick Search", type: "launcher", enforceDeleted: true },
         {
             id: "_lbProtectedSession",
             title: t("hidden-subtree.protected-session-title"),

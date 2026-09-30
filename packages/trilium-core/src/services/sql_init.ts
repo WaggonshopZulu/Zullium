@@ -1,8 +1,9 @@
-import { deferred, isDisplayableLocale, OptionRow, setDayjsLocale } from "@triliumnext/commons";
+import { dayjs, deferred, isDisplayableLocale, OptionRow, setDayjsLocale } from "@triliumnext/commons";
 import i18next from "i18next";
 import { getSql } from "./sql";
 import { getLog } from "./log";
 import { getBackup } from "./backup";
+import attributeService from "./attributes";
 import optionService from "./options";
 import eventService from "./events";
 import { getContext } from "./context";
@@ -213,13 +214,15 @@ async function createInitialDatabase(skipDemoDb?: boolean, locale?: string) {
         }
     }
 
-    // Post-demo: pick the first visible (non-system) child of root as the start note.
-    // System notes have IDs starting with "_" and should not be navigated to on startup.
-    // Falls back to "root" if no visible child exists (e.g. empty database).
+    // Post-demo: start on today's Daily Shift Log page, which the hidden-subtree check above has
+    // already created. Otherwise pick the first visible (non-system) child of root: system notes
+    // have IDs starting with "_" and should not be navigated to on startup. Falls back to "root" if
+    // no visible child exists (e.g. empty database).
     sql.transactional(() => {
-        const startNoteId = sql.getValue<string | null>(
-            "SELECT noteId FROM branches WHERE parentNoteId = 'root' AND isDeleted = 0 AND substr(noteId, 1, 1) != '_' ORDER BY notePosition"
-        ) ?? "root";
+        const startNoteId = attributeService.getNoteWithLabel("dateNote", dayjs().format("YYYY-MM-DD"))?.noteId
+            ?? sql.getValue<string | null>(
+                "SELECT noteId FROM branches WHERE parentNoteId = 'root' AND isDeleted = 0 AND substr(noteId, 1, 1) != '_' ORDER BY notePosition"
+            ) ?? "root";
 
         optionService.setOption(
             "openNoteContexts",

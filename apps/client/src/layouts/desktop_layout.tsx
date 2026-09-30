@@ -34,7 +34,6 @@ import NoteTreeWidget from "../widgets/note_tree.js";
 import NoteWrapperWidget from "../widgets/note_wrapper.js";
 import NoteDetail from "../widgets/NoteDetail.jsx";
 import PromotedAttributes from "../widgets/PromotedAttributes.jsx";
-import QuickSearchWidget from "../widgets/quick_search.js";
 import ReadOnlyNoteInfoBar from "../widgets/ReadOnlyNoteInfoBar.jsx";
 import { FixedFormattingToolbar } from "../widgets/ribbon/FormattingToolbar.jsx";
 import LazyComponent from "../widgets/react/LazyComponent.jsx";
@@ -93,7 +92,6 @@ export default class DesktopLayout {
                     .child(
                         new LeftPaneContainer()
                             .child(<SidebarBrandHeader />)
-                            .optChild(!launcherPaneIsHorizontal, new QuickSearchWidget())
                             .child(appContext.noteTreeWidget)
                     )
                     .child(
