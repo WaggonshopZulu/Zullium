@@ -289,6 +289,20 @@ body.layout-horizontal > .horizontal {
     margin: var(--launcher-pane-button-gap) var(--launcher-pane-button-margin);
 }
 
+/* A label longer than the rail is wide (e.g. "Open Today's Journal Note") ran off the pane's edge,
+   which clips it — every control here keeps its name in full, so the label wraps onto a second line
+   and the button grows to fit rather than staying a fixed height that cuts the text off. */
+#launcher-pane.vertical .launcher-button {
+    height: auto !important;
+    min-height: var(--launcher-pane-vert-button-height);
+    padding-block: 4px;
+}
+
+#launcher-pane.vertical .launcher-button .action-button-label {
+    white-space: normal;
+    line-height: 1.15;
+}
+
 #launcher-pane .launcher-button {
     padding: 0 !important;
     border-radius: 8px;
@@ -601,6 +615,43 @@ div.quick-search:focus-within {
     /* Prevent changes to background and outline when the state of the input group changes */
     background: transparent;
     outline: none;
+}
+
+/* Vertical layout: the quick search lives in the narrow left pane and carries the date-range
+   filter (.quick-search-dates). As a single-row input group it squeezed the text field to nothing
+   and spilled the date form out under the launcher rail. Wrap it into a tidy stack instead — the
+   search field and button on one row, the date filter contained on the row below — and give the
+   brand header above it room to breathe. */
+body.layout-vertical .sidebar-brand-header {
+    margin-bottom: 8px;
+}
+
+body.layout-vertical #left-pane div.quick-search {
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+
+body.layout-vertical #left-pane div.quick-search .search-string {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+}
+
+body.layout-vertical #left-pane div.quick-search .quick-search-dates {
+    flex: 0 0 100%;
+    gap: 4px 8px;
+    overflow: hidden;
+}
+
+body.layout-vertical #left-pane div.quick-search .quick-search-dates label {
+    flex: 1 1 120px;
+    min-width: 0;
+}
+
+body.layout-vertical #left-pane div.quick-search .quick-search-dates input[type="date"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
 }
 
 div.quick-search::before {

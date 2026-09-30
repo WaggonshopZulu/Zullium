@@ -145,9 +145,13 @@ export default function RightPanelContainer() {
                                     />
                                 )}
                                 <div class="right-pane-actions">
-                                    {/* Pin only applies while peeking (it docks the pane); close shows in both modes. */}
-                                    {mode === "peek" && <ActionButton icon="bx bx-pin" text={t("right_pane.dock")} onClick={dock} />}
-                                    <ActionButton icon="bx bx-x" text={t("right_pane.close")} onClick={close} />
+                                    {/* Pin only applies while peeking (it docks the pane); close shows in both modes.
+                                        hideLabel: this header row is a fixed 34px tall, shared with the tab strip
+                                        beside it — a visible label here has nowhere to go but to overflow into the
+                                        card row underneath (found live: "Close panel" bled into "Table of
+                                        Contents"). The name still reaches the reader as a tooltip and an aria-label. */}
+                                    {mode === "peek" && <ActionButton icon="bx bx-pin" text={t("right_pane.dock")} onClick={dock} hideLabel />}
+                                    <ActionButton icon="bx bx-x" text={t("right_pane.close")} onClick={close} hideLabel />
                                 </div>
                             </div>
                             {tabs.length > 0 ? (

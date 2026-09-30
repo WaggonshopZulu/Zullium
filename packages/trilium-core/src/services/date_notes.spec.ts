@@ -150,5 +150,15 @@ describe("date_notes", () => {
             );
             expect(weekTitle).toBe("2027-W01");
         });
+
+        it("defaults a month note to '{month} {year}' when no monthPattern label is set", () => {
+            // A root note that provides no pattern for any unit, so each falls back to its default.
+            const bareRootNote = {
+                getOwnedLabelValue: () => null
+            } as unknown as BNote;
+
+            const monthTitle = dateNotesService.getJournalNoteTitle(bareRootNote, "month", dayjs("2026-09-15"), 9);
+            expect(monthTitle).toBe("September 2026");
+        });
     });
 });

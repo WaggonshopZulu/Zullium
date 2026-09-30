@@ -18,12 +18,18 @@ export default function TabHistoryNavigationButtons() {
 
     return (
         <div className="tab-history-navigation-buttons">
+            {/* The tab strip is the one row in the app with no width to spare: tabs, the new-tab
+                button and (per legacyBackVisible/legacyForwardVisible above) a second copy of
+                these same buttons in the launcher rail already compete for it. hideLabel keeps
+                these icon-only, the same exception right-pane-toggle-button and the panel header
+                buttons use; the name still reaches the reader as a tooltip and an aria-label. */}
             {!legacyBackVisible && <ActionButton
                 icon="bx bx-left-arrow-alt"
                 text={t("tab_history_navigation_buttons.go-back")}
                 triggerCommand="backInNoteHistory"
                 onContextMenu={onContextMenu}
                 disabled={!canGoBack}
+                hideLabel
             />}
             {!legacyForwardVisible && <ActionButton
                 icon="bx bx-right-arrow-alt"
@@ -31,6 +37,7 @@ export default function TabHistoryNavigationButtons() {
                 triggerCommand="forwardInNoteHistory"
                 onContextMenu={onContextMenu}
                 disabled={!canGoForward}
+                hideLabel
             />}
         </div>
     );

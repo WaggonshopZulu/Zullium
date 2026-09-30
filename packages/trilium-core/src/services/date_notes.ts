@@ -69,7 +69,7 @@ function getJournalNoteTitle(
     const patterns = {
         year: rootNote.getOwnedLabelValue("yearPattern") || "{year}",
         quarter: rootNote.getOwnedLabelValue("quarterPattern") || t("quarterNumber"),
-        month: rootNote.getOwnedLabelValue("monthPattern") || "{monthNumberPadded} - {month}",
+        month: rootNote.getOwnedLabelValue("monthPattern") || "{month} {year}",
         week: rootNote.getOwnedLabelValue("weekPattern") || t("weekdayNumber"),
         day: rootNote.getOwnedLabelValue("datePattern") || "{dateNumberPadded} - {weekDay}"
     };

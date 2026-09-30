@@ -12,10 +12,9 @@ import { useNoteContext, useNoteLabel, useNoteProperty, useTriliumEvent, useTril
 import { NewNoteLink } from "../react/NoteLink";
 import { useEditedNotes } from "../ribbon/EditedNotesTab";
 import SearchDefinitionTab from "../ribbon/SearchDefinitionTab";
-import NoteTypeSwitcher from "./NoteTypeSwitcher";
 
 export default function NoteTitleActions() {
-    const { note, ntxId, componentId, noteContext, viewScope } = useNoteContext();
+    const { note, ntxId, componentId, noteContext } = useNoteContext();
     const noteType = useNoteProperty(note, "type");
 
     return (
@@ -23,7 +22,6 @@ export default function NoteTitleActions() {
             <PromotedAttributes note={note} componentId={componentId} noteContext={noteContext} />
             {noteType === "search" && <SearchProperties note={note} ntxId={ntxId} />}
             <EditedNotes />
-            {(!viewScope?.viewMode || viewScope.viewMode === "default") && <NoteTypeSwitcher note={note} />}
         </div>
     );
 }

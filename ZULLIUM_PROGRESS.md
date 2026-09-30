@@ -789,14 +789,162 @@ justified a full re-run beyond the narrow one). Not re-run: server/standalone/co
 only source change was to a client-only hook and its one caller, with no server or shared-package
 touch point.
 
-## Recommended next step
-Every task with code left to write is done. Task #8 and Task #9's findings are all resolved (the
-`showOptions` section references, the Trilium-branded setup/login/unlock screens, OCR, and
-protected-session/password protection — see above), and Task #11 confirmed the whole thing actually
-builds, packages and boots clean, catching and fixing one real tooltip bug along the way.
+## UI tweaks, round 1 — the Menu button's oversized crest (2026-09-29)
+The user's own first look at the running app: "the first vertical tab (Menu I think) is crowded and
+overlaid with or by the next vertical sidebar." Diagnosed with the `building-client-ui` skill's own
+documented technique — a login-free, in-memory instance driven by Playwright, reading real
+`getComputedStyle`/`getBoundingClientRect` values rather than reasoning from the stylesheets, per that
+skill's own warning that the cascade is unreliable enough to reason about from source alone.
 
-Task #10 (backup) is the only item left, and it is deliberately on hold until the app is installed on
-its dedicated workstation — no code left to write there, just the external drive's folder path entered
-through the existing picker once that machine is set up. Task #12 (sync finished code back to
+**Root cause:** the vertical launch bar's Menu button uses an inline `<svg>` — Trilium's own original
+animated leaf-logo icon (`global_menu.tsx`'s `VerticalLayoutIcon`, the `st0`-`st8` classes in
+`global_menu.css` are its hover-color animation, never touched by Task 9's rebrand since that only
+replaced the *raster* crest assets) — with no width or height set anywhere, on the SVG itself or in
+CSS. Measured at **107×107px**, rendering inside a button only 40px tall. This was always true; it
+went unnoticed because the button used to be a tiny fixed 53-58px square (pre-Task 7), where the
+unconstrained size happened not to matter or get clipped visibly. Once Task 7 widened the button into
+a labelled icon+text row, the same 107px icon overflowed its box, got clipped at the window's top edge,
+and visually dominated the whole top-left corner of the rail — exactly "crowded," and close enough to
+the tree pane's edge to read as "overlaid" with it.
+
+**Fix:** `global_menu.css` now sizes `.global-menu-button svg` to `width: 1em; height: 1em;` off
+`font-size: var(--launcher-pane-icon-size, 150%)` — the same token every other rail icon already sizes
+off, so the crest tracks any future change to that variable instead of drifting out of step again.
+Measured **28.8×28.8px** after the fix — visibly proportional to the rest of the rail, confirmed by
+screenshot before and after.
+
+**Found in passing, not fixed:** `global_menu.css`'s own `.global-menu { width: 53px; height: 53px; }`
+(lines 1-5) is dead — a stale pre-Task-7 value, fully overridden by an `!important` rule in
+`shell.css`. Harmless as dead CSS, but worth deleting next time this file is touched.
+
+**Also visible in the screenshots, unrelated to what was asked about, not touched:** the right sidebar
+shows overlapping text ("TABLE OF..." running into "Close panel"), and a top-right label renders
+mirrored and backwards ("lasnq nign relggoT", almost certainly "Toggle right panel" under some
+`transform`/`writing-mode` gone wrong). Both are real, both are somewhere in the right-pane/status-bar
+area, neither was what the user pointed at this round — flagged here rather than chased, consistent
+with this session's pattern of not silently expanding scope.
+
+**Verification:** typecheck clean (CSS-only change, so this mostly confirms nothing else broke).
+No test file exists for `global_menu.tsx`/`.css` — this is a pure visual-sizing fix with no logic to
+unit-test; verification was the live-instance measurement and screenshot, before and after, per the
+skill's own documented approach for exactly this class of bug.
+
+## UI tweaks, round 1 continued — the two things noticed along the way (2026-09-29)
+Both things flagged at the end of the Menu-crest fix turned out real, and turned up a third, closely
+related bug in the process — all three share one root cause: Task 7 gave every icon a visible label by
+default, and three specific buttons live in fixed-height, already-crowded strips that were never
+checked for whether a label actually fits there. Same diagnostic approach as before: the login-free
+Playwright-driven fixture, reading real computed styles and screenshots rather than reasoning from the
+stylesheets.
+
+**The mirrored "Toggle right panel" text.** Traced to `right_pane_toggle.tsx`'s button carrying
+`bx-flip-horizontal` — a legitimate trick (the same `bx-sidebar` glyph, mirrored, doubles as both the
+left- and right-pane toggle icon) that only ever touched the icon before Task 7. `ActionButton`
+renders its icon as a `::before` directly on the button itself (not a separate child element), so once
+a visible label span became a real DOM child of that same button, the button-level `transform:
+scaleX(-1)` flipped the label right along with the icon. Confirmed via `getComputedStyle`: the label
+span's own `transform` was `none` (transforms don't inherit), but its *ancestor* button's was
+`matrix(-1, 0, 0, 1, 0, 0)` — the visual effect comes from the ancestor, not the element being read.
+
+Fixed at the general/CSS level, not just this one call site: added a rule to `style.css`, right beside
+Task 7's own `.action-button-label` rule, that resets `transform: none` on any `.action-button`
+carrying one of boxicons' own `bx-rotate-*`/`bx-flip-*` utility classes and re-applies the same
+transform to its `::before` (the icon) alone. This covers every current and future button using this
+icon-reuse trick, not just the one that happened to be visible — a second, not-yet-visually-confirmed
+instance already existed (`FloatingButtonsDefinitions.tsx`'s `ShowTocWidgetButton`, `bx-rotate-180` on
+an `ActionButton` with a label), fixed by the same change without a separate edit.
+
+**Chasing that same button surfaced a second, related bug**, not visible until the first was fixed:
+once un-mirrored, "Toggle right panel" measured 82px past a 1600px-wide window's own right edge — a
+real overflow, not a viewport-width artifact of the narrower test window. The button sits last in the
+tab row, the single most space-constrained horizontal strip in the app (tabs, history buttons and a
+new-tab button already compete for it), with nothing reserving room for a label that didn't exist
+before Task 7. Fixed with `hideLabel` on that one `ActionButton` — the same "rare spot a label
+genuinely does not fit" exception Task 7's own commit message already established as the intended
+escape hatch, not a general opt-out. The name still reaches the reader as a tooltip and an aria-label,
+just not as permanently visible text.
+
+**"TABLE OF CONTENTS" overlapping "Close panel."** A different-looking symptom, same underlying cause:
+`RightPanelContainer.tsx`'s pane-close button (and its peek-mode "dock" pin, same fix) sits in
+`.right-pane-header`, a fixed 34px-tall row shared with the tab strip beside it. Once labeled, "Close
+panel" had nowhere to go but to overflow *downward*, out of its own 24px-tall button and directly onto
+the "Table of Contents" card header sitting right underneath it in normal document flow — confirmed by
+measuring the label span's own rect landing 10px below its parent button's bottom edge, something
+normal flow does not do on its own. Same `hideLabel` fix, same rationale: this pane's own header has no
+spare height for a permanent label, so it stays a tooltip and an aria-label instead.
+
+**Before/after, all three, screenshotted at each step**, not just reasoned about: the crest went from
+overflowing/clipped to a clean 28.8×28.8px mark matching the rest of the rail; the toggle button went
+from mirrored gibberish, to correctly-oriented text overflowing the window, to a clean icon with no
+label; the close button went from garbled overlapping text to a clean "×" with the card header legible
+on its own line underneath.
+
+**Verification:** `pnpm typecheck` clean. `RightPanelContainer.spec.tsx` (6/6) and `ActionButton`'s
+suites (6/6) re-run — nothing asserts on these two buttons' label visibility specifically, so nothing
+broke, nothing needed updating. No dedicated test for the CSS transform fix or the tab-row overflow —
+both were pure layout/rendering bugs with no unit-testable logic; verification was the live-instance
+measurement and screenshot at each step, per the same documented approach used for the crest fix.
+
+## UI tweaks, round 2 — the half-migrated layout and five more findings (2026-09-29)
+
+The user ran the packaged `.exe` and found the whole UI looked wrong in a way the live dev fixture did
+not reproduce. Diagnosis (a headless CDP connection into the actual packaged Electron app, against a
+copy of the real database, with `TRILIUM_GENERAL_NOAUTHENTICATION=true` — no password ever handled)
+turned up a root cause plus a cluster of downstream bugs:
+
+- **theme-next never loaded (`bootstrap_utils.ts`).** `newLayout` (the component tree) and the
+  `theme-next/*` stylesheets that size it are independent options. The user's `theme` was `auto`, so
+  theme-next never loaded and the new components fell back to the old `--launcher-pane-size: 53px`
+  and a 53px rail. Fixed by coupling them: when `newLayout` is on and the theme is a plain built-in,
+  the payload now supplies the matching `next` base (`auto`→`next`, `light`→`next-light`,
+  `dark`→`next-dark`); an explicit `appThemeBase` still wins. Test-covered (`bootstrap_utils.spec.ts`,
+  red-then-green on both server and standalone runners).
+- **Serif rail labels (`style.css`).** `.action-button-label` reset the icon's font-*size* but not its
+  font-*family*, so every launcher label inherited `boxicons` from its button — an icon font with no
+  Latin letters, which the browser rendered in its default serif. Named the UI font on the label.
+- **Search widget overflow (`theme-next/shell.css`).** In the narrow left pane the quick-search
+  `input-group` (with the custom `.quick-search-dates` date filter) squeezed the text field to nothing
+  and spilled the date form under the rail. Wrapped it into a tidy stack — search field + button on
+  one row, date filter contained below — scoped to `body.layout-vertical`.
+- **Note-type switcher removed (`NoteTitleActions.tsx`).** Dropped the inline "Switch from text to:
+  Canvas / Code / Markdown / …" bar under the note title, per the user. The switcher still exists for
+  the template-selection popup.
+- **Month-note title (`date_notes.ts`).** Default changed from `{monthNumberPadded} - {month}`
+  ("09 - September") to `{month} {year}` ("September 2026"). Affects newly created month notes only;
+  existing notes keep their names. Test-covered.
+- **Long rail label clipped (`theme-next/shell.css`).** "Open Today's Journal Note" ran off the 190px
+  pane and was clipped at the edge. Vertical launcher labels now wrap and the button grows to fit,
+  keeping every name fully visible (the user needs full text labels, not tooltips).
+
+Also this session: the tab-strip back/forward buttons got `hideLabel`
+(`TabHistoryNavigationButtons.tsx`) — their "Go back to previous note" / "Go forward to next note"
+labels had nowhere to go in the tab row.
+
+**Verification:** `pnpm typecheck` clean; `date_notes.spec.ts` (9/9) and `bootstrap_utils.spec.ts`
+(13/13) green on both server and standalone; `NoteTypeSwitcher`/`ActionButton` client suites green.
+Every visual fix confirmed by screenshot against the real database in the *packaged* build, not the
+dev fixture — the fixture is what masked the theme-next bug in the first place.
+
+## Recommended next step
+**UI tweaks, ongoing.** The round-1 pattern (`hideLabel` for a cramped fixed-height strip; a general
+CSS fix for icon styling bleeding onto a label) held for round 2 as well, plus the new lesson that the
+*packaged* build must be the thing verified — the dev fixture defaults to a `next` theme and so hides
+any newLayout/theme-next coupling gap. The CDP-into-the-packaged-app probe
+(`--remote-debugging-port` + `TRILIUM_GENERAL_NOAUTHENTICATION` against a throwaway copy of the real
+DB) is the tool for that; delete the DB copy afterward. Continue the visual pass with the user.
+
+Task #8 and Task #9's findings are all resolved (the `showOptions` section references, the
+Trilium-branded setup/login/unlock screens, OCR, and protected-session/password protection — see
+above). Task #10 (backup) is deliberately on hold until the app is installed on its dedicated
+workstation — no code left to write there, just the external drive's folder path entered through the
+existing picker once that machine is set up; the user has confirmed this is part of the install
+workflow, not something to chase in a dev session. Task #12 (sync finished code back to
 C:\Zullium\repo) is the only other NOT STARTED item on the original list, and may be moot now that the
 work lives on GitHub instead.
+
+Separately, worth a look before ever producing a real Windows installer (not yet run this session —
+only the portable `electron-forge:package` build has been tested): the Squirrel installer config
+(`apps/desktop/electron-forge/forge.config.ts`) still points its uninstall icon at a raw
+`raw.githubusercontent.com/TriliumNext/Trilium/...` URL — an outbound reference at odds with this
+project's whole point — and its setup-wizard icon/banner (`electron-forge/setup-icon/setup.ico`,
+`setup-banner.gif`) are still Trilium's own artwork, untouched by Task 9's rebrand.

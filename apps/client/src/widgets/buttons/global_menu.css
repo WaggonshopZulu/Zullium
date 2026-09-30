@@ -16,6 +16,19 @@ button.global-menu-button {
     padding: 6px;
 }
 
+/* Trilium's own leaf-logo SVG carries no width/height of its own — it went unnoticed while this
+   button was a tiny fixed square (pre-Task 7), where its unconstrained ~107px render happened not
+   to matter; once the vertical rail widened into a labelled icon+text row, that same size
+   overflowed the button and spilled into the pane next to it. Sized here to match the boxicons
+   glyphs the rest of the rail uses, off the same --launcher-pane-icon-size token so the two stay
+   in step if that token ever changes. */
+.global-menu-button svg {
+    width: 1em;
+    height: 1em;
+    font-size: var(--launcher-pane-icon-size, 150%);
+    flex-shrink: 0;
+}
+
 .global-menu-button svg > g {
     transform-origin: center;
     transition: transform 300ms ease-in-out;

@@ -359,9 +359,13 @@ button.custom-title-bar-button {
 }
 
 /* Every icon button carries its name in words next to the icon, not as a hover-only tooltip — see
-   ActionButton.tsx. Reset off the icon's own (often much larger) font-size, which this would
-   otherwise inherit. */
+   ActionButton.tsx. The button element itself carries the boxicons class that renders the glyph, so
+   its own font-family is `boxicons` and its font-size is the icon's. The label is a child and would
+   inherit both: the size (reset here) and, worse, the icon font — boxicons has no Latin letters, so
+   the label's text falls back to the browser default serif (seen live on the launcher rail). Name the
+   UI text font on the label so it renders as text, not in the icon font. */
 .action-button-label {
+    font-family: var(--main-font-family, sans-serif);
     font-size: 13px;
     font-weight: normal;
     line-height: 1;
@@ -375,6 +379,26 @@ button.custom-title-bar-button {
     padding: 5px;
     justify-content: center;
 }
+
+/* Boxicons' own rotate/flip utility classes (bx-rotate-*, bx-flip-*) assume they land on an
+   icon-only element. On an ActionButton the icon renders as a ::before on the button itself, not a
+   separate child — so before ActionButton carried a visible label, flipping the whole button was
+   equivalent to flipping just the icon. Now that a label sits beside it (see .action-button-label
+   above), the same whole-button transform flips the label's text too (#right-pane-toggle-button
+   showed this live: "Toggle right panel" rendered mirrored). Undo the whole-button transform and
+   apply it to the icon glyph alone instead. */
+.action-button.bx-rotate-90,
+.action-button.bx-rotate-180,
+.action-button.bx-rotate-270,
+.action-button.bx-flip-horizontal,
+.action-button.bx-flip-vertical {
+    transform: none;
+}
+.action-button.bx-rotate-90::before { transform: rotate(90deg); }
+.action-button.bx-rotate-180::before { transform: rotate(180deg); }
+.action-button.bx-rotate-270::before { transform: rotate(270deg); }
+.action-button.bx-flip-horizontal::before { transform: scaleX(-1); }
+.action-button.bx-flip-vertical::before { transform: scaleY(-1); }
 
 .icon-action-always-border {
     border-color: var(--button-border-color);

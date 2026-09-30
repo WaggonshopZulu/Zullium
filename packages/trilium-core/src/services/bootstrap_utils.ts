@@ -55,7 +55,22 @@ export default function getSharedBootstrapItems(assetPath: string, dbInitialized
     const options = optionService.getOptionMap();
     const theme = options.theme;
     const themeNote = attributes.getNoteWithLabel("appTheme", theme);
-    const themeUseNextAsBase = themeNote?.getAttributeValue("label", "appThemeBase") ?? undefined;
+    const explicitThemeBase = themeNote?.getAttributeValue("label", "appThemeBase") as "next" | "next-light" | "next-dark" | undefined;
+    // The new component tree (newLayout) and the theme-next stylesheets it depends on
+    // (--launcher-pane-vert-size and the rest of theme-next/*.css) are configured
+    // independently: newLayout is a boolean option, while theme-next only loads when
+    // `theme` is itself a "next"-family value or a custom theme note names one via
+    // appThemeBase. A user who enables newLayout without also switching to a "next"
+    // theme gets the new components with none of the CSS that sizes them, which is
+    // most users, since newLayout defaults to on. Falling back to the "next" variant
+    // matching their light/dark/auto choice keeps the two in step without requiring a
+    // separate theme change; an explicit appThemeBase from a custom theme still wins.
+    const NEXT_THEMES = new Set([ "next", "next-light", "next-dark" ]);
+    let newLayoutThemeBase: "next" | "next-light" | "next-dark" | undefined;
+    if (optionService.getOptionBool("newLayout") && !NEXT_THEMES.has(theme)) {
+        newLayoutThemeBase = theme === "light" ? "next-light" : theme === "dark" ? "next-dark" : "next";
+    }
+    const themeUseNextAsBase = explicitThemeBase ?? newLayoutThemeBase;
 
     return {
         ...commonItems,
@@ -65,10 +80,10 @@ export default function getSharedBootstrapItems(assetPath: string, dbInitialized
         maxEntityChangeSyncIdAtLoad: sql.getValue<number>("SELECT COALESCE(MAX(id), 0) FROM entity_changes WHERE isSynced = 1"),
         isProtectedSessionAvailable: protected_session.isProtectedSessionAvailable(),
         theme,
-        themeBase: themeUseNextAsBase as "next" | "next-light" | "next-dark" | undefined,
+        themeBase: themeUseNextAsBase,
         customThemeCssUrl: getCustomThemeCssUrl(theme, themeNote),
         themeCssUrl: getThemeCssUrl(theme, commonItems.assetPath, themeNote) as string | false,
-        themeUseNextAsBase: themeNote?.getAttributeValue("label", "appThemeBase") as "next" | "next-light" | "next-dark",
+        themeUseNextAsBase,
         appCssNoteIds: getAppCssNoteIds(),
     }
 }

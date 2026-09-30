@@ -22,6 +22,13 @@ export default function RightPaneToggle() {
             text={t("right_pane.toggle")}
             icon="bx bx-sidebar"
             triggerCommand="toggleRightPane"
+            // The tab row is the one strip in the app with no room to give: tabs, history
+            // buttons and the new-tab button already compete for it, and this button sits
+            // last in line with nothing to stop a label running off the window's own edge
+            // (measured 82px past a 1600px-wide window). The name still reaches the reader,
+            // as a tooltip and an aria-label, just not as permanently visible text — the same
+            // exception ActionButton's hideLabel exists for.
+            hideLabel
         />
     );
 }

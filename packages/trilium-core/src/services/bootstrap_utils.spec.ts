@@ -174,6 +174,61 @@ describe("bootstrap_utils (real DB)", () => {
         expect(items.customThemeCssUrl).toBeUndefined();
     });
 
+    describe("themeBase and newLayout", () => {
+        function withNewLayout(enabled: boolean, fn: () => void) {
+            cls.init(() => options.setOption("newLayout", enabled ? "true" : "false"));
+            try {
+                fn();
+            } finally {
+                cls.init(() => options.setOption("newLayout", "true"));
+            }
+        }
+
+        it("adds the matching next-family themeBase when newLayout is on and the theme is a plain built-in", () => {
+            withNewLayout(true, () => {
+                expect(fullPayload("auto").themeBase).toBe("next");
+                expect(fullPayload("light").themeBase).toBe("next-light");
+                expect(fullPayload("dark").themeBase).toBe("next-dark");
+            });
+        });
+
+        it("leaves themeBase alone when newLayout is off", () => {
+            withNewLayout(false, () => {
+                expect(fullPayload("auto").themeBase).toBeUndefined();
+                expect(fullPayload("light").themeBase).toBeUndefined();
+                expect(fullPayload("dark").themeBase).toBeUndefined();
+            });
+        });
+
+        it("does not double up when the theme is already a next-family theme", () => {
+            withNewLayout(true, () => {
+                expect(fullPayload("next").themeBase).toBeUndefined();
+                expect(fullPayload("next-light").themeBase).toBeUndefined();
+                expect(fullPayload("next-dark").themeBase).toBeUndefined();
+            });
+        });
+
+        it("still prefers a custom theme's own appThemeBase over the newLayout fallback", () => {
+            const noteId = cls.init(() => {
+                const { note } = notes.createNewNote({
+                    parentNoteId: "root",
+                    title: "Custom Theme With Base",
+                    content: "body {}",
+                    type: "code",
+                    mime: "text/css"
+                });
+                attributes.createLabel(note.noteId, "appTheme", "myCustomThemeWithBase");
+                attributes.createLabel(note.noteId, "appThemeBase", "next-dark");
+                return note.noteId;
+            });
+
+            withNewLayout(true, () => {
+                expect(fullPayload("myCustomThemeWithBase").themeBase).toBe("next-dark");
+            });
+            expect(noteId).toBeTruthy();
+        });
+    });
+
     it("getIconConfig produces an icon registry and CSS", () => {
         const config = getIconConfig(ASSET_PATH);
         expect(config.iconRegistry).toBeTruthy();
