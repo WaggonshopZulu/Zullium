@@ -969,6 +969,16 @@ day pages are deliberately blank with no template.
   user-visible occurrence left in app source; the remainder is package metadata, code comments and the
   backup container's magic bytes. The text editor's `TN` autocorrect (`replacements.ts`) still expands to
   "Trilium Notes" when typed.
+- **Beta folder and Search button** (2026-09-30): `apps/desktop/beta/` holds two launchers and a README for
+  portable mode (`TRILIUM_DATA_DIR`, `TRILIUM_ELECTRON_DATA_DIR`, `TRILIUM_PORT=37850`), so a beta copy keeps
+  its notes beside the app and never touches `%AppData%	rilium-data`; `.gitattributes` keeps `*.bat` as CRLF.
+  `C:\Zulliumeta\` is the assembled copy (`app\` + launchers, `data\` created on first run).
+  Verified: the live database's size and timestamp were identical before and after a beta run, and no new
+  folder appeared in `%AppData%`. The top bar is New, Search, Calendar, Today, Menu: `_lbSearch` is back
+  (title "Search", command `searchNotes`) because Ctrl+S was bound to the removed quick search and full-text
+  search otherwise needed Ctrl+J then Ctrl+Enter. The remove-option buttons on the search page and the bulk
+  actions panel (`HelpRemoveButtons.tsx`) are `hideLabel`, which stopped their labels colliding.
+  Show Cheatsheet opens a local shortcut-card dialog; Show Help opens the bundled Trilium User Guide.
 - **Noticed, not fixed**: the wizard and pre-login pages keep a white card in OS dark mode while switching
   the text to light grey (unreadable, and upstream's own behaviour); the horizontal top bar looked white in a
   forced-dark emulation. The user's Windows is in light mode. The vertical-layout Menu icon is still

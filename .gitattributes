@@ -21,3 +21,6 @@ apps/edit-docs/demo/** text=auto eol=lf
 # a string literal) doesn't make Git/GitHub treat the whole file as binary.
 *.ts diff
 *.tsx diff
+
+# Windows batch files must keep CRLF line endings to run reliably in cmd.exe.
+*.bat text eol=crlf

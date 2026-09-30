@@ -97,6 +97,7 @@ describe("buildLaunchBarConfig", () => {
         const config = buildLaunchBarConfig();
 
         expect(byId(config.desktopVisibleLaunchers, "_lbNewNote").command).toBe("createNoteIntoInbox");
+        expect(byId(config.desktopVisibleLaunchers, "_lbSearch").command).toBe("searchNotes");
         expect(byId(config.desktopAvailableLaunchers, "_lbDeletedNotes").command).toBe("showDeletedNotes");
         expect(byId(config.desktopVisibleLaunchers, "_lbSettings").command).toBe("showOptions");
         expect(byId(config.desktopAvailableLaunchers, "_commandPalette").command).toBe("commandPalette");
@@ -116,11 +117,11 @@ describe("buildLaunchBarConfig", () => {
     it("drops the rail entries the shift-log layout does not use", () => {
         const { desktopVisibleLaunchers } = buildLaunchBarConfig();
 
-        for (const id of [ "_lbSearch", "_lbJumpTo", "_lbNoteMap", "_lbRecentChanges", "_lbQuickSearch" ]) {
+        for (const id of [ "_lbJumpTo", "_lbNoteMap", "_lbRecentChanges", "_lbQuickSearch" ]) {
             expect(byId(desktopVisibleLaunchers, id).enforceDeleted, id).toBe(true);
         }
-        // What the rail keeps: New, Today and Calendar.
-        for (const id of [ "_lbNewNote", "_lbToday", "_lbCalendar" ]) {
+        // What the rail keeps: New, Search, Calendar and Today.
+        for (const id of [ "_lbNewNote", "_lbSearch", "_lbToday", "_lbCalendar" ]) {
             expect(byId(desktopVisibleLaunchers, id).enforceDeleted, id).toBeUndefined();
         }
     });

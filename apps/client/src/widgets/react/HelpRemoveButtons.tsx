@@ -23,6 +23,9 @@ export default function HelpRemoveButtons({ help, removeText, onRemove }: HelpRe
                 icon="bx bx-x"
                 className="search-option-del"
                 text={removeText ?? ""}
+                // The button sits in a narrow table column, where a visible label ran into its
+                // neighbours; the name stays as the tooltip and accessible name.
+                hideLabel
                 onClick={(e) => {
                     e.preventDefault();
                     onRemove?.();

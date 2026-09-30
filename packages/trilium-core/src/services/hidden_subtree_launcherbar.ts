@@ -105,7 +105,10 @@ export default function buildLaunchBarConfig() {
             id: "_lbNewNote",
             ...sharedLaunchers.newNote
         },
-        { id: "_lbSearch", title: "Search Notes", type: "launcher", enforceDeleted: true },
+        {
+            id: "_lbSearch",
+            ...sharedLaunchers.searchNotes
+        },
         { id: "_lbJumpTo", title: "Jump to", type: "launcher", enforceDeleted: true },
         { id: "_lbNoteMap", title: "Note Map", type: "launcher", enforceDeleted: true },
         {
