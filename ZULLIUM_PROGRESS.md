@@ -126,7 +126,9 @@ pre-existing items below):**
   is ever reused, mark the withdrawn ids `enforceDeleted`. Decide when doing the admin-gated entry point (Task 8).
 
 ## Task #3 — update-checker removal (2026-09-28)
-Recovered from the VM disk into `C:\Zulliumecoveredepo`, committed as `cce19ec` on branch `zullium-work`
+Recovered from the VM disk into `C:\Zullium
+ecovered
+epo`, committed as `cce19ec` on branch `zullium-work`
 (Tasks 1, 2, 13). Task 3 is on top of that, uncommitted.
 - The only automatic outbound call was the client-side `useTriliumUpdateStatus` hook in
   `apps/client/src/widgets/buttons/global_menu.tsx` (GitHub releases API, every 8 h). Removed the hook,
@@ -924,6 +926,41 @@ labels had nowhere to go in the tab row.
 (13/13) green on both server and standalone; `NoteTypeSwitcher`/`ActionButton` client suites green.
 Every visual fix confirmed by screenshot against the real database in the *packaged* build, not the
 dev fixture — the fixture is what masked the theme-next bug in the first place.
+
+## OneNote-style shift log, UI round 3, first-run wizard and crest (2026-09-30)
+
+Driven by the team's OneNote workflow (`C:\Zulliumrt\Luis D.docx`, the OneNote screenshot). One
+running page per day; the incoming officer copies forward and edits their own last shift by hand, so
+day pages are deliberately blank with no template.
+
+- **Daily Shift Log** (`guard_structure.ts`, `date_notes.ts`): titles read "Tuesday, September 01, 2026" /
+  "September 2026" / "2026". Each calendar level sorts by its ISO label (`yearNote`/`monthNote`/`dateNote`)
+  rather than title, which would otherwise order alphabetically. `ensureShiftLogDates()` runs at every
+  startup and keeps blank day pages from the start of the current month to the end of next year (487 pages
+  on a first run, one lookup afterwards). The log root carries an inheritable `hideChildrenOverview`.
+- **Layout** (round 3): new databases default to `layoutOrientation=horizontal` and a closed right panel.
+  The rail is New, Calendar and Today, plus Menu. Search Notes, Jump to, Note Map, Recent Changes and Quick
+  Search are `enforceDeleted`. `desktop_layout.tsx` no longer mounts the quick search (the widget file stays
+  for `mobile_layout.tsx`). The floating help button and "Notes edited on this day" are removed (the latter
+  listed all 487 pre-created pages on the creation day). A fresh database starts on today's page
+  (`sql_init.ts`; it pre-seeds `openNoteContexts`, so a client-side fallback never runs) and later launches
+  reopen the last page. In the horizontal bar, launchers size to their content and the Menu wrapper sets
+  `contain: none` (`.component` size containment had collapsed it to 0px, pushing "Menu" off-screen).
+- **First-run wizard** (`setup.tsx`, `entry.json`): "Welcome to Daily Brief Logbook" with Start a new
+  logbook and Restore from backup. The sync-from-server / sync-from-desktop cards and the demo-content
+  choice are gone; the sync screens stay in the file, unreachable. The app name reaches every string as
+  `{{appName}}` (`services/i18n.ts` `defaultVariables`), "knowledge base" became "logbook", and the login and
+  set-password pages are reworded.
+- **Crest**: the gold crest was replaced by the black-and-white art as a transparent "ink-only" PNG
+  (black at an opacity set by how dark each pixel of `crest_master.png` is, so the cream paper drops out).
+  `brand-crest.png` serves the sidebar header, About, setup, login and unlock screens, and the startup
+  splash (which still showed Trilium's leaf). `brand-crest-faint.png` and a white-ink
+  `brand-crest-faint-dark.png` serve the empty-pane watermark. The sidebar header, About and the watermark
+  invert under `body.dark-theme`. The app icon (`.ico`) was already the black-and-white crest.
+- **Noticed, not fixed**: the wizard and pre-login pages keep a white card in OS dark mode while switching
+  the text to light grey (unreadable, and upstream's own behaviour); the horizontal top bar looked white in a
+  forced-dark emulation. The user's Windows is in light mode. The vertical-layout Menu icon is still
+  Trilium's leaf. `Based on TriliumNext Notes, licensed under AGPL-3.0` stays in About on purpose.
 
 ## Recommended next step
 **UI tweaks, ongoing.** The round-1 pattern (`hideLabel` for a cramped fixed-height strip; a general

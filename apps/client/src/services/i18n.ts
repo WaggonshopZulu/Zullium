@@ -1,4 +1,4 @@
-import { getEnglishName, type Locale, LOCALE_IDS, LOCALES, setDayjsLocale } from "@triliumnext/commons";
+import { APP_NAME, getEnglishName, type Locale, LOCALE_IDS, LOCALES, setDayjsLocale } from "@triliumnext/commons";
 import i18next from "i18next";
 import i18nextHttpBackend from "i18next-http-backend";
 import { initReactI18next } from "react-i18next";
@@ -39,7 +39,10 @@ export async function initLocale(locale: LOCALE_IDS = "en", scope: "app" | "entr
         backend: {
             loadPath: `${window.glob.assetPath}/translations/{{lng}}/{{ns}}.json`
         },
-        returnEmptyString: false
+        returnEmptyString: false,
+        // Lets any string name the app as `{{appName}}`, so a rename of the build reaches the wizard and
+        // the login page along with the window title.
+        interpolation: { defaultVariables: { appName: APP_NAME } }
     });
 
     await setDayjsLocale(locale);

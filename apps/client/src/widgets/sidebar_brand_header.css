@@ -20,3 +20,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+body.dark-theme .sidebar-brand-header-crest {
+    filter: invert(1);
+}

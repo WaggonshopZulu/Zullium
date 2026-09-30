@@ -79,3 +79,7 @@
         transform: scale(1);
     }
 }
+
+body.dark-theme .about-dialog .icon {
+    filter: invert(1);
+}

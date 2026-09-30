@@ -152,77 +152,20 @@ describe("the menu, and what each way out of it commits to", () => {
         await flushEffects();
 
         card("setup.new-document")?.click();
-        expect(setState).toHaveBeenCalledWith("createNewDocumentOptions");
+        expect(setState).toHaveBeenCalledWith("createNewDocumentEmpty");
 
         card("setup.restore-from-backup")?.click();
         expect(setState).toHaveBeenCalledWith("restoreFromBackup");
 
-        card("setup.sync-from-server")?.click();
-        expect(setState).toHaveBeenCalledWith("syncFromServer");
-
         expect(serverMock.post).not.toHaveBeenCalledWith("setup/existing/delete");
     });
 
-    describe("connecting a desktop app, the one path that erases from here", () => {
-        // Every other path erases at the moment it creates a database, server-side. This one waits
-        // for another device to push one, and decides it has arrived by seeing a schema appear —
-        // which the knowledge base already here would satisfy on its own. So arriving on the screen
-        // is what commits, and the erasure happens on the way in.
-        it("asks with the browser's own dialog before erasing, then waits for the push", async () => {
-            window.glob.hasExistingData = true;
-            const setState = renderMenu();
-            await flushEffects();
+    it("offers no way to sync from a server or another desktop app", async () => {
+        renderMenu();
+        await flushEffects();
 
-            card("setup.sync-from-desktop")?.click();
-            await flushEffects();
-
-            expect(window.confirm).toHaveBeenCalledWith("setup.existing-data-erase-confirm");
-            expect(serverMock.post).toHaveBeenCalledWith("setup/existing/delete");
-            expect(setState).toHaveBeenCalledWith("syncFromDesktop");
-        });
-
-        it("erases nothing and goes nowhere when that dialog is answered no", async () => {
-            window.glob.hasExistingData = true;
-            vi.stubGlobal("confirm", vi.fn(() => false));
-            const setState = renderMenu();
-            await flushEffects();
-
-            card("setup.sync-from-desktop")?.click();
-            await flushEffects();
-
-            expect(serverMock.post).not.toHaveBeenCalledWith("setup/existing/delete");
-            expect(setState).not.toHaveBeenCalled();
-        });
-
-        it("asks nothing on a first run, which has nothing to clear out of the way", async () => {
-            const setState = renderMenu();
-            await flushEffects();
-
-            card("setup.sync-from-desktop")?.click();
-            await flushEffects();
-
-            expect(window.confirm).not.toHaveBeenCalled();
-            expect(serverMock.post).not.toHaveBeenCalledWith("setup/existing/delete");
-            expect(setState).toHaveBeenCalledWith("syncFromDesktop");
-        });
-
-        it("stays put and says why when the erasure fails, rather than waiting on a push it cannot take", async () => {
-            window.glob.hasExistingData = true;
-            serverMock.post.mockImplementation(async (url: string) => {
-                if (url === "setup/existing/delete") {
-                    throw new Error("the database is in use");
-                }
-                return {};
-            });
-            const setState = renderMenu();
-            await flushEffects();
-
-            card("setup.sync-from-desktop")?.click();
-            await flushEffects();
-
-            expect(container.querySelector(".page-error")?.textContent).toContain("the database is in use");
-            expect(setState).not.toHaveBeenCalled();
-        });
+        expect(card("setup.sync-from-server")).toBeFalsy();
+        expect(card("setup.sync-from-desktop")).toBeFalsy();
     });
 });
 
@@ -250,14 +193,8 @@ describe("the language step, as the wizard renders it", () => {
     });
 });
 
-describe("creating the knowledge base", () => {
-    it("asks for the demo content or not, and finishes when the server is done", async () => {
-        renderInto(renderState("createNewDocumentWithDemo", vi.fn()));
-        await flushEffects();
-        expect(serverMock.post).toHaveBeenCalledWith("setup/new-document", { locale: "en" });
-
-        render(null, container);
-        serverMock.post.mockClear();
+describe("creating the logbook", () => {
+    it("always starts empty, never with the demo content", async () => {
         renderInto(renderState("createNewDocumentEmpty", vi.fn()));
         await flushEffects();
         expect(serverMock.post).toHaveBeenCalledWith("setup/new-document?skipDemoDb", { locale: "en" });
@@ -275,7 +212,7 @@ describe("creating the knowledge base", () => {
         expect(container.textContent).toContain("setup.create-new-document-failed");
 
         container.querySelector<HTMLElement>(".back-button")?.click();
-        expect(setState).toHaveBeenCalledWith("createNewDocumentOptions");
+        expect(setState).toHaveBeenCalledWith("firstOptions");
     });
 
     it("reads whatever the failure had to say, in each of the shapes one arrives in", async () => {

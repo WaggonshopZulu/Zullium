@@ -9,6 +9,10 @@ body.desktop {
         background-size: min(420px, 60%) auto;
     }
 
+    &.dark-theme .note-detail-empty {
+        background-image: url(../../assets/brand-crest-faint-dark.png);
+    }
+
     .note-detail-empty > * {
         margin-inline: auto;
         max-width: 850px;

@@ -48,9 +48,9 @@ async function main() {
     document.body.replaceChildren(bodyWrapper);
 }
 
-type State = "unlock" | "backupDatabase" | "existingData" | "selectLanguage" | "firstOptions" | "createNewDocumentOptions" | "createNewDocumentWithDemo" | "createNewDocumentEmpty" | "restoreFromBackup" | "syncFromDesktop" | "syncFromServer" | "syncFromServerInProgress" | "syncFromDesktopInProgress" | "syncFailed";
+type State = "unlock" | "backupDatabase" | "existingData" | "selectLanguage" | "firstOptions" | "createNewDocumentEmpty" | "restoreFromBackup" | "syncFromDesktop" | "syncFromServer" | "syncFromServerInProgress" | "syncFromDesktopInProgress" | "syncFailed";
 
-const STATE_ORDER: State[] = ["unlock", "backupDatabase", "selectLanguage", "existingData", "firstOptions", "createNewDocumentOptions", "createNewDocumentWithDemo", "createNewDocumentEmpty", "restoreFromBackup", "syncFromDesktop", "syncFromServer", "syncFromServerInProgress", "syncFromDesktopInProgress", "syncFailed"];
+const STATE_ORDER: State[] = ["unlock", "backupDatabase", "selectLanguage", "existingData", "firstOptions", "createNewDocumentEmpty", "restoreFromBackup", "syncFromDesktop", "syncFromServer", "syncFromServerInProgress", "syncFromDesktopInProgress", "syncFailed"];
 
 export function renderState(state: State, setState: (state: State) => void) {
     switch (state) {
@@ -67,8 +67,6 @@ export function renderState(state: State, setState: (state: State) => void) {
         );
         case "selectLanguage": return <SelectLanguage setState={setState} />;
         case "firstOptions": return <SetupOptions setState={setState} onKeep={() => void onExistingDataKept()} />;
-        case "createNewDocumentOptions": return <CreateNewDocumentOptions setState={setState} />;
-        case "createNewDocumentWithDemo": return <CreateNewDocumentInProgress withDemo setState={setState} />;
         case "createNewDocumentEmpty": return <CreateNewDocumentInProgress setState={setState} />;
         // No way back where the wizard was opened for this and nothing else: the menu it would
         // return to was never shown, and on an instance that had a database it is not a menu the
@@ -258,33 +256,6 @@ function SetupOptions({ setState, onKeep }: { setState: (state: State) => void; 
     const [ error, setError ] = useState<string | null>(null);
     const [ errorId, setErrorId ] = useState(0);
 
-    /**
-     * Clears the way for a knowledge base that another desktop will push, then waits for it.
-     *
-     * The one path that cannot erase at the moment the database is created, because that moment
-     * belongs to the other device rather than to anything pressed here: this instance only waits,
-     * and it decides it has a database by seeing a schema appear, which the old one would satisfy on
-     * its own. So arriving on the screen is what commits, and it is asked about with the browser's
-     * own dialog for the same reason every other erasure in the wizard is.
-     */
-    async function syncFromDesktop() {
-        if (hasExistingData()) {
-            if (!window.confirm(t("setup.existing-data-erase-confirm"))) {
-                return;
-            }
-
-            try {
-                await deleteExistingData();
-            } catch (e) {
-                setError(e instanceof Error ? e.message : String(e));
-                setErrorId((previous) => previous + 1);
-                return;
-            }
-        }
-
-        setState("syncFromDesktop");
-    }
-
     return (
         <SetupPage
             title={t("setup.heading")}
@@ -315,22 +286,7 @@ function SetupOptions({ setState, onKeep }: { setState: (state: State) => void; 
                     icon="bx bx-file-blank"
                     title={t("setup.new-document")}
                     description={t("setup.new-document-description")}
-                    onClick={() => setState("createNewDocumentOptions")}
-                />
-
-                <SetupOptionCard
-                    icon="bx bx-server"
-                    title={t("setup.sync-from-server")}
-                    description={t("setup.sync-from-server-description")}
-                    onClick={() => setState("syncFromServer")}
-                />
-
-                <SetupOptionCard
-                    icon="bx bx-desktop"
-                    title={t("setup.sync-from-desktop")}
-                    description={t("setup.sync-from-desktop-description")}
-                    disabled={glob.isStandalone}
-                    onClick={() => void syncFromDesktop()}
+                    onClick={() => setState("createNewDocumentEmpty")}
                 />
 
                 <SetupOptionCard
@@ -544,22 +500,6 @@ function useOutstandingSyncInfo() {
     return { outstandingPullCount, totalPullCount, initialized, lastSyncError };
 }
 
-function CreateNewDocumentOptions({ setState }: { setState: (state: State) => void }) {
-    return (
-        <SetupPage
-            className="create-new-document-options"
-            title={t("setup.create-new-document-options-title")}
-            illustration={<Icon icon="bx bx-star" className="illustration-icon" />}
-            onBack={() => setState("firstOptions")}
-        >
-            <div class="setup-options">
-                <SetupOptionCard icon="bx bx-book-open" title={t("setup.create-new-document-options-with-demo")} description={t("setup.create-new-document-options-with-demo-description")} onClick={() => setState("createNewDocumentWithDemo")} />
-                <SetupOptionCard icon="bx bx-file-blank" title={t("setup.create-new-document-options-empty")} description={t("setup.create-new-document-options-empty-description")} onClick={() => setState("createNewDocumentEmpty")} />
-            </div>
-        </SetupPage>
-    );
-}
-
 /**
  * The wait while the database is created, and what became of it if it was not.
  *
@@ -567,14 +507,11 @@ function CreateNewDocumentOptions({ setState }: { setState: (state: State) => vo
  * poll and no other way of ending, so a request that comes back with an error would otherwise leave
  * it turning for as long as the user was willing to watch it.
  */
-function CreateNewDocumentInProgress({ withDemo = false, setState }: {
-    withDemo?: boolean;
-    setState: (state: State) => void;
-}) {
+function CreateNewDocumentInProgress({ setState }: { setState: (state: State) => void }) {
     const [ error, setError ] = useState<string | null>(null);
 
     useEffect(() => {
-        server.post(`setup/new-document${withDemo ? "" : "?skipDemoDb"}`, { locale: getCurrentLanguage() })
+        server.post("setup/new-document?skipDemoDb", { locale: getCurrentLanguage() })
             .then(onSetupFinished)
             .catch(async (e: unknown) => {
                 // The knowledge base is erased server-side as the first step of this, so a failure
@@ -583,7 +520,7 @@ function CreateNewDocumentInProgress({ withDemo = false, setState }: {
                 await refreshExistingData();
                 setError(messageOf(e));
             });
-    }, [ withDemo ]);
+    }, []);
 
     return (
         <SetupPage
@@ -599,7 +536,7 @@ function CreateNewDocumentInProgress({ withDemo = false, setState }: {
             error={error}
             // Only once there is something to go back from: while it is running there is nothing to
             // return to that would not leave a half-created database behind.
-            onBack={error ? () => setState("createNewDocumentOptions") : undefined}
+            onBack={error ? () => setState("firstOptions") : undefined}
         />
     );
 }
