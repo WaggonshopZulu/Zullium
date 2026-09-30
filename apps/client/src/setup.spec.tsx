@@ -31,7 +31,7 @@ const serverMock = vi.hoisted(() => ({
 }));
 vi.mock("./services/server", () => ({ default: serverMock }));
 
-import { afterLanguage, getNetworkAddresses, initialState, openedAtRestore, renderState, SyncFailed, SyncFromServer, SyncInProgress } from "./setup";
+import { getNetworkAddresses, initialState, openedAtRestore, renderState, SyncFailed, SyncFromServer, SyncInProgress } from "./setup";
 
 type Stats = { outstandingPullCount: number; totalPullCount: number | null; initialized: boolean; lastSyncError?: string | null };
 
@@ -169,35 +169,11 @@ describe("the menu, and what each way out of it commits to", () => {
     });
 });
 
-describe("the language step, as the wizard renders it", () => {
-    it("leads to the offer of a copy, or past it where there is nothing to copy", async () => {
-        // The step it leads to is worked out rather than named, and was a hardcoded state before
-        // the language moved in front of the offer — so the wiring is worth asserting, not just
-        // the function behind it.
-        const setState = vi.fn();
-        window.glob.hasExistingData = true;
-        renderInto(renderState("selectLanguage", setState));
-        await flushEffects();
-
-        container.querySelector<HTMLElement>("footer button")?.click();
-        expect(setState).toHaveBeenCalledWith("existingData");
-
-        render(null, container);
-        window.glob.hasExistingData = undefined;
-        const firstRun = vi.fn();
-        renderInto(renderState("selectLanguage", firstRun));
-        await flushEffects();
-
-        container.querySelector<HTMLElement>("footer button")?.click();
-        expect(firstRun).toHaveBeenCalledWith("firstOptions");
-    });
-});
-
 describe("creating the logbook", () => {
-    it("always starts empty, never with the demo content", async () => {
+    it("always starts empty, in English (United Kingdom), never with the demo content", async () => {
         renderInto(renderState("createNewDocumentEmpty", vi.fn()));
         await flushEffects();
-        expect(serverMock.post).toHaveBeenCalledWith("setup/new-document?skipDemoDb", { locale: "en" });
+        expect(serverMock.post).toHaveBeenCalledWith("setup/new-document?skipDemoDb", { locale: "en-GB" });
     });
 
     it("says what stopped it instead of spinning, and offers a way back", async () => {
@@ -455,15 +431,19 @@ describe("getNetworkAddresses, deciding whose word to trust for this device's ad
 });
 
 describe("where the wizard opens", () => {
-    it("starts at the language step on a first run", () => {
-        expect(initialState({})).toBe("selectLanguage");
+    it("opens on the menu on a first run, with no language to choose", () => {
+        expect(initialState({})).toBe("firstOptions");
     });
 
-    it("starts there whatever a marker asked for, so the rest is read in the chosen language", () => {
-        expect(initialState({ setupTargetScreen: "restore-backup" })).toBe("selectLanguage");
-        expect(initialState({ hasExistingData: true })).toBe("selectLanguage");
+    it("offers a copy of the existing logbook first, before the menu that replaces it", () => {
+        expect(initialState({ hasExistingData: true })).toBe("existingData");
         expect(initialState({ hasExistingData: true, setupTargetScreen: "restore-backup" }))
-            .toBe("selectLanguage");
+            .toBe("existingData");
+    });
+
+    it("goes where a marker asked once there is nothing left to lose", () => {
+        // A restore reached this way skips the menu: it is the errand the app was sent here for.
+        expect(initialState({ setupTargetScreen: "restore-backup" })).toBe("restoreFromBackup");
     });
 
     it("goes straight to the backup screen, which is the one that replaces nothing", () => {
@@ -473,7 +453,7 @@ describe("where the wizard opens", () => {
             .toBe("backupDatabase");
 
         // Except where there is nothing to back up, which is not a state the app can ask for.
-        expect(initialState({ setupTargetScreen: "backup-database" })).toBe("selectLanguage");
+        expect(initialState({ setupTargetScreen: "backup-database" })).toBe("firstOptions");
     });
 
     it("asks for the password first where the wizard is standing over a knowledge base", () => {
@@ -496,30 +476,11 @@ describe("where the wizard opens", () => {
 
     it("ignores a screen it does not know rather than guessing at one", () => {
         expect(initialState({ setupTargetScreen: "createNewDocumentEmpty" as never }))
-            .toBe("selectLanguage");
-        expect(afterLanguage({ setupTargetScreen: "createNewDocumentEmpty" as never }))
             .toBe("firstOptions");
     });
 });
 
-describe("where the language step leads", () => {
-    it("offers a copy of the existing knowledge base, before the menu that replaces it", () => {
-        // After the language rather than before, so a question about the user's own knowledge base
-        // is put in the language they have just chosen.
-        expect(afterLanguage({ hasExistingData: true })).toBe("existingData");
-        expect(afterLanguage({ hasExistingData: true, setupTargetScreen: "restore-backup" }))
-            .toBe("existingData");
-    });
-
-    it("goes straight to the menu on a first run, which has nothing to copy", () => {
-        expect(afterLanguage({})).toBe("firstOptions");
-    });
-
-    it("goes where a marker asked once there is nothing left to lose", () => {
-        // A restore reached this way skips the menu: it is the errand the app was sent here for.
-        expect(afterLanguage({ setupTargetScreen: "restore-backup" })).toBe("restoreFromBackup");
-    });
-
+describe("the restore screen", () => {
     it("knows when the restore is the whole of what the wizard was opened for", () => {
         // Which decides whether that screen offers a way back: there is one only where the user
         // walked into the restore through the wizard's own menu.

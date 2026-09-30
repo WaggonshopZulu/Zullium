@@ -38,7 +38,9 @@ const GUARD_ROOTS: GuardRootDefinition[] = [
         noteId: REFERENCE_NOTE_ID,
         title: "Reference",
         notePosition: 20,
-        labels: [ { name: "iconClass", value: "bx bx-book" }, { name: "sorted" } ]
+        // Not inheritable: the list repeats the tree on this page, but each sub-folder's own list is
+        // how its notes are found.
+        labels: [ { name: "iconClass", value: "bx bx-book" }, { name: "sorted" }, { name: "hideChildrenOverview" } ]
     }
 ];
 

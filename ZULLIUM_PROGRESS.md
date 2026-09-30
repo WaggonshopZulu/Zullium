@@ -957,6 +957,18 @@ day pages are deliberately blank with no template.
   splash (which still showed Trilium's leaf). `brand-crest-faint.png` and a white-ink
   `brand-crest-faint-dark.png` serve the empty-pane watermark. The sidebar header, About and the watermark
   invert under `body.dark-theme`. The app icon (`.ico`) was already the black-and-white crest.
+- **Language and help** (same day): the wizard has no language screen; a new logbook is always
+  created as `en-GB` (`SETUP_LOCALE` in `setup.tsx`), so the app reads "Colour" and "30 Sept 2026".
+  `SelectLanguage` and its spec were deleted. The Reference page hides its children list with a
+  non-inheritable `hideChildrenOverview` (each sub-folder keeps its own list). The help button the user
+  crossed out lives in the note-actions row (`NoteActionsCustom.tsx`), not the floating-button list; both
+  are gone now. The first check of this was vacuous (a day page has no help entry); it was redone on the
+  Daily Shift Log, which does.
+- **Splash title** (reported by the user after "Preparing your logbook"): `apps/client/index.html` hard-coded
+  `Trilium Notes` as the startup splash title; it now reads "Daily Brief Logbook". It is the only
+  user-visible occurrence left in app source; the remainder is package metadata, code comments and the
+  backup container's magic bytes. The text editor's `TN` autocorrect (`replacements.ts`) still expands to
+  "Trilium Notes" when typed.
 - **Noticed, not fixed**: the wizard and pre-login pages keep a white card in OS dark mode while switching
   the text to light grey (unreadable, and upstream's own behaviour); the horizontal top bar looked white in a
   forced-dark emulation. The user's Windows is in light mode. The vertical-layout Menu icon is still

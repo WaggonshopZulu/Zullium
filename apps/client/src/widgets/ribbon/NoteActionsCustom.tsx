@@ -8,9 +8,8 @@ import NoteContext from "../../components/note_context";
 import FNote from "../../entities/fnote";
 import { t } from "../../services/i18n";
 import { copyImageReferenceToClipboard } from "../../services/image";
-import { getHelpUrlForNote } from "../../services/in_app_help";
 import { downloadFileNote, openNoteExternally } from "../../services/open";
-import { createImageSrcUrl, isMobile, openInAppHelpFromUrl } from "../../services/utils";
+import { createImageSrcUrl, isMobile } from "../../services/utils";
 import { ViewTypeOptions } from "../collections/interface";
 import { buildSaveSqlToNoteHandler } from "../FloatingButtonsDefinitions";
 import { showImageCompressionDialog } from "../dialogs/image_compression/image_compression_dialog";
@@ -79,7 +78,6 @@ export default function NoteActionsCustom(props: NoteActionsCustomProps) {
             <RefreshButton {...innerProps} />
             {innerProps.note.noteId === "_backendLog" && <DownloadFileButton {...innerProps} />}
             <CopyReferenceToClipboardButton {...innerProps} />
-            <InAppHelpButton {...innerProps} />
             <NoteActionsCustomInner {...innerProps} />
         </div>
     );
@@ -300,19 +298,6 @@ function SaveToNoteButton({ note, noteMime }: NoteActionsCustomInnerProps) {
         text={t("code_buttons.save_to_note_button_title")}
         onClick={buildSaveSqlToNoteHandler(note)}
     />;
-}
-
-function InAppHelpButton({ note }: NoteActionsCustomInnerProps) {
-    const helpUrl = getHelpUrlForNote(note);
-    const isEnabled = !!helpUrl;
-
-    return isEnabled && (
-        <NoteAction
-            icon="bx bx-help-circle"
-            text={t("help-button.title")}
-            onClick={() => helpUrl && openInAppHelpFromUrl(helpUrl)}
-        />
-    );
 }
 
 //#endregion

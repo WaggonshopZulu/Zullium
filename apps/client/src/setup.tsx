@@ -1,13 +1,12 @@
 import "./setup.css";
 
-import { LOCALES, MOBILE_SYNC_MAX_BLOB_CONTENT_SIZE, NetworkAddressesResponse, SetupSyncFromServerResponse, type SetupTargetScreen } from "@triliumnext/commons";
+import { MOBILE_SYNC_MAX_BLOB_CONTENT_SIZE, NetworkAddressesResponse, SetupSyncFromServerResponse, type SetupTargetScreen } from "@triliumnext/commons";
 import clsx from "clsx";
 import { render } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 import logo from "./assets/brand-crest.png";
-import { getCurrentLanguage, initLocale, t } from "./services/i18n";
+import { initLocale, t } from "./services/i18n";
 import server from "./services/server";
 import { isElectron, isMobileApp } from "./services/utils";
 import SetupBackupDatabase from "./setup_backup";
@@ -23,7 +22,6 @@ import Admonition, { ExtendedAdmonition } from "./widgets/react/Admonition";
 import Button from "./widgets/react/Button";
 import { Card, CardFrame, CardSection } from "./widgets/react/Card";
 import FormGroup from "./widgets/react/FormGroup";
-import { FormListItem } from "./widgets/react/FormList";
 import FormTextBox from "./widgets/react/FormTextBox";
 import Icon from "./widgets/react/Icon";
 import SetupPage from "./widgets/react/SetupPage";
@@ -48,9 +46,12 @@ async function main() {
     document.body.replaceChildren(bodyWrapper);
 }
 
-type State = "unlock" | "backupDatabase" | "existingData" | "selectLanguage" | "firstOptions" | "createNewDocumentEmpty" | "restoreFromBackup" | "syncFromDesktop" | "syncFromServer" | "syncFromServerInProgress" | "syncFromDesktopInProgress" | "syncFailed";
+/** The language every new logbook is created in; there is no step to pick another. */
+const SETUP_LOCALE = "en-GB";
 
-const STATE_ORDER: State[] = ["unlock", "backupDatabase", "selectLanguage", "existingData", "firstOptions", "createNewDocumentEmpty", "restoreFromBackup", "syncFromDesktop", "syncFromServer", "syncFromServerInProgress", "syncFromDesktopInProgress", "syncFailed"];
+type State = "unlock" | "backupDatabase" | "existingData" | "firstOptions" | "createNewDocumentEmpty" | "restoreFromBackup" | "syncFromDesktop" | "syncFromServer" | "syncFromServerInProgress" | "syncFromDesktopInProgress" | "syncFailed";
+
+const STATE_ORDER: State[] = ["unlock", "backupDatabase", "existingData", "firstOptions", "createNewDocumentEmpty", "restoreFromBackup", "syncFromDesktop", "syncFromServer", "syncFromServerInProgress", "syncFromDesktopInProgress", "syncFailed"];
 
 export function renderState(state: State, setState: (state: State) => void) {
     switch (state) {
@@ -65,7 +66,6 @@ export function renderState(state: State, setState: (state: State) => void) {
                 onKept={onSetupFinished}
             />
         );
-        case "selectLanguage": return <SelectLanguage setState={setState} />;
         case "firstOptions": return <SetupOptions setState={setState} onKeep={() => void onExistingDataKept()} />;
         case "createNewDocumentEmpty": return <CreateNewDocumentInProgress setState={setState} />;
         // No way back where the wizard was opened for this and nothing else: the menu it would
@@ -127,8 +127,8 @@ interface SetupGlob {
 /**
  * Where the wizard opens.
  *
- * Every run starts at the language step and works forward from there. Three things come in already
- * knowing better: a wizard with a knowledge base behind it that has to be unlocked before it will do
+ * There is no language step: a new logbook is always created in English (United Kingdom). Three things
+ * come in already knowing better: a wizard with a knowledge base behind it that has to be unlocked before it will do
  * anything, a sync interrupted after it created the schema, and an instance sent to a particular
  * screen through a `setup.json` marker.
  */
@@ -148,23 +148,12 @@ export function initialState(glob: SetupGlob): State {
 /** The rest of the wizard, once there is nothing left standing in front of it. */
 function afterUnlock(glob: SetupGlob): State {
     // Asked for by a running instance that wants its database held still long enough to be copied.
-    // Straight there, past the language: the instance already runs in one, and the copy is the whole
-    // errand rather than a step on the way to a menu the user never asked for.
+    // Straight there: the copy is the whole errand rather than a step on the way to a menu the user
+    // never asked for.
     if (glob.setupTargetScreen === "backup-database" && glob.hasExistingData) {
         return "backupDatabase";
     }
 
-    return "selectLanguage";
-}
-
-/**
- * Where the language step leads.
- *
- * The offer of a copy comes after it rather than before, so that a question about the user's own
- * knowledge base is put in the language they have just chosen rather than in whichever one the
- * instance happened to be running in.
- */
-export function afterLanguage(glob: SetupGlob): State {
     // The one moment the database is open with nothing running against it, which is what taking a
     // copy of it needs.
     if (glob.hasExistingData) {
@@ -198,60 +187,6 @@ function afterExistingData(glob: SetupGlob): State {
     }
 }
 
-function SelectLanguage({ setState }: { setState: (state: State) => void }) {
-    const { t, i18n } = useTranslation();
-    const [ currentLocale, setCurrentLocale ] = useState(i18n.language);
-    const filteredLocales = useMemo(() => LOCALES.filter(l => {
-        if (l.contentOnly) return false;
-        if (l.devOnly && !window.glob.isDev) return false;
-        return true;
-    }), []);
-    // The row the user chose last, which is not the last bundle to arrive: each language is a
-    // 160-290 KB fetch, so two taps in a row are answered in whichever order the two loads finish.
-    const chosen = useRef(currentLocale);
-
-    return (
-        <SetupPage
-            title={t("setup.language")}
-            className="select-language"
-            illustration={<Icon icon="bx bx-globe" className="illustration-icon" />}
-            footer={<Button text={t("setup.continue")} kind="primary" onClick={() => setState(afterLanguage(window.glob))} />}
-        >
-            <Card>
-                <CardSection>
-                    {filteredLocales.map(locale => (
-                        <FormListItem
-                            key={locale.id}
-                            value={locale.id}
-                            active={locale.id === currentLocale}
-                            rtl={locale.rtl}
-                            onClick={() => {
-                                // Marked chosen on the press rather than once its bundle has
-                                // loaded: on a phone that wait is seconds long, and a row that
-                                // does not light up reads as a tap that missed.
-                                chosen.current = locale.id;
-                                setCurrentLocale(locale.id);
-                                document.body.dir = locale.rtl ? "rtl" : "ltr";
-
-                                void i18n.changeLanguage(locale.id).then(() => {
-                                    // An earlier, larger bundle landing after this one would
-                                    // otherwise leave the app speaking a language the user has
-                                    // already tapped away from.
-                                    if (chosen.current !== locale.id) {
-                                        void i18n.changeLanguage(chosen.current);
-                                    }
-                                });
-                            }}
-                        >
-                            {locale.name}
-                        </FormListItem>
-                    ))}
-                </CardSection>
-            </Card>
-        </SetupPage>
-    );
-}
-
 function SetupOptions({ setState, onKeep }: { setState: (state: State) => void; onKeep: () => void }) {
     const [ error, setError ] = useState<string | null>(null);
     const [ errorId, setErrorId ] = useState(0);
@@ -265,7 +200,7 @@ function SetupOptions({ setState, onKeep }: { setState: (state: State) => void; 
             errorId={errorId}
             // Back to whichever step actually came before this one: the offer of a copy where there
             // is still something to copy, and the language where that offer was never made.
-            onBack={() => setState(hasExistingData() ? "existingData" : "selectLanguage")}
+            onBack={hasExistingData() ? () => setState("existingData") : undefined}
         >
             <div class="setup-options">
                 {/* First, and offered only while there is something to go back to. Set apart from
@@ -511,7 +446,7 @@ function CreateNewDocumentInProgress({ setState }: { setState: (state: State) =>
     const [ error, setError ] = useState<string | null>(null);
 
     useEffect(() => {
-        server.post("setup/new-document?skipDemoDb", { locale: getCurrentLanguage() })
+        server.post("setup/new-document?skipDemoDb", { locale: SETUP_LOCALE })
             .then(onSetupFinished)
             .catch(async (e: unknown) => {
                 // The knowledge base is erased server-side as the first step of this, so a failure

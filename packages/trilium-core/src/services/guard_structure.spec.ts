@@ -37,6 +37,17 @@ describe("guard structure", () => {
         expect(becca.notes[SHIFT_LOG_NOTE_ID].getOwnedLabels("calendarRoot")).toHaveLength(1);
     });
 
+    it("hides the children list on both roots, and only the log's reaches its descendants", () => {
+        ensure();
+
+        const [ logLabel ] = becca.notes[SHIFT_LOG_NOTE_ID].getOwnedLabels("hideChildrenOverview");
+        const [ referenceLabel ] = becca.notes[REFERENCE_NOTE_ID].getOwnedLabels("hideChildrenOverview");
+
+        expect(logLabel?.isInheritable).toBe(true);
+        expect(referenceLabel, "the Reference page carries the label").toBeDefined();
+        expect(referenceLabel.isInheritable).toBe(false);
+    });
+
     it("puts back a label that was removed, and leaves a changed title alone", () => {
         ensure();
         const shiftLog = becca.notes[SHIFT_LOG_NOTE_ID];
