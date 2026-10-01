@@ -1,24 +1,28 @@
 .sidebar-brand-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--left-pane-collapsed-border-color, var(--main-border-color));
+    gap: 12px;
+    padding: 16px 14px;
+    background: var(--left-pane-background-color);
+    border-bottom: 2px solid var(--main-border-color);
+    box-shadow: 0 4px 6px -3px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 2;
     flex-shrink: 0;
+    contain: none;
 }
 
 .sidebar-brand-header-crest {
-    height: 28px;
+    height: 52px;
     width: auto;
 }
 
 .sidebar-brand-header-name {
     font-weight: 600;
-    font-size: 0.95em;
+    font-size: 1.05em;
     color: var(--left-pane-text-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
+    min-width: 0;
 }
 
 body.dark-theme .sidebar-brand-header-crest {
