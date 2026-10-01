@@ -101,4 +101,19 @@ describe("RootCommandExecutor — admin-gated commands", () => {
         const openedIds = appContextMock.tabManager.openContextWithNote.mock.calls.map((call) => call[0]);
         expect(openedIds).toEqual([ "_hidden", "_search", "_sqlConsole" ]);
     });
+
+    it("refuses Shared Notes and Help outside admin mode, and opens them in admin mode", async () => {
+        await executor.showShareSubtreeCommand();
+        await executor.showHelpCommand();
+
+        expect(appContextMock.tabManager.openContextWithNote).not.toHaveBeenCalled();
+        expect(adminOnlyToast).toHaveBeenCalledTimes(2);
+
+        mockState.admin = true;
+        await executor.showShareSubtreeCommand();
+        await executor.showHelpCommand();
+
+        const openedIds = appContextMock.tabManager.openContextWithNote.mock.calls.map((call) => call[0]);
+        expect(openedIds).toEqual([ "_share", "_help" ]);
+    });
 });

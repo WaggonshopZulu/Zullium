@@ -133,6 +133,9 @@ function formatDateISO(date: Date) {
     return `${date.getFullYear()}-${padNum(date.getMonth() + 1)}-${padNum(date.getDate())}`;
 }
 
+/** The Day.js format the insert-time shortcut uses: 24-hour hours and minutes, such as `23:42`. */
+export const TIME_FORMAT = "HH:mm";
+
 export function formatDateTime(date: Date, userSuppliedFormat?: string): string {
     if (userSuppliedFormat?.trim()) {
         return dayjs(date).format(userSuppliedFormat);

@@ -16,13 +16,14 @@ import { useChildNotes, useContainedLinkNavigation, useNoteContext, useTriliumEv
 import { DetailPane, MasterDetailHeader, MasterPane, useMobileMasterDetail } from "../react/master_detail";
 import Modal from "../react/Modal";
 import { NoteContextContext, ParentComponent } from "../react/react_utils";
+import type { OptionPages } from "../type_widgets/ContentWidget";
 import { PageHelpSlot } from "../type_widgets/options/components/OptionsPageHeader";
 import SettingsNavigation from "../type_widgets/options/components/SettingsNavigation";
 import SettingsSearch from "../type_widgets/options/components/SettingsSearch";
 import OptionsSearchPage, { hasSearchTerms } from "../type_widgets/options/search_page";
 
 /** The settings page shown when no specific section was requested and none was viewed yet this session. */
-const DEFAULT_SECTION = "_optionsAppearance";
+const DEFAULT_SECTION: OptionPages = "_optionsShortcuts";
 
 /**
  * The settings dialog, opened via the `showOptions` command. Settings open in a dialog rather than

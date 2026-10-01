@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+import { APP_NAME } from "@triliumnext/commons";
 import { initializeCore, options } from "@triliumnext/core";
 import schemaSql from "@triliumnext/core/src/assets/schema.sql?raw";
 import serverEnTranslations from "../../server/src/assets/translations/en/server.json";
@@ -119,6 +120,7 @@ beforeAll(async () => {
                 fallbackLng: "en",
                 ns: "server",
                 defaultNS: "server",
+                interpolation: { defaultVariables: { appName: APP_NAME } },
                 resources: {
                     en: { server: serverEnTranslations }
                 }

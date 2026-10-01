@@ -74,21 +74,16 @@ export default function InlineTitle() {
                 <NoteIcon />
                 <div class="note-title-caption">
                     <NoteTitleWidget />
-                    <NoteTitleDetails />
                 </div>
             </div>
         </div>
     );
 }
 
-export function shouldShowInlineTitle(note: FNote | null | undefined, type: NoteType | undefined, viewScope: ViewScope | undefined) {
-    if (viewScope?.viewMode !== "default") return false;
-    // Options pages provide their own title via OptionsPageHeader, so this inline title stays hidden
-    // for them (and the sticky title-row is hidden too — see the effect in InlineTitle).
-    if (note?.noteId?.startsWith("_options")) return false;
-    // A code note fills the pane and scrolls inside its own editor, so nothing ever scrolls past
-    // this title. The sticky title row in .note-split carries the title for those notes instead.
-    return type === "text";
+export function shouldShowInlineTitle(_note: FNote | null | undefined, _type: NoteType | undefined, _viewScope: ViewScope | undefined) {
+    // The title stays in the row above the editor, where it never scrolls away, so the larger
+    // title that used to open each text note is not rendered.
+    return false;
 }
 
 //#region Title details

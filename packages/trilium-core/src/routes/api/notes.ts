@@ -5,6 +5,7 @@ import type { Request } from "../../http_interface";
 
 import blobService from "../../services/blob";
 import eraseService from "../../services/erase.js";
+import { assertDatedParent } from "../../services/guard_structure.js";
 import { ValidationError } from "../../errors.js";
 import becca from "../../becca/becca.js";
 import type BBranch from "../../becca/entities/bbranch.js";
@@ -177,6 +178,8 @@ function createNote(req: Request) {
         /* v8 ignore next -- defensive guard for Express array query params; unreachable via the string-only test harness */
         throw new ValidationError("Missing or incorrect type for target branch ID.");
     }
+
+    assertDatedParent(params.parentNoteId);
 
     const { note, branch } = noteService.createNewNoteWithTarget(target, String(targetBranchId), params);
 

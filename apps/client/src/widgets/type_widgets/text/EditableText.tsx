@@ -16,7 +16,7 @@ import note_create from "../../../services/note_create";
 import options from "../../../services/options";
 import { consumeSearchTerms } from "../../../services/search_jump";
 import toast from "../../../services/toast";
-import utils, { isMobile } from "../../../services/utils";
+import utils, { isMobile, TIME_FORMAT } from "../../../services/utils";
 import type { IconPickerOpts } from "../../dialogs/icon_picker";
 import { useEditorSpacedUpdate, useLegacyImperativeHandlers, useNoteLabel, useSearchTermsConsumer, useTriliumEvent, useTriliumOption, useTriliumOptionBool } from "../../react/hooks";
 import IconPicker from "../../react/IconPicker";
@@ -158,6 +158,10 @@ export default function EditableText({ note, parentComponent, ntxId, noteContext
         async insertDateTimeToTextCommand() {
             const editor = await waitForEditor();
             editor?.execute("insertDateTimeToText");
+        },
+        async insertTimeToTextCommand() {
+            const editor = await waitForEditor();
+            editor?.execute("insertDateTimeToText", { format: TIME_FORMAT });
         },
         // Include note functionality note
         addIncludeNoteToTextCommand() {

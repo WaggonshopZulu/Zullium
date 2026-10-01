@@ -530,6 +530,9 @@ function ShortcutEditor({ keyboardShortcut: action, conflicts }: { keyboardShort
                         text={t("shortcuts.revert_to_default", { shortcuts: formatDefaultShortcuts(action) })}
                         tooltipClass="tooltip-top"
                         onClick={() => revertShortcut(action)}
+                        // A small reset icon in a fixed-width slot; its long name, which includes the
+                        // default combination, stays as the tooltip and accessible name.
+                        hideLabel
                     />}
             </span>
             <ShortcutRecorder onCapture={addShortcut} />

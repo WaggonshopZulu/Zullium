@@ -6,12 +6,12 @@ rem window settings in "electron", so nothing is read from or written to the liv
 rem %AppData%. A different port keeps it from clashing with a live copy running at the same time.
 rem
 rem Layout this file expects:
-rem   BETA\app\        the packaged app folder (contains trilium.exe)
+rem   BETA\app\        the packaged app folder (contains zullium.exe)
 rem   BETA\data\       created on first run; the beta notes - copy this folder to back them up
 rem   BETA\electron\   created on first run; window settings only
 setlocal
 set "TRILIUM_DATA_DIR=%~dp0data"
 set "TRILIUM_ELECTRON_DATA_DIR=%~dp0electron"
 set "TRILIUM_PORT=37850"
-start "" "%~dp0app\trilium.exe" %*
+start "" "%~dp0app\zullium.exe" %*
 endlocal

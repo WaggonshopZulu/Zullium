@@ -47,7 +47,7 @@ const baseReplacements = {
     year: [ "year" ],
     quarter: [ "quarterNumber", "shortQuarter" ],
     month: [ "isoMonth", "monthNumber", "monthNumberPadded",
-        "month", "shortMonth3", "shortMonth4" ],
+        "month", "shortMonth3", "shortMonth4", "shortMonthName" ],
     week: [ "weekNumber", "weekNumberPadded", "shortWeek", "shortWeek3" ],
     day: [ "isoDate", "dateNumber", "dateNumberPadded",
         "ordinal", "weekDay", "weekDay3", "weekDay2" ]
@@ -107,6 +107,7 @@ function getJournalNoteTitle(
         "{month}": monthName,
         "{shortMonth3}": monthName.slice(0, 3),
         "{shortMonth4}": monthName.slice(0, 4),
+        "{shortMonthName}": getShortMonthName(monthName),
 
         // Quarter related
         "{quarterNumber}": quarterNumberStr,
@@ -140,6 +141,72 @@ function getJournalNoteTitle(
         (title, [ key, value ]) => title.replace(new RegExp(key, "g"), value),
         pattern
     );
+}
+
+/** Jan Feb Mar Apr May June July Aug Sept Oct Nov Dec: names of four letters or fewer stay whole. */
+function getShortMonthName(monthName: string) {
+    if (monthName.length <= 4) {
+        return monthName;
+    }
+
+    return monthName === "September" ? "Sept" : monthName.slice(0, 3);
+}
+
+/** Label on a journal root whose pages are written by date: its levels are locked and its day pages kept tidy. */
+export const DAY_HEADER_LABEL = "dayPageHeader";
+
+/** A day page that holds only the FYI heading and rules earlier builds put on blank pages. */
+const LEGACY_BLANK_PAGE = /^(<h1>[^<]*<\/h1>)?<h2>FYI<\/h2>(<p>&nbsp;<\/p>|<hr>)*$/;
+
+/** Makes a year or month page read-only on a journal whose pages are written by date. */
+function lockContainerPage(rootNote: BNote, note: BNote) {
+    if (rootNote.hasLabel(DAY_HEADER_LABEL) && !note.hasOwnedLabel("readOnly")) {
+        attributeService.createLabel(note.noteId, "readOnly");
+    }
+}
+
+/**
+ * Keeps the pages under a journal root that carries `dayPageHeader` in shape: the root, years and
+ * months are read-only so nothing is written outside a day, a day page that only holds the old FYI
+ * header is emptied, and a title in an older form is rewritten to the root's `datePattern`.
+ * Pages with text keep their content.
+ */
+export function tidyDayPages(rootNote: BNote) {
+    if (!rootNote.hasLabel(DAY_HEADER_LABEL)) {
+        return;
+    }
+
+    lockContainerPage(rootNote, rootNote);
+
+    if (String(rootNote.getContent() ?? "")) {
+        rootNote.setContent("");
+    }
+
+    for (const label of [ YEAR_LABEL, MONTH_LABEL ]) {
+        for (const containerNote of attributeService.getNotesWithLabel(label)) {
+            if (containerNote.isDescendantOfNote(rootNote.noteId)) {
+                lockContainerPage(rootNote, containerNote);
+            }
+        }
+    }
+
+    for (const dayNote of attributeService.getNotesWithLabel(DATE_LABEL)) {
+        if (!dayNote.isDescendantOfNote(rootNote.noteId)) {
+            continue;
+        }
+
+        if (LEGACY_BLANK_PAGE.test(String(dayNote.getContent() ?? ""))) {
+            dayNote.setContent("");
+        }
+
+        const isoDate = dayNote.getLabelValue(DATE_LABEL) ?? "";
+        const shortTitle = getJournalNoteTitle(rootNote, "day", dayjs(isoDate), dayjs(isoDate).date());
+
+        if (/^(\w+, )?[A-Za-z]+ \d{1,2}(, \d{4})?$/.test(dayNote.title) && dayNote.title !== shortTitle) {
+            dayNote.title = shortTitle;
+            dayNote.save();
+        }
+    }
 }
 
 function createNote(parentNote: BNote, noteTitle: string) {
@@ -206,6 +273,7 @@ function getYearNote(dateStr: string, _rootNote: BNote | null = null): BNote {
         yearNote = createNote(rootNote, yearStr);
 
         attributeService.createLabel(yearNote.noteId, YEAR_LABEL, yearStr);
+        lockContainerPage(rootNote, yearNote);
         // Sort the months by their ISO `monthNote` value ("2026-09"), not their title — the title is
         // now "September 2026", which a title sort would order alphabetically.
         attributeService.createLabel(yearNote.noteId, "sorted", MONTH_LABEL);
@@ -295,6 +363,7 @@ function getMonthNote(dateStr: string, _rootNote: BNote | null = null): BNote {
         monthNote = createNote(monthParentNote, noteTitle);
 
         attributeService.createLabel(monthNote.noteId, MONTH_LABEL, monthStr);
+        lockContainerPage(rootNote, monthNote);
         // Sort the days by their ISO `dateNote` value ("2026-09-01"), not their title — the title is
         // now "Tuesday, September 01, 2026", which a title sort would order by weekday name.
         attributeService.createLabel(monthNote.noteId, "sorted", DATE_LABEL);
@@ -422,7 +491,10 @@ function getDayNote(dateStr: string, _rootNote: BNote | null = null): BNote {
     );
 
     getSql().transactional(() => {
-        dateNote = createNote(dateParentNote as BNote, noteTitle);
+        dateNote = createNote(
+            dateParentNote as BNote,
+            noteTitle
+        );
 
         attributeService.createLabel(dateNote.noteId, DATE_LABEL, dateStr.substring(0, 10));
 
@@ -458,6 +530,7 @@ export default {
     getWeekNote,
     getWeekFirstDayNote,
     getDayNote,
+    tidyDayPages,
     getTodayNote,
     getJournalNoteTitle
 };

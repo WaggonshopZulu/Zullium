@@ -7,6 +7,9 @@ import attributes from "../../services/attributes";
 import { renderInto } from "../../test/render";
 import { SEARCH_OPTIONS } from "./SearchDefinitionOptions";
 
+const adminState = vi.hoisted(() => ({ admin: false }));
+vi.mock("../../services/admin_mode", () => ({ isAdminMode: () => adminState.admin }));
+
 // Stands in for the CodeMirror editor, which loads on demand and is covered by its own spec.
 let editorProps: { noteId: string, currentValue: string, onChange(value: string): void } | undefined;
 vi.mock("./SearchStringEditor", () => ({
@@ -19,6 +22,7 @@ vi.mock("./SearchStringEditor", () => ({
 beforeEach(() => {
     vi.useFakeTimers();
     editorProps = undefined;
+    adminState.admin = false;
     vi.spyOn(attributes, "setLabel").mockResolvedValue(undefined);
 });
 
@@ -54,6 +58,17 @@ describe("the search string option", () => {
 
         expect(attributes.setLabel).toHaveBeenCalledTimes(1);
         expect(attributes.setLabel).toHaveBeenCalledWith("search2", "searchString", "#author = tolkien");
+    });
+});
+
+describe("the help and remove buttons on an option", () => {
+    it("are left off a guard's search box and shown in the admin window", () => {
+        const guard = renderOption(noteWith("search1", "#book"));
+        expect(guard.querySelector(".search-option-del")).toBeNull();
+
+        adminState.admin = true;
+        const admin = renderOption(noteWith("search2", "#book"));
+        expect(admin.querySelector(".search-option-del")).not.toBeNull();
     });
 });
 

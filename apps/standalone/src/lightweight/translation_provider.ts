@@ -1,4 +1,4 @@
-import { LOCALE_IDS } from "@triliumnext/commons";
+import { APP_NAME, LOCALE_IDS } from "@triliumnext/commons";
 import type i18next from "i18next";
 import I18NextHttpBackend from "i18next-http-backend";
 
@@ -11,6 +11,7 @@ export default async function translationProvider(i18nextInstance: typeof i18nex
             loadPath: `${import.meta.resolve("../server-assets/translations")}/{{lng}}/{{ns}}.json`
         },
         returnEmptyString: false,
+        interpolation: { defaultVariables: { appName: APP_NAME } },
         debug: true
     });
 }

@@ -1,4 +1,4 @@
-import { dayjs, LOCALES, LOCALE_IDS, setDayjsLocale, type Dayjs } from "@triliumnext/commons";
+import { APP_NAME, dayjs, LOCALES, LOCALE_IDS, setDayjsLocale, type Dayjs } from "@triliumnext/commons";
 import { hidden_subtree, options } from "@triliumnext/core";
 import i18next from "i18next";
 import { join } from "path";
@@ -21,7 +21,10 @@ export async function initializeTranslationsWithParams(i18nextInstance: typeof i
         ns: "server",
         backend: {
             loadPath: join(resourceDir, "assets/translations/{{lng}}/{{ns}}.json")
-        }
+        },
+        // Lets any string name the app as `{{appName}}`, so a rename of the build reaches the window
+        // titles, the tray and the dialogs along with everything else.
+        interpolation: { defaultVariables: { appName: APP_NAME } }
     });
 
     // Initialize dayjs locale.

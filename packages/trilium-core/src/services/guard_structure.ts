@@ -1,10 +1,13 @@
 import { dayjs, Dayjs, REFERENCE_NOTE_ID, SHIFT_LOG_NOTE_ID } from "@triliumnext/commons";
+import { t } from "i18next";
 
 import becca from "../becca/becca.js";
 import type BNote from "../becca/entities/bnote.js";
+import { ValidationError } from "../errors.js";
 import attributeService from "./attributes.js";
 import dateNotesService from "./date_notes.js";
 import noteService from "./notes.js";
+import treeService from "./tree.js";
 
 const DATE_LABEL = "dateNote";
 
@@ -13,7 +16,7 @@ interface GuardRootDefinition {
     title: string;
     notePosition: number;
     /** Labels the note must carry. `inheritable` ones also apply to every descendant. */
-    labels: { name: string; value?: string; inheritable?: boolean }[];
+    labels: { name: string; value?: string; inheritable?: boolean; enforceValue?: boolean }[];
 }
 
 const GUARD_ROOTS: GuardRootDefinition[] = [
@@ -24,14 +27,15 @@ const GUARD_ROOTS: GuardRootDefinition[] = [
         // `calendarRoot` makes the day-note service build its year, month and day notes here. Each
         // level sorts its children by their ISO date label (`yearNote` "2026", `monthNote` "2026-09",
         // `dateNote` "2026-09-01") rather than by title, so the human-readable titles ("September
-        // 2026", "Tuesday, September 01, 2026") don't disturb chronological order; `sortDirection=desc`
-        // is inheritable, putting the newest entry first at every level.
+        // 2026", "Tuesday, September 01, 2026") don't disturb chronological order; each level
+        // therefore reads oldest first, January above February and the 1st above the 2nd.
         labels: [
             { name: "iconClass", value: "bx bx-calendar" },
             { name: "calendarRoot" },
             { name: "sorted", value: "yearNote" },
-            { name: "sortDirection", value: "desc", inheritable: true },
-            { name: "hideChildrenOverview", inheritable: true }
+            { name: "hideChildrenOverview", inheritable: true },
+            { name: "dayPageHeader" },
+            { name: "datePattern", value: "{shortMonthName} {dateNumber}, {year} ({weekDay})", enforceValue: true }
         ]
     },
     {
@@ -56,6 +60,40 @@ export function ensureGuardStructure() {
             enforceLabel(note, label);
         }
     }
+
+    restoreAscendingSort();
+}
+
+/**
+ * Refuses a new child under the Daily Shift Log, a year or a month, which would sit outside every
+ * date. Day pages are created by `getDayNote()`, never through this check.
+ */
+export function assertDatedParent(parentNoteId: string) {
+    const parent = becca.getNote(parentNoteId);
+
+    if (parent?.hasLabel("calendarRoot") || parent?.hasLabel("yearNote") || parent?.hasLabel("monthNote")) {
+        throw new ValidationError(t("guard.no-undated-notes"));
+    }
+}
+
+/** Drops the descending order earlier builds put on the Daily Shift Log and re-sorts its levels. */
+function restoreAscendingSort() {
+    const shiftLog = becca.notes[SHIFT_LOG_NOTE_ID];
+    const descending = shiftLog?.getOwnedLabels("sortDirection") ?? [];
+
+    if (descending.length === 0) {
+        return;
+    }
+
+    for (const label of descending) {
+        label.markAsDeleted();
+    }
+
+    for (const note of attributeService.getNotesWithLabel("sorted")) {
+        if (note.noteId === SHIFT_LOG_NOTE_ID || note.isDescendantOfNote(SHIFT_LOG_NOTE_ID)) {
+            treeService.sortNotesIfNeeded(note.noteId);
+        }
+    }
 }
 
 /**
@@ -69,6 +107,12 @@ export function ensureGuardStructure() {
  * hang off the Daily Shift Log it creates.
  */
 export function ensureShiftLogDates(targetEnd: Dayjs = dayjs().add(1, "year").endOf("year")) {
+    const logRoot = becca.getNote(SHIFT_LOG_NOTE_ID);
+
+    if (logRoot) {
+        dateNotesService.tidyDayPages(logRoot);
+    }
+
     if (attributeService.getNoteWithLabel(DATE_LABEL, targetEnd.format("YYYY-MM-DD"))) {
         return;
     }
@@ -93,5 +137,7 @@ function createGuardRoot(definition: GuardRootDefinition): BNote {
 function enforceLabel(note: BNote, label: GuardRootDefinition["labels"][number]) {
     if (!note.hasOwnedLabel(label.name)) {
         note.addLabel(label.name, label.value ?? "", label.inheritable ?? false);
+    } else if (label.enforceValue && note.getOwnedLabelValue(label.name) !== label.value) {
+        note.setLabel(label.name, label.value ?? "");
     }
 }

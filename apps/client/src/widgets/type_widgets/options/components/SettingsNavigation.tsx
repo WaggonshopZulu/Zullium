@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { useOptionPages } from "../../../dialogs/OptionsDialog";
 
 interface SettingsNavigationProps {
-    /** Note ID of the settings page currently being displayed (e.g. `_optionsAppearance`). */
+    /** Note ID of the settings page currently being displayed (e.g. `_optionsShortcuts`). */
     activeNoteId: string;
 }
 

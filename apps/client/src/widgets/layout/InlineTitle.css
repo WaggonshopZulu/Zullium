@@ -95,3 +95,7 @@ body.prefers-centered-content .inline-title {
         font-weight: 500;
     }
 }
+
+.note-split.type-text > .title-row {
+    border-bottom: 1px solid var(--main-border-color);
+}

@@ -979,6 +979,18 @@ day pages are deliberately blank with no template.
   search otherwise needed Ctrl+J then Ctrl+Enter. The remove-option buttons on the search page and the bulk
   actions panel (`HelpRemoveButtons.tsx`) are `hideLabel`, which stopped their labels colliding.
   Show Cheatsheet opens a local shortcut-card dialog; Show Help opens the bundled Trilium User Guide.
+- **Guard lockdown, exe rename and shortcuts** (2026-09-30, after the first beta run): the program is now
+  `zullium.exe` (`EXECUTABLE_NAME` in `forge.config.ts`, company name set through `win32metadata`); the package
+  ships only `zullium-safe-mode.bat` (the upstream portable and no-cert-check scripts are gone). Guards no
+  longer see Shared Notes, Help or Cheatsheet in the Menu, and the commands themselves refuse outside admin
+  mode (F1 shows the admin-only message). On the search page a guard sees only the search box, Search and
+  Save to note; the option picker, extra options, actions and "Search & Execute actions" are admin-only.
+  **Bug found by the user:** Menu > Options did not open at all, because `DEFAULT_SECTION` in
+  `OptionsDialog.tsx` was the removed `_optionsAppearance` page; it is now `_optionsShortcuts`, typed as
+  `OptionPages` so naming a removed page fails the build. The Shortcuts page's "Add a shortcut" button is
+  always visible and inline (it only appeared on row hover). New action `insertTimeToText`, Alt+Shift+T,
+  inserts only the time as `HH:mm` (`TIME_FORMAT` in `services/utils.ts`); Alt+T still inserts date and time.
+  Verified in the packaged exe: Shift+Alt+T inserted `19:24` and Alt+T inserted `2026-09-30 19:24`.
 - **Noticed, not fixed**: the wizard and pre-login pages keep a white card in OS dark mode while switching
   the text to light grey (unreadable, and upstream's own behaviour); the horizontal top bar looked white in a
   forced-dark emulation. The user's Windows is in light mode. The vertical-layout Menu icon is still

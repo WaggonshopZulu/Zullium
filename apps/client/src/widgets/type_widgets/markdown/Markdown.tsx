@@ -18,7 +18,7 @@ import note_create from "../../../services/note_create";
 import options from "../../../services/options";
 import { removeIndividualBinding } from "../../../services/shortcuts";
 import tree from "../../../services/tree";
-import utils, { isDesktop } from "../../../services/utils";
+import utils, { isDesktop, TIME_FORMAT } from "../../../services/utils";
 import { useLegacyImperativeHandlers, useTriliumEvent } from "../../react/hooks";
 import { extractHighlightsFromStaticHtml, type RawHighlight } from "../../sidebar/highlights_extract";
 import SplitEditor from "../helpers/SplitEditor";
@@ -369,6 +369,12 @@ function useTextCommands(parentComponent: TypeWidgetProps["parentComponent"], ed
 
             const dateString = utils.formatDateTime(new Date(), options.get("customDateTimeFormat"));
             insertText(editorView, dateString);
+        },
+
+        insertTimeToTextCommand() {
+            if (!editorView) return;
+
+            insertText(editorView, utils.formatDateTime(new Date(), TIME_FORMAT));
         },
 
         addIncludeNoteToTextCommand() {

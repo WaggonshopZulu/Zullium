@@ -5,6 +5,7 @@ import { useContext, useEffect, useState } from "preact/hooks";
 import { Fragment } from "preact/jsx-runtime";
 
 import appContext from "../../components/app_context";
+import { isAdminMode } from "../../services/admin_mode";
 import FNote from "../../entities/fnote";
 import attributes from "../../services/attributes";
 import bulk_action, { ACTION_GROUPS } from "../../services/bulk_action";
@@ -77,12 +78,16 @@ export default function SearchDefinitionTab({ note, ntxId, hidden }: Pick<TabCon
         }
     });
 
+    // A guard searches by typing into the search box. The other options, the actions and the option
+    // pickers are for an admin; hiding them leaves whatever they hold in effect.
+    const adminMode = isAdminMode();
+
     return (
         <div className="search-definition-widget">
             <div className="search-settings">
                 {note && !hidden && (
                     <table className="search-setting-table">
-                        <tbody>
+                        {adminMode && <tbody>
                             <tr>
                                 <td className="title-column">{t("search_definition.add_search_option")}</td>
                                 <td colSpan={2} className="add-search-option">
@@ -116,9 +121,9 @@ export default function SearchDefinitionTab({ note, ntxId, hidden }: Pick<TabCon
                                     <AddBulkActionButton note={note} />
                                 </td>
                             </tr>
-                        </tbody>
+                        </tbody>}
                         <tbody className="search-options">
-                            {searchOptions?.activeOptions.map(({ attributeType, attributeName, component, additionalAttributesToDelete, defaultValue }) => {
+                            {searchOptions?.activeOptions.filter(({ attributeName }) => adminMode || attributeName === "searchString").map(({ attributeType, attributeName, component, additionalAttributesToDelete, defaultValue }) => {
                                 const Component = component;
                                 return <Component
                                     attributeName={attributeName}
@@ -131,8 +136,8 @@ export default function SearchDefinitionTab({ note, ntxId, hidden }: Pick<TabCon
                                 />;
                             })}
                         </tbody>
-                        <BulkActionsList note={note} />
-                        <SearchButtonBar note={note} refreshResults={refreshResults} />
+                        {adminMode && <BulkActionsList note={note} />}
+                        <SearchButtonBar note={note} refreshResults={refreshResults} adminMode={adminMode} />
                     </table>
                 )}
             </div>
@@ -140,9 +145,10 @@ export default function SearchDefinitionTab({ note, ntxId, hidden }: Pick<TabCon
     );
 }
 
-function SearchButtonBar({ note, refreshResults }: {
+function SearchButtonBar({ note, refreshResults, adminMode }: {
     note: FNote;
     refreshResults(): void;
+    adminMode: boolean;
 }) {
     async function searchAndExecuteActions() {
         await server.post(`search-and-execute-note/${note.noteId}`);
@@ -170,7 +176,7 @@ function SearchButtonBar({ note, refreshResults }: {
                         desktop={
                             <div className="search-actions-container">
                                 <Button icon="bx bx-search" text={t("search_definition.search_button")} keyboardShortcut="Enter" onClick={refreshResults} />
-                                <Button icon="bx bxs-zap" text={t("search_definition.search_execute")} onClick={searchAndExecuteActions} />
+                                {adminMode && <Button icon="bx bxs-zap" text={t("search_definition.search_execute")} onClick={searchAndExecuteActions} />}
                                 {note.isHiddenCompletely() && <Button icon="bx bx-save" text={t("search_definition.save_to_note")} onClick={saveSearchNote} />}
                             </div>
                         }
@@ -179,7 +185,7 @@ function SearchButtonBar({ note, refreshResults }: {
                                 text={t("search_definition.search_button")} icon="bx bx-search"
                                 onClick={refreshResults}
                             >
-                                <FormListItem icon="bx bxs-zap" onClick={searchAndExecuteActions}>{t("search_definition.search_execute")}</FormListItem>
+                                {adminMode && <FormListItem icon="bx bxs-zap" onClick={searchAndExecuteActions}>{t("search_definition.search_execute")}</FormListItem>}
                                 {note.isHiddenCompletely() && <FormListItem icon="bx bx-save" onClick={saveSearchNote}>{t("search_definition.save_to_note")}</FormListItem>}
                             </SplitButton>
                         }

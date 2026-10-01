@@ -69,6 +69,7 @@ const enum KeyboardActionNamesEnum {
     addLinkToText,
     followLinkUnderCursor,
     insertDateTimeToText,
+    insertTimeToText,
     pasteMarkdownIntoText,
     cutIntoNote,
     addIncludeNoteToText,

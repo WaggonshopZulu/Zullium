@@ -10,7 +10,7 @@ import { PRODUCT_NAME } from "../src/app-info.js";
 
 const ELECTRON_FORGE_DIR = __dirname;
 
-const EXECUTABLE_NAME = "trilium"; // keep in sync with server's package.json -> packagerConfig.executableName
+const EXECUTABLE_NAME = "zullium"; // the .exe's file name, and the Linux package name
 const APP_ICON_PATH = path.join(ELECTRON_FORGE_DIR, "app-icon");
 
 const extraResourcesForPlatform = getExtraResourcesForPlatform();
@@ -41,6 +41,9 @@ const config: ForgeConfig = {
     packagerConfig: {
         executableName: EXECUTABLE_NAME,
         name: PRODUCT_NAME,
+        // The company shown in the file's Properties and in Windows prompts; packager would otherwise
+        // take it from package.json's author.
+        win32metadata: { CompanyName: PRODUCT_NAME },
         appVersion: packageJson.version,
         overwrite: true,
         asar: true,
@@ -262,7 +265,11 @@ function getExtraResourcesForPlatform() {
     const resources: string[] = [];
 
     const getScriptResources = () => {
-        const scripts = ["trilium-portable", "trilium-safe-mode", "trilium-no-cert-check"];
+        // The Windows build ships only the safe-mode launcher. Portable mode is what the beta folder's
+        // own launcher does, and the no-cert-check one only serves syncing with a self-signed server.
+        const scripts = process.platform === "win32"
+            ? ["zullium-safe-mode"]
+            : ["trilium-portable", "trilium-safe-mode", "trilium-no-cert-check"];
         const scriptExt = (process.platform === "win32") ? "bat" : "sh";
         return scripts.map(script => `electron-forge/${script}.${scriptExt}`);
     };

@@ -40,6 +40,25 @@ describe("keyboard_actions service", () => {
         expect(actions.some((a) => "actionName" in a && a.actionName === "jumpToNote")).toBe(true);
     });
 
+    it("inserts the time alone on Alt+Shift+T, leaving Alt+T for the date and time", () => {
+        const actions = keyboardActions.getDefaultKeyboardActions();
+        const byName = (name: string) => actions.find((a) => "actionName" in a && a.actionName === name);
+        const time = byName("insertTimeToText");
+        const dateTime = byName("insertDateTimeToText");
+
+        expect(time && "defaultShortcuts" in time && time.defaultShortcuts).toEqual([ "Alt+Shift+T" ]);
+        expect(time && "scope" in time && time.scope).toBe("text-detail");
+        expect(dateTime && "defaultShortcuts" in dateTime && dateTime.defaultShortcuts).toEqual([ "Alt+T" ]);
+    });
+
+    it("leaves Alt+Shift+T to the time insert alone", () => {
+        const owners = keyboardActions.getDefaultKeyboardActions()
+            .filter((a) => "actionName" in a && a.defaultShortcuts?.includes("Alt+Shift+T"))
+            .map((a) => "actionName" in a && a.actionName);
+
+        expect(owners).toEqual([ "insertTimeToText" ]);
+    });
+
     it("zoomIn is bound to the plus key as well as equals, so it works on non-US layouts", () => {
         const actions = keyboardActions.getDefaultKeyboardActions();
         const zoomIn = actions.find((a) => "actionName" in a && a.actionName === "zoomIn");

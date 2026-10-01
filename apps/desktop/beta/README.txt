@@ -6,7 +6,7 @@ What this is
   Nothing here reads or changes %AppData%\trilium-data.
 
 What is in it
-  app\        the program (trilium.exe and its files)
+  app\        the program (zullium.exe and its files)
   data\       the beta notes. Created the first time the app is opened.
   electron\   window settings only. Created the first time the app is opened.
   Daily Brief Logbook (BETA).bat           opens the app for the team

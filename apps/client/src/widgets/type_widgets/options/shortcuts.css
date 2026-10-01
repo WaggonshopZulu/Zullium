@@ -159,29 +159,23 @@
         }
     }
 
-    /* The recorder stays a fixed-size .icon-action button; recording is shown as an active highlight
-       (no size change) so toggling it never reflows the row. */
+    /* The add button shows its label beside the plus and stays visible: a button that appears only
+       when the pointer is over the row cannot be found by anyone who does not already know it is
+       there. Recording is shown as an active highlight, so toggling it never reflows the row. */
+    .shortcut-recorder {
+        display: inline-flex !important;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        width: auto !important;
+        height: auto !important;
+        padding: 3px 10px !important;
+        white-space: nowrap;
+    }
+
     .shortcut-recorder.recording {
         color: var(--link-color);
         border-color: var(--link-color);
-    }
-
-    /* Desktop: keep idle rows uncluttered by revealing the add button only on row hover (or while
-       it is focused / recording). Fade rather than display:none so the row never reflows. Mobile has
-       no hover, so the button stays visible there (see the body.mobile block below). */
-    body.desktop & {
-        .shortcut-recorder {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.15s ease;
-        }
-
-        .tn-card-option:hover .shortcut-recorder,
-        .shortcut-recorder:focus,
-        .shortcut-recorder.recording {
-            opacity: 1;
-            pointer-events: auto;
-        }
     }
 
     /* The card stacks the row at this width on its own, so the chips read from the leading edge

@@ -14,6 +14,7 @@ import Admonition from "../react/Admonition";
 import FormSelect from "../react/FormSelect";
 import FormTextBox from "../react/FormTextBox";
 import HelpRemoveButtons from "../react/HelpRemoveButtons";
+import { isAdminMode } from "../../services/admin_mode";
 import { useNoteLabel, useNoteRelation, useTooltip } from "../react/hooks";
 import Icon from "../react/Icon";
 import NoteAutocomplete from "../react/NoteAutocomplete";
@@ -127,7 +128,7 @@ function SearchOption({ note, className, title, titleIcon, children, help, attri
                 {title}
             </td>
             <td>{children}</td>
-            <HelpRemoveButtons
+            {isAdminMode() && <HelpRemoveButtons
                 help={help}
                 removeText={t("abstract_search_option.remove_this_search_option")}
                 onRemove={() => {
@@ -138,7 +139,7 @@ function SearchOption({ note, className, title, titleIcon, children, help, attri
                         }
                     }
                 }}
-            />
+            />}
         </tr>
     );
 }

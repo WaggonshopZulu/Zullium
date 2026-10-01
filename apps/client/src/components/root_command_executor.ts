@@ -100,7 +100,8 @@ export default class RootCommandExecutor extends Component {
     }
 
     async showHelpCommand() {
-        await this.showAndHoistSubtree("_help");
+        // Admin-gated: the help is Trilium's own manual, not guidance for this logbook.
+        await requireAdminMode(() => this.showAndHoistSubtree("_help"));
     }
 
     async showLaunchBarSubtreeCommand() {
@@ -113,7 +114,8 @@ export default class RootCommandExecutor extends Component {
     }
 
     async showShareSubtreeCommand() {
-        await this.showAndHoistSubtree("_share");
+        // Admin-gated: see showSQLConsoleCommand above.
+        await requireAdminMode(() => this.showAndHoistSubtree("_share"));
     }
 
     async showHiddenSubtreeCommand() {

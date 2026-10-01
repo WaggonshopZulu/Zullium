@@ -5,7 +5,7 @@ import becca from "../becca/becca.js";
 import attributeService from "./attributes.js";
 import { getContext } from "./context.js";
 import dateNotesService from "./date_notes.js";
-import { ensureGuardStructure, ensureShiftLogDates } from "./guard_structure.js";
+import { assertDatedParent, ensureGuardStructure, ensureShiftLogDates } from "./guard_structure.js";
 import treeService from "./tree.js";
 
 function ensure() {
@@ -53,17 +53,17 @@ describe("guard structure", () => {
         const shiftLog = becca.notes[SHIFT_LOG_NOTE_ID];
 
         getContext().init(() => {
-            for (const label of shiftLog.getOwnedLabels("sortDirection")) {
+            for (const label of shiftLog.getOwnedLabels("calendarRoot")) {
                 label.markAsDeleted();
             }
             shiftLog.title = "Renamed";
             shiftLog.save();
         });
-        expect(shiftLog.hasOwnedLabel("sortDirection")).toBe(false);
+        expect(shiftLog.hasOwnedLabel("calendarRoot")).toBe(false);
 
         ensure();
 
-        expect(shiftLog.getOwnedLabelValue("sortDirection")).toBe("desc");
+        expect(shiftLog.hasOwnedLabel("calendarRoot")).toBe(true);
         expect(shiftLog.title).toBe("Renamed");
 
         getContext().init(() => {
@@ -82,7 +82,7 @@ describe("guard structure", () => {
         }
     });
 
-    it("files day notes under Shift Log, the newest first at every level", () => {
+    it("files day notes under Shift Log, the oldest first at every level", () => {
         ensure();
 
         getContext().init(() => {
@@ -103,12 +103,23 @@ describe("guard structure", () => {
             }
         });
 
-        expect(childTitles(yearNote?.noteId ?? "")).toEqual([ "October 2026", "September 2026" ]);
+        expect(childTitles(yearNote?.noteId ?? "")).toEqual([ "September 2026", "October 2026" ]);
         expect(childTitles(monthNote?.noteId ?? "")).toEqual([
-            "Monday, September 28, 2026",
-            "Sunday, September 27, 2026",
-            "Saturday, September 26, 2026"
+            "Sept 26, 2026 (Saturday)",
+            "Sept 27, 2026 (Sunday)",
+            "Sept 28, 2026 (Monday)"
         ]);
+    });
+
+    it("drops the descending order an earlier build left on the log, and sorts it oldest first", () => {
+        ensure();
+        const shiftLog = becca.notes[SHIFT_LOG_NOTE_ID];
+        getContext().init(() => {
+            shiftLog.addLabel("sortDirection", "desc", true);
+            ensureGuardStructure();
+        });
+
+        expect(shiftLog.hasOwnedLabel("sortDirection")).toBe(false);
     });
 
     it("pre-creates blank day notes through the horizon, and does nothing once it is reached", () => {
@@ -129,5 +140,74 @@ describe("guard structure", () => {
         // The horizon's page now exists, so a second pass is a no-op and adds no duplicates.
         getContext().init(() => ensureShiftLogDates(horizon));
         expect(countDayNotes()).toBe(before);
+    });
+
+    it("leaves blank day pages empty, clears the old FYI header, and never touches written pages", () => {
+        ensure();
+        const horizon = dayjs().add(2, "day");
+        const isoOf = (offset: number) => dayjs().add(offset, "day").format("YYYY-MM-DD");
+        getContext().init(() => ensureShiftLogDates(horizon));
+
+        const today = attributeService.getNoteWithLabel("dateNote", isoOf(0));
+        expect(today?.getContent()).toBe("");
+        expect(today?.title).toMatch(/^[A-Z][a-z]{2,4} \d{1,2}, \d{4} \([A-Z][a-z]+day\)$/);
+
+        const written = attributeService.getNoteWithLabel("dateNote", isoOf(1));
+        const headed = attributeService.getNoteWithLabel("dateNote", isoOf(2));
+        getContext().init(() => {
+            written?.setContent("<h2>FYI</h2><p>x</p>");
+            headed?.setContent("<h1>Old</h1><h2>FYI</h2><p>&nbsp;</p><hr><p>&nbsp;</p>");
+            ensureShiftLogDates(horizon);
+        });
+        expect(written?.getContent()).toBe("<h2>FYI</h2><p>x</p>");
+        expect(headed?.getContent()).toBe("");
+
+        getContext().init(() => {
+            if (written) {
+                written.title = "Wednesday, September 30, 2026";
+                written.save();
+            }
+            ensureShiftLogDates(horizon);
+        });
+        expect(written?.title, "an old long title is rewritten").toMatch(/\(\w+day\)$/);
+    });
+
+    it("shortens month names to Jan Feb Mar Apr May June July Aug Sept Oct Nov Dec", () => {
+        ensure();
+        const logRoot = becca.notes[SHIFT_LOG_NOTE_ID];
+        getContext().init(() => logRoot.setLabel("datePattern", "{shortMonth3} {dateNumber}"));
+        getContext().init(() => ensureGuardStructure());
+        expect(logRoot.getOwnedLabelValue("datePattern")).toBe("{shortMonthName} {dateNumber}, {year} ({weekDay})");
+
+        const titles = Array.from({ length: 12 }, (_, month) =>
+            dateNotesService.getJournalNoteTitle(logRoot, "day", dayjs(new Date(2026, month, 5)), 5)
+                .split(",")[0]);
+        expect(titles).toEqual([
+            "Jan 5", "Feb 5", "Mar 5", "Apr 5", "May 5", "June 5",
+            "July 5", "Aug 5", "Sept 5", "Oct 5", "Nov 5", "Dec 5"
+        ]);
+    });
+
+    it("locks the log, years and months, refuses undated children, and clears stray text", () => {
+        ensure();
+        const horizon = dayjs().add(1, "day");
+        getContext().init(() => {
+            becca.notes[SHIFT_LOG_NOTE_ID].setContent("<p>stray</p>");
+            ensureShiftLogDates(horizon);
+        });
+
+        const day = attributeService.getNoteWithLabel("dateNote", dayjs().format("YYYY-MM-DD"));
+        const month = day?.getParentNotes()[0];
+        const year = month?.getParentNotes()[0];
+
+        for (const container of [ becca.notes[SHIFT_LOG_NOTE_ID], year, month ]) {
+            expect(container?.hasOwnedLabel("readOnly"), container?.title).toBe(true);
+            expect(() => assertDatedParent(container?.noteId ?? "")).toThrow();
+        }
+        expect(day?.hasOwnedLabel("readOnly")).toBe(false);
+        expect(() => assertDatedParent(day?.noteId ?? "")).not.toThrow();
+        expect(() => assertDatedParent(REFERENCE_NOTE_ID)).not.toThrow();
+        expect(becca.notes[SHIFT_LOG_NOTE_ID].getContent()).toBe("");
+
     });
 });

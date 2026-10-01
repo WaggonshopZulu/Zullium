@@ -18,7 +18,6 @@ import toast from "../../services/toast";
 import { isElectron as getIsElectron, isMac as getIsMac, isMobile as getIsMobile } from "../../services/utils";
 import ws from "../../services/ws";
 import ClosePaneButton from "../buttons/close_pane_button";
-import CreatePaneButton from "../buttons/create_pane_button";
 import MovePaneButton from "../buttons/move_pane_button";
 import { showImageCompressionDialog } from "../dialogs/image_compression/image_compression_dialog";
 import { isAlwaysFullWidthByType } from "../note_wrapper";
@@ -42,7 +41,6 @@ export default function NoteActions() {
                     <MovePaneButton direction="left" />
                     <MovePaneButton direction="right" />
                     <ClosePaneButton />
-                    <CreatePaneButton />
                 </>
             )}
             {note && !isNewLayout && <RevisionsButton note={note} />}

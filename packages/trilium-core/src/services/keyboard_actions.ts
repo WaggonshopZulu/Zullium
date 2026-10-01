@@ -594,6 +594,14 @@ function getDefaultKeyboardActions() {
             scope: "text-detail"
         },
         {
+            friendlyName: t("keyboard_action_names.insert-time-to-text"),
+            actionName: "insertTimeToText",
+            iconClass: "bx bx-time-five",
+            defaultShortcuts: ["Alt+Shift+T"],
+            description: t("keyboard_actions.insert-time-to-text"),
+            scope: "text-detail"
+        },
+        {
             friendlyName: t("keyboard_action_names.paste-markdown-into-text"),
             actionName: "pasteMarkdownIntoText",
             iconClass: "bx bxl-markdown",

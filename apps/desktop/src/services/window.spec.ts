@@ -527,12 +527,12 @@ describe("window service", () => {
             // entries are really in the catalog the Electron main process reads.
             await windowService.createSetupWindow();
             expect((state.windows[state.windows.length - 1].opts as Record<string, unknown>).title)
-                .toBe("Getting Started - Trilium Notes");
+                .toBe("Getting Started - Daily Brief Logbook");
 
             state.isSetupRequested = true;
             await windowService.createSetupWindow();
             expect((state.windows[state.windows.length - 1].opts as Record<string, unknown>).title)
-                .toBe("Start Over - Trilium Notes");
+                .toBe("Start Over - Daily Brief Logbook");
         });
 
         it("keeps that title, which the page it loads would otherwise replace with the app name", async () => {

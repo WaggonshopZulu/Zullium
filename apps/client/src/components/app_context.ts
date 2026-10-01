@@ -365,6 +365,7 @@ export type CommandMappings = {
     addLinkToText: CommandData;
     followLinkUnderCursor: CommandData;
     insertDateTimeToText: CommandData;
+    insertTimeToText: CommandData;
     pasteMarkdownIntoText: CommandData;
     cutIntoNote: CommandData;
     addIncludeNoteToText: CommandData;
