@@ -10,6 +10,7 @@ import utils, {
     escapeRegExp,
     fileAccept,
     formatDateTime,
+    formatDayTreeTitle,
     formatSize,
     getErrorMessage,
     getSizeFromSvg,
@@ -998,5 +999,16 @@ describe("isPreAuthScreen", () => {
     it("does NOT flag an unset glob (unit-test / unknown state) — strict === false keeps eager loads working", () => {
         setGlob({});
         expect(isPreAuthScreen()).toBe(false);
+    });
+});
+
+describe("formatDayTreeTitle", () => {
+    it("shortens an ISO date to the sidebar's month-and-day form, and leaves anything else null", () => {
+        expect(formatDayTreeTitle("2026-09-26")).toBe("Sept 26");
+        expect(formatDayTreeTitle("2026-06-05")).toBe("June 5");
+        expect(formatDayTreeTitle("2027-01-01")).toBe("Jan 1");
+        expect(formatDayTreeTitle("")).toBeNull();
+        expect(formatDayTreeTitle("2026-13-01")).toBeNull();
+        expect(formatDayTreeTitle("September 26")).toBeNull();
     });
 });

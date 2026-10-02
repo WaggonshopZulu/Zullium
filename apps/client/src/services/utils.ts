@@ -136,6 +136,16 @@ function formatDateISO(date: Date) {
 /** The Day.js format the insert-time shortcut uses: 24-hour hours and minutes, such as `23:42`. */
 export const TIME_FORMAT = "HH:mm";
 
+const SHORT_MONTH_NAMES = [ "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec" ];
+
+/** The sidebar's label for a day page, such as "Sept 26", from its ISO `#dateNote` value; null when the value is not a date. */
+export function formatDayTreeTitle(isoDate: string) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+    const monthName = match ? SHORT_MONTH_NAMES[Number(match[2]) - 1] : undefined;
+
+    return match && monthName ? `${monthName} ${Number(match[3])}` : null;
+}
+
 export function formatDateTime(date: Date, userSuppliedFormat?: string): string {
     if (userSuppliedFormat?.trim()) {
         return dayjs(date).format(userSuppliedFormat);
