@@ -10,7 +10,7 @@ export function usesClassicToolbar({ floatingToolbarRequested }: { floatingToolb
 
 /**
  * The whole of what the editor's toolbar offers, in the order it appears: text style, highlight
- * and font colors, font family and size, inserting an image or a file, and finding text in the note. Nothing
+ * and font colors, font family and size, bullets and numbering, tables, inserting an image or a file, and finding text in the note. Nothing
  * else has a button, and each button carries its name in words (see the `TriliumGuardToolbar` plugin).
  */
 export const TOOLBAR_ITEMS = [
@@ -23,6 +23,11 @@ export const TOOLBAR_ITEMS = [
     "|",
     "fontFamily",
     "fontSize",
+    "|",
+    "bulletedList",
+    "numberedList",
+    "|",
+    "insertTable",
     "|",
     "imageUpload",
     "attachFile",

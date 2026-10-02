@@ -138,6 +138,7 @@ export async function buildConfig(opts: BuildEditorOptions): Promise<EditorConfi
             contentToolbar: ["tableColumn", "tableRow", "mergeTableCells", "tableProperties", "tableCellProperties", "toggleTableCaption"]
         },
         list: {
+            enableListItemMarkerFormatting: false,
             properties: {
                 styles: true,
                 startIndex: true,

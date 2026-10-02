@@ -11,6 +11,8 @@ describe("buildToolbarConfig", () => {
             "bold", "italic", "underline",
             "fontBackgroundColor", "fontColor",
             "fontFamily", "fontSize",
+            "bulletedList", "numberedList",
+            "insertTable",
             "imageUpload", "attachFile",
             "findInNote"
         ]);

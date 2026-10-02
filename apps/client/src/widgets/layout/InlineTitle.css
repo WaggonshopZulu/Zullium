@@ -99,3 +99,24 @@ body.prefers-centered-content .inline-title {
 .note-split.type-text > .title-row {
     border-bottom: 1px solid var(--main-border-color);
 }
+
+.note-split.type-text {
+    position: relative;
+}
+
+.note-split.type-text::after {
+    content: "";
+    position: absolute;
+    inset-inline-end: 48px;
+    inset-block-end: 40px;
+    width: 380px;
+    height: 380px;
+    background: url("../../assets/brand-crest.png") center / contain no-repeat;
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 1;
+}
+
+body.dark-theme .note-split.type-text::after {
+    filter: invert(1);
+}

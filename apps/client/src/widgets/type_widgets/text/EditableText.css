@@ -59,3 +59,8 @@ body.heading-style-underline .note-detail-editable-text h6 { border-bottom: 1px 
      * level of nested checkboxes */
     margin-inline-start: 14px;
 }
+/* Single line spacing: Enter starts a new line directly under the last, and a blank line is a
+   second Enter, as in the OneNote pages the team copies forward. */
+.note-detail-editable-text-editor p {
+    margin-block: 0;
+}

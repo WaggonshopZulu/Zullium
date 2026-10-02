@@ -6,6 +6,7 @@ import ApiLog from "../widgets/api_log.jsx";
 import ClosePaneButton from "../widgets/buttons/close_pane_button.js";
 import CreatePaneButton from "../widgets/buttons/create_pane_button.js";
 import GlobalMenu from "../widgets/buttons/global_menu.jsx";
+import TopBarBrand from "../widgets/top_bar_brand.js";
 import LeftPaneResizer from "../widgets/buttons/left_pane_resizer.js";
 import MovePaneButton from "../widgets/buttons/move_pane_button.js";
 import RightPaneToggle from "../widgets/buttons/right_pane_toggle.jsx";
@@ -180,8 +181,9 @@ export default class DesktopLayout {
             launcherPane = new FlexContainer("row")
                 .css("height", "53px")
                 .class("horizontal")
-                .child(<LauncherContainer isHorizontalLayout={true} />)
                 .child(<GlobalMenu isHorizontalLayout={true} />)
+                .child(<LauncherContainer isHorizontalLayout={true} />)
+                .child(<TopBarBrand />)
                 .child(<LeftPaneResizer />);
         } else {
             launcherPane = new FlexContainer("column")

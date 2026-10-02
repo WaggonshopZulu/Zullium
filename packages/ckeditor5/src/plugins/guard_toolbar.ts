@@ -7,7 +7,12 @@ import { ButtonView, FileDialogButtonView, Plugin, type ToolbarView } from "cked
  */
 const LABELS: Record<string, string> = {
     "Font Background Color": "Highlight",
-    "Font Color": "Font color"
+    "Font Background Colour": "Highlight",
+    "Font Color": "Font color",
+    "Font Colour": "Font color",
+    "Bulleted List": "Bullets",
+    "Numbered List": "Numbering",
+    "Insert table": "Table"
 };
 
 /**
