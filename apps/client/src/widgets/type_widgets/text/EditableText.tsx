@@ -26,7 +26,7 @@ import CKEditorWithWatchdog, { CKEditorApi, NotificationEventData, NotificationE
 import getTemplates, { updateTemplateCache } from "./snippets.js";
 import linkEmbedService from "../../../services/link_embed";
 import { usesClassicToolbar } from "./toolbar";
-import { loadIncludedNote, refreshIncludedNote, setupImageOpening } from "./utils";
+import { installCopyBetweenEditors, keepDraggedTextAfterCrossEditorDrop, loadIncludedNote, refreshIncludedNote, setupImageOpening } from "./utils";
 
 /**
  * The editor can operate into two distinct modes:
@@ -295,6 +295,8 @@ export default function EditableText({ note, parentComponent, ntxId, noteContext
 
     const onWatchdogStateChange = useWatchdogCrashHandling();
 
+    useEffect(() => installCopyBetweenEditors(), []);
+
     useEffect(() => {
         document.body.style.setProperty("--code-block-tab-width", codeBlockTabWidth || "4");
     }, [codeBlockTabWidth]);
@@ -492,6 +494,7 @@ export default function EditableText({ note, parentComponent, ntxId, noteContext
                         setupImageOpening(containerRef.current, false);
                     }
 
+                    keepDraggedTextAfterCrossEditorDrop(editor);
                     initialized.current.resolve();
                     // Restore the data, either on the first render or if the editor crashes.
                     // We are not using CKEditor's built-in watch dog content, instead we are using the data we store regularly in the spaced update (see `dataSaved`).

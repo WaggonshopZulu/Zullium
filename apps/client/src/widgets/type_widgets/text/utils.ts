@@ -1,3 +1,5 @@
+import type { CKTextEditor } from "@triliumnext/ckeditor5";
+
 import appContext from "../../../components/app_context";
 import content_renderer from "../../../services/content_renderer";
 import froca from "../../../services/froca";
@@ -137,4 +139,78 @@ async function parseFromImage($img: JQuery<HTMLElement>): Promise<{ noteId: stri
     }
 
     return null;
+}
+
+/** Whether a drag started in one editor and is over a different one. */
+export function isCrossEditorDrag(source: Element | null, target: Element | null) {
+    return !!source && !!target && source !== target;
+}
+
+let copyBetweenEditorsInstalls = 0;
+let removeCopyBetweenEditors: (() => void) | undefined;
+let dropLandedInAnotherEditor = false;
+
+/**
+ * Stops an editor from deleting text it dragged out once that text was dropped into a different
+ * editor. The browser's copy/move hint does not always reach the source, so the source also checks
+ * where the drop landed. Called once for each editor.
+ */
+export function keepDraggedTextAfterCrossEditorDrop(editor: CKTextEditor) {
+    const dragDrop = editor.plugins.get("DragDrop") as unknown as { _finalizeDragging(moved: boolean): void };
+
+    editor.editing.view.document.on("dragend", (evt) => {
+        if (dropLandedInAnotherEditor) {
+            dropLandedInAnotherEditor = false;
+            dragDrop._finalizeDragging(false);
+            evt.stop();
+        }
+    }, { priority: "high" });
+}
+
+/**
+ * Makes text dragged from one note's editor into another's a copy, leaving the original where it
+ * was. The editor reports a move for any drag it started, so its source would delete the text on
+ * drop; a drag within one editor is left alone and still moves. Shared by every open editor, and
+ * returns a function that releases this caller's share.
+ */
+export function installCopyBetweenEditors() {
+    if (copyBetweenEditorsInstalls++ === 0) {
+        const editableOf = (node: EventTarget | null) => {
+            const element = node instanceof Element ? node : (node as Node | null)?.parentElement;
+            return element?.closest(".ck-editor__editable") ?? null;
+        };
+        let source: Element | null = null;
+
+        const onDragStart = (e: DragEvent) => {
+            source = editableOf(e.target);
+            dropLandedInAnotherEditor = false;
+        };
+        const onDrop = (e: DragEvent) => {
+            dropLandedInAnotherEditor = isCrossEditorDrag(source, editableOf(e.target));
+        };
+        const onDragEnd = () => { source = null; };
+        // Bubbles after the editor's own handler, which accepts the drop and picks "move".
+        const onDragOver = (e: DragEvent) => {
+            if (e.defaultPrevented && e.dataTransfer && isCrossEditorDrag(source, editableOf(e.target))) {
+                e.dataTransfer.dropEffect = "copy";
+            }
+        };
+
+        document.addEventListener("dragstart", onDragStart, true);
+        document.addEventListener("dragend", onDragEnd, true);
+        document.addEventListener("drop", onDrop, true);
+        document.addEventListener("dragover", onDragOver);
+        removeCopyBetweenEditors = () => {
+            document.removeEventListener("dragstart", onDragStart, true);
+            document.removeEventListener("dragend", onDragEnd, true);
+            document.removeEventListener("drop", onDrop, true);
+            document.removeEventListener("dragover", onDragOver);
+        };
+    }
+
+    return () => {
+        if (--copyBetweenEditorsInstalls === 0) {
+            removeCopyBetweenEditors?.();
+        }
+    };
 }
